@@ -1,0 +1,205 @@
+---
+title: "101_Select_data"
+author: "DHJ"
+date: "5 5 2020"
+output: html_document
+---
+
+## 1. Libraries
+```{r}
+
+library(readr)
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(safejoin)   # github moodymudskipper
+
+library(maps)
+library(mapdata)
+
+simple_map <- map_data("worldHires", "Norway")
+
+```
+
+
+## 2. Data  
+
+### Main data
+```{r}
+
+dat <- readRDS("../Milkys/Data/10_data_all.RData") %>%
+  filter(MYEAR >= 1994)
+
+```
+
+
+### Coordinates  
+```{r}
+
+col_spec <- cols(
+  .default = col_double(),
+  ICES_ecoregion = col_character(),
+  OSPAR_subregion = col_character(),
+  OSPAR_shore = col_character(),
+  Country = col_character(),
+  Country_ISO = col_character(),
+  Organisation = col_character(),
+  Station_Name = col_character(),
+  ReplacedBy = col_character(),
+  MSTAT = col_character(),
+  Description = col_character(),
+  Other_area = col_logical(),
+  WLTYP = col_character(),
+  Geometry = col_character(),
+  All_Data_Types = col_character(),
+  All_Biota_Types = col_character(),
+  All_Sediment_Types = col_character(),
+  All_Water_Types = col_character(),
+  Notes = col_character()
+)
+
+df_stations <- readr::read_tsv("C:/Data/seksjon 212/MIME-dhj/OSPAR_MIME_2019/StationDictionary_20191104/StationDictionary_20191104_utf8.txt",
+                               col_types = col_spec) %>%
+  filter(Country == "Norway") %>% 
+  mutate(STATION_CODE = stringr::str_extract(Station_Name, "([^[[:blank:]]]+)"))  # Extract the code
+
+
+```
+
+
+## 3. Pick stations by abundance   
+
+### Stations  
+Number of years during the last 10 years  
+```{r}
+
+df <- dat %>% 
+  filter(MYEAR >= 2009) %>%
+  distinct(STATION_CODE, MYEAR) %>%
+  count(STATION_CODE) %>%
+  arrange(desc(n))
+
+df 
+
+```
+
+### Pick stations with >= 6 of the last 10 years  
+```{r}
+
+stations <- df %>%
+  filter(n >= 6) %>%
+  pull(STATION_CODE)
+
+# Snail stations 
+sel <- grepl("G", stations)
+# stations[sel]
+
+stations <- stations[!sel]
+stations
+
+```
+
+
+
+## 4. Check stations
+
+
+### Check if we have them in the station dictionary  
+```{r}
+
+sel <- stations %in% df_stations$STATION_CODE
+mean(sel)  # 1 yes we have
+
+```
+
+### Test map of stations
+```{r}
+
+df_stations %>%
+  filter(STATION_CODE %in% stations) %>%
+  ggplot(aes(Lon, Lat)) +
+  annotation_map(simple_map, fill = "lightgreen") +
+  geom_point() +
+  coord_map("lambert", parameters = c(10.4, 59.3))
+
+```
+
+## 5. Pick parameters  
+Number of station-years during the last 10 years  
+```{r}
+
+df <- dat %>% 
+  filter(MYEAR >= 2009 & STATION_CODE %in% stations) %>%
+  distinct(PARAM, STATION_CODE, MYEAR) %>%
+  count(PARAM) %>%
+  arrange(desc(n))
+
+df 
+
+```
+
+### Pick parameters by editing sorted list   
+```{r}
+
+params <- df %>%
+  filter(n > 115) %>%
+  pull(PARAM) %>%
+  sort()
+
+# dput(params)
+
+params <- c(
+  "AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
+  "NI", "PB", "ZN",
+  "4-T-NP", 
+  "BDE100", "BDE28", "BDE47", "BDE6S", "BDE99", "CB_S7", 
+  "CB101", "CB105", "CB118", "CB123", "CB126", "CB138", "CB153", "CB156", "CB157", 
+  "CB167", "CB169", "CB180", "CB28", "CB52", "CB77", 
+  "DDEPP", "DDTEP", 
+  "HBCDA", "HBCDB", "HBCDD", "HBCDG", 
+  "HCB", "HCHA", "HCHG", 
+  "MCCP", "QCB", "SCCP", "TBBPA", "TDEPP",
+  "Delta13C", "Delta15N"
+  )
+
+
+```
+
+
+## 6. Add isotopes   
+Not so easy because of pooled liver samples. Do later!  
+```{r}
+
+if (FALSE){
+  
+  supp_params <- c("Delta13C", "Delta15N")
+  
+  dat_for_join <- dat %>%
+    filter(STATION_CODE %in% stations & PARAM %in% supp_params) %>%
+    select(MYEAR:SAMPLE_NO2, PARAM, VALUE_WW) %>%
+    pivot_wider(names_from = PARAM, values_from = VALUE_WW)
+  
+  dat2 <- dat %>%
+    safe_left_join(dat_for_join, check = "V", 
+                   by = c("MYEAR", "STATION_CODE", "LATIN_NAME", "SAMPLE_NO2"))
+  
+}
+
+```
+
+## 7. Save data  
+```{r}
+
+dat %>%
+  filter(STATION_CODE %in% stations & PARAM %in% params) %>%
+  saveRDS("Data/101_Selected_data.rds")
+
+df_stations %>%
+  filter(STATION_CODE %in% stations) %>%
+  saveRDS("Data/101_Selected_stations.rds")
+
+
+```
+
+

@@ -1,0 +1,102 @@
+---
+title: "120 Initial analyses"
+author: "DHJ"
+date: "6 5 2020"
+output: html_document
+---
+
+## 1. Libraries  
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(mgcv)
+library(safejoin)
+
+# devtools::install_github("lenz99-/lme4cens")
+library(lme4cens)
+
+
+```
+
+
+## 2. Data  
+```{r}
+
+dat <- readRDS("Data/101_Selected_data.rds")
+df_stations <- readRDS("Data/101_Selected_stations.rds")
+
+# xtabs(~STATION_CODE, df_stations ) %>% sort()
+df_stations <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  summarise_at(vars("Lat", "Lon"), mean)
+
+```
+
+
+## 3. Patterns for a single parameter  
+
+### Data
+```{r}
+
+param <- "CB118"
+tissue <- "Muskel"
+
+dat_param <- dat %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
+    safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon), check = "V") 
+
+# Median LOQ (per year and tissue only - should be the same for all stations)
+dat_param_loq <- dat_param %>%
+  filter(!is.na(FLAG1)) %>%
+  group_by(MYEAR, TISSUE_NAME) %>%
+  summarise(LOQ = median(VALUE_WW))
+
+dat_param <- dat_param %>%
+  left_join(dat_param_loq)
+
+df_summ <- dat_param %>%
+  group_by(STATION_CODE, MYEAR) %>%
+  summarise(n = n(), median = median(VALUE_WW), below_loq = mean(!is.na(FLAG1)), loq = mean(LOQ)) 
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = n))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = below_loq))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = loq))
+
+```
+
+### Pick random data for LOQ values  
+```{r}
+dat_param <- as.data.frame(dat_param)
+
+sel <- !is.na(dat_param$FLAG1)
+
+# Test that runif works for vactors of min, max:
+# runif(2, min = c(1,50), max = c(10,100))
+dat_param$VALUE_WW_r <- dat_param$VALUE_WW
+dat_param$VALUE_WW_r[sel] <- runif(
+  n = sum(sel), 
+  min = dat_param$LOQ[sel]/2,
+  max = dat_param$VALUE_WW[sel]
+)
+
+
+dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
+
+```
+
+### 
+```{r}
+
+
+
+
+```
+
