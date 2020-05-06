@@ -113,6 +113,7 @@ summary(mod)
 
 visreg::visreg(mod)
 
+dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
 
 ```
 
