@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ## 1. Libraries  
-```{r}
+```{r,}
 
 library(dplyr)
 library(tidyr)
@@ -21,22 +21,76 @@ library(lme4cens)
 
 ```
 
-
-## 2. Data  
+### Function  
 ```{r}
 
-dat <- readRDS("Data/101_Selected_data.rds")
-df_stations <- readRDS("Data/101_Selected_stations.rds")
-
-# xtabs(~STATION_CODE, df_stations ) %>% sort()
-df_stations <- df_stations %>%
-  group_by(STATION_CODE) %>%
-  summarise_at(vars("Lat", "Lon"), mean)
+#
+# Make new variable 'VALUE_WW_r' with random values between
+# 0.5*LOQ and LOQ for data undcer LOQ
+#
+# Returns data set
+#
+add_random_data <- function(data){
+  
+  # Set todata frame (not tibble)
+  data <- as.data.frame(data)
+  
+  # Under LOQs
+  sel <- !is.na(data$FLAG1)
+  
+  # Test that runif works for vactors of min, max:
+  # runif(2, min = c(1,50), max = c(10,100))
+  data$VALUE_WW_r <- data$VALUE_WW
+  data$VALUE_WW_r[sel] <- runif(
+    n = sum(sel), 
+    min = data$LOQ[sel]/2,
+    max = data$VALUE_WW[sel]
+  )
+  
+  data
+  
+}
 
 ```
 
 
-## 3. Patterns for a single parameter  
+## 2. Data   
+Note that we get stations from script 103  
+```{r}
+
+dat <- readRDS("Data/101_Selected_data.rds")
+df_stations <- readRDS("Data/103_Selected_stations.rds")
+
+# xtabs(~STATION_CODE, df_stations ) %>% sort()
+df_stations <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean)
+
+```
+
+### Combine data  
+```{r}
+
+# Median LOQ (per year and tissue only - should be the same for all stations)
+dat_param_loq <- dat %>%
+  filter(!is.na(FLAG1)) %>%
+  group_by(PARAM, MYEAR, TISSUE_NAME) %>%
+  summarise(LOQ = median(VALUE_WW))
+
+dat2 <- dat %>%
+  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast), 
+                 check = "CV",
+                 by = "STATION_CODE") %>%
+  safe_left_join(dat_param_loq, 
+                 check = "CV",
+                 by = c("PARAM", "MYEAR", "TISSUE_NAME"))
+
+
+
+```
+
+
+## 3. Single parameter, with long-lat  
 
 ### Data
 ```{r}
@@ -44,20 +98,83 @@ df_stations <- df_stations %>%
 param <- "CD"
 tissue <- "Lever"
 
-dat_param <- dat %>%
+dat_param <- dat2 %>%
   filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
-    safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon), check = "V") 
+  add_random_data() %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW_r))
 
-# Median LOQ (per year and tissue only - should be the same for all stations)
-dat_param_loq <- dat_param %>%
-  filter(!is.na(FLAG1)) %>%
-  group_by(MYEAR, TISSUE_NAME) %>%
-  summarise(LOQ = median(VALUE_WW))
+```
 
-dat_param <- dat_param %>%
-  left_join(dat_param_loq)
 
-df_summ <- dat_param %>%
+### Mod 1a
+```{r}
+
+mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR), data = dat_param)
+
+summary(mod)
+
+plot(mod)
+
+visreg::visreg2d(mod, "Lon", "Lat") 
+
+```
+
+### Mod 1b   
+LAtitude only
+```{r}
+
+mod <- gam(FAT_PERC ~ te(Lat) + s(MYEAR), data = dat_param)
+
+summary(mod)
+
+visreg::visreg(mod)
+
+dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
+
+```
+
+### Mod 2  
+Lon-lat plus several things   
+```{r}
+
+mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , data = dat_param)
+
+summary(mod)
+
+plot(mod)
+
+visreg::visreg2d(mod, "Lon", "Lat")
+
+
+```
+
+## 4. Test: dist_along_coast, adjust separetely for each station     
+- First adjust for lenrgth and fat, separately for each station  
+- Then analyse the adjusted values by year and distance along coast  
+- Test for one series
+
+### Data
+```{r}
+
+param <- "CD"
+tissue <- "Lever"
+
+dat_param <- dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
+  add_random_data() %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
+  select(STATION_CODE, log_VALUE_WW, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
+  filter(complete.cases(.))
+
+complete.cases(dat_param) %>% mean()
+  
+```
+
+### Check data patterns  
+```{r}
+
+df_summ <- dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
   group_by(STATION_CODE, MYEAR) %>%
   summarise(n = n(), median = median(VALUE_WW), below_loq = mean(!is.na(FLAG1)), loq = mean(LOQ)) 
 
@@ -72,61 +189,301 @@ ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
 
 ```
 
-### Pick random data for LOQ values  
+
+
+### Ordinary (pseudoreplicated) GAM
 ```{r}
-dat_param <- as.data.frame(dat_param)
 
-sel <- !is.na(dat_param$FLAG1)
+mod <- gam(log_VALUE_WW ~ s(Dist_along_coast) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , 
+           data = dat_param)
 
-# Test that runif works for vactors of min, max:
-# runif(2, min = c(1,50), max = c(10,100))
-dat_param$VALUE_WW_r <- dat_param$VALUE_WW
-dat_param$VALUE_WW_r[sel] <- runif(
-  n = sum(sel), 
-  min = dat_param$LOQ[sel]/2,
-  max = dat_param$VALUE_WW[sel]
+summary(mod)
+
+```
+
+### Adjust for length and fat, functions  
+
+Function 1 - to use for each station  
+```{r, fig.height=3, fig.width=9}
+
+# Use this function for each station
+# Adds log_VALUE_WW_adj to the data
+add_adjusted_value_station <- function(data, LNMEA_mean, FAT_PERC_mean,
+                                       plot = FALSE){
+  data$fMYEAR <- factor(data$MYEAR)
+  mod <- lm(log_VALUE_WW  ~ LNMEA + FAT_PERC + fMYEAR, data = data)
+  if (plot){
+    par(mfrow = c(1,3), mar = c(4,5,2,1))
+    visreg::visreg(mod)
+  }
+  pred_data <- data
+  n <- nrow(data)
+  pred_data$LNMEA <- rep(LNMEA_mean, n)
+  pred_data$FAT_PERC <- rep(FAT_PERC_mean, n)
+  pred <- predict(mod, pred_data)
+  data$log_VALUE_WW_adj <- pred + residuals(mod)
+  as.data.frame(data %>% select(-fMYEAR))
+
+}
+
+stations <- unique(dat_param$STATION_CODE)
+
+# debugonce(add_adjusted_value_station)
+test <- add_adjusted_value_station(
+  dat_param %>% filter(STATION_CODE == stations[1]),
+  mean(dat_param$LNMEA, na.rm = TRUE),
+  mean(dat_param$FAT_PERC, na.rm = TRUE),
+  plot = TRUE
 )
 
-dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
+if (FALSE){
+  for (i in seq_along(stations)){
+    
+    test <- add_adjusted_value_station(
+      dat_param %>% filter(STATION_CODE == stations[i]),
+      mean(dat_param$LNMEA, na.rm = TRUE),
+      mean(dat_param$FAT_PERC, na.rm = TRUE),
+      plot = TRUE
+    )
+    
+  }
+}
+
+if (FALSE){
+
+  ggplot(test, aes(log_VALUE_WW, log_VALUE_WW_adj)) +
+    geom_point()
+  
+  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, LNMEA)) +
+    geom_point()
+  
+  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, FAT_PERC)) +
+    geom_point()
+  
+}
 
 ```
 
-### Mod 1
+
+Function 2 - perform function 1 for all stations    
+```{r, fig.height=3, fig.width=9}
+
+add_adjusted_value <- function(data, plot = FALSE){
+
+  LNMEA_mean <- mean(data$LNMEA, na.rm = TRUE)
+  FAT_PERC_mean <- mean(data$FAT_PERC, na.rm = TRUE)
+  
+  stations <- unique(data$STATION_CODE)
+ 
+  result <- stations %>%
+    map_dfr(
+      function(station)
+        add_adjusted_value_station(
+          data %>% filter(STATION_CODE == station), 
+          LNMEA_mean, FAT_PERC_mean, plot = plot) 
+    )
+}
+
+dat_param2 <- add_adjusted_value(dat_param)
+
+if (FALSE){
+
+
+  test <- add_adjusted_value(dat_param, plot = TRUE)
+ 
+  ggplot(test, aes(log_VALUE_WW, log_VALUE_WW_adj)) +
+    geom_point()
+  
+  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, LNMEA)) +
+    geom_point()
+  
+  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, FAT_PERC)) +
+    geom_point()
+  
+}
+
+```
+
+
+### Linear analysis by year and dist. along coast   
+Use gls with AR1 model  
 ```{r}
 
-mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR), data = dat_param)
+dat_param3 <- dat_param2 %>%
+  select(STATION_CODE, log_VALUE_WW_adj, MYEAR, Dist_along_coast) %>%
+  filter(complete.cases(.))  # %>%
+  # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
+  # summarize(log_VALUE_WW_adj = mean(log_VALUE_WW_adj))
 
-summary(mod)
+complete.cases(dat_param3) %>% mean()
 
-plot(mod)
+# PSeudorepl
+mod0 <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = dat_param3)
+acf(residuals(mod0), type = "partial")
 
-visreg::visreg2d(mod, "Lon", "Lat") 
+mod10 <- gls(log_VALUE_WW_adj ~ 1, data = dat_param3,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+mod1a <- gls(log_VALUE_WW_adj ~ MYEAR, data = dat_param3,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+mod1b <- gls(log_VALUE_WW_adj ~ Dist_along_coast, data = dat_param3,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+mod1c <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = dat_param3,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+mod1d <- gls(log_VALUE_WW_adj ~ MYEAR*Dist_along_coast, data = dat_param3,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+
+aic <- AIC(mod0, mod10, mod1a, mod1b, mod1c, mod1d)
+aic$dAIC <- aic$AIC - min(aic$AIC)
+aic
+
+# AIC wanrs that "models are not all fitted to the same number of observations"
+# BUT they all have:
+list(mod0, mod10, mod1a, mod1b, mod1c, mod1d) %>% map_int(~summary(.)$dims$N)
+
+# summary(mod1d) %>% str()
+summary(mod1a)$tTable
+summary(mod1d)$tTable
+summary(mod1c)$tTable
+
+summary(mod1c)$tTable
+
+summary(mod1c)$tTable[2:3,] %>% matrix(nrow = 1) %>% data.frame()
+
 
 ```
 
-### Mod 1
+### Linear analysis, function    
 ```{r}
 
-mod <- gam(FAT_PERC ~ te(Lat) + s(MYEAR), data = dat_param)
+run_gls <- function(data){
+  
+  data <- data %>%
+    select(STATION_CODE, log_VALUE_WW_adj, MYEAR, Dist_along_coast) %>%
+    filter(complete.cases(.))  # %>%
+  # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
+  # summarize(log_VALUE_WW_adj = mean(log_VALUE_WW_adj))
+  
+  mod10 <- gls(log_VALUE_WW_adj ~ 1, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1a <- gls(log_VALUE_WW_adj ~ MYEAR, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1b <- gls(log_VALUE_WW_adj ~ Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1c <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1d <- gls(log_VALUE_WW_adj ~ MYEAR*Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  
+  aic <- AIC(mod10, mod1a, mod1b, mod1c, mod1d)
+  aic$dAIC <- aic$AIC - min(aic$AIC)
+  
+  best_model <- which.min(aic$AIC)
+  
+  result_values <- summary(mod1c)$tTable[2:3,] %>% as.numeric()
+  result <- c(best_model, result_values) %>% matrix(nrow = 1) %>%data.frame()
+  names(result) <- c("Best_model",
+                     "Year_est", "Position_est",
+                     "Year_se", "Position_se",
+                     "Year_t", "Position_t",
+                     "Year_p", "Position_p")
+  result
+}
 
-summary(mod)
-
-visreg::visreg(mod)
-
-dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
+# debugonce(run_gls)
+run_gls(dat_param2)
 
 ```
 
-### Mod 1
+### Function for the whole thing, one replicate      
 ```{r}
 
-mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , data = dat_param)
+analysis_one_par_one_repl <- function(param, tissue, data){
 
-summary(mod)
+  # Select data
+  data_selected <- data %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
+    add_random_data() %>%
+    mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
+    select(STATION_CODE, log_VALUE_WW, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
+    filter(complete.cases(.))
+  
+  stations <- unique(data_selected$STATION_CODE)
+  
+  # Add adjusted value
+  data_selected <- add_adjusted_value(data_selected)
+  
+  # Run analysis
+  result <- run_gls(data_selected)
+  data.frame(PARAM = param, TISSUE_NAME = tissue, result)
+  
+}
 
-plot(mod)
+analysis_one_par_one_repl("CD", "Lever", dat2)
 
-visreg::visreg2d(mod, "Lon", "Lat")
+# 1:5 %>% set_names()
+```
+```{r}
+
+1:3 %>% 
+  set_names() %>% 
+  map_dfr(
+  ~analysis_one_par_one_repl(param = "CD", 
+                             tissue = "Lever", 
+                             data = dat2),
+  .id = "Repl"
+)
 
 
 ```
+
+### Function for the whole thing, n replicates  
+Replicates needed for the 'add_random_data' part
+```{r}
+
+analysis_one_par <- function(param, tissue, data, nrepl = 5){
+  
+  seq(1, nrepl) %>%
+    set_names() %>%
+    map_dfr(
+      ~analysis_one_par_one_repl(param = param, 
+                                 tissue = tissue, 
+                                 data = data),
+      .id = "Repl")
+  
+}
+
+
+analysis_one_par("CD", "Lever", dat2)
+
+
+```
+
+## 5. Run for all parameters + tissues
+```{r, warning=FALSE, message=FALSE}
+
+dat_param_tissue <- dat2 %>%
+  count(PARAM, TISSUE_NAME) %>%
+  arrange(desc(n)) %>%
+  filter(n > 200) %>%
+  as.data.frame()
+
+head(dat_param_tissue)  
+
+analysis_one_par_s <- safely(analysis_one_par)
+
+result_list <- seq(1:nrow(dat_param_tissue)) %>%
+# result_list <- seq(1,10) %>%
+  map(
+    ~analysis_one_par_s(dat_param_tissue$PARAM[.], 
+                        dat_param_tissue$TISSUE_NAME[.], 
+                        dat2,
+                        nrepl = 3)
+  )
+
+```
+
+### Extract results
+```{r}
+
+```
+
