@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ## 1. Libraries  
-```{r,}
+```{r, message=FALSE, warning=FALSE, results='hide'}
 
 library(dplyr)
 library(tidyr)
@@ -63,9 +63,21 @@ df_stations <- readRDS("Data/103_Selected_stations.rds")
 
 # xtabs(~STATION_CODE, df_stations ) %>% sort()
 df_stations <- df_stations %>%
-  group_by(STATION_CODE) %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE %in% "I969" ~ "RH",
+    TRUE ~ MSTAT)) %>%
+  group_by(STATION_CODE, MSTAT) %>%
   summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean)
 
+check <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  mutate(n = n()) %>%
+  filter(n > 1)
+
+if (nrow(check) > 0){
+  cat("Some stations have >1 MSTAT codes - check 'check'! \n")
+}
+  
 ```
 
 ### Combine data  
@@ -78,7 +90,7 @@ dat_param_loq <- dat %>%
   summarise(LOQ = median(VALUE_WW))
 
 dat2 <- dat %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast), 
+  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
                  check = "CV",
                  by = "STATION_CODE") %>%
   safe_left_join(dat_param_loq, 
@@ -89,6 +101,29 @@ dat2 <- dat %>%
 
 ```
 
+### Use correct basis  
+```{r}
+pah <- c("ACNLE", "ACNE", "FLE", "PA", "ANT", "FLU", "PYR", "BAA", 
+         "CHR", "BBJF", "BKF", "BAP", "DBA3A", "BGHIP", "ICDP", "NAP", 
+         "BBJKF", "BJKF") 
+pfas <- c("PFOS", "PFOSA", "PFBS", "PFDcA", "PFHxA", "PFHxS", 
+          "PFHpA", "PFUdA", "PFOA", "PFNA", "PFUdA")
+metals <- c("AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
+            "NI", "PB", "ZN")
+
+dat2 <- dat2 %>%
+  mutate(CONC = case_when(
+    PARAM %in% c(pah, pfas, metals) ~ VALUE_DW,
+    PARAM %in% c(pah, pfas, metals) ~ VALUE_WW
+  ),
+  Basis = case_when(
+    PARAM %in% c(pah, pfas, metals) ~ "Dry weight",
+    PARAM %in% c(pah, pfas, metals) ~ "Wet weight"
+  )
+  )
+  
+
+```
 
 ## 3. Single parameter, with long-lat  
 
@@ -101,7 +136,7 @@ tissue <- "Lever"
 dat_param <- dat2 %>%
   filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
   add_random_data() %>%
-  mutate(log_VALUE_WW = log10(VALUE_WW_r))
+  mutate(log_CONC = log10(CONC))
 
 ```
 
@@ -109,7 +144,7 @@ dat_param <- dat2 %>%
 ### Mod 1a
 ```{r}
 
-mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR), data = dat_param)
+mod <- gam(log_CONC ~ te(Lon, Lat) + s(MYEAR), data = dat_param)
 
 summary(mod)
 
@@ -129,7 +164,7 @@ summary(mod)
 
 visreg::visreg(mod)
 
-dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
+dat_param$log_CONC <- log10(dat_param$VALUE_WW_r)
 
 ```
 
@@ -137,7 +172,7 @@ dat_param$log_VALUE_WW <- log10(dat_param$VALUE_WW_r)
 Lon-lat plus several things   
 ```{r}
 
-mod <- gam(log_VALUE_WW ~ te(Lon, Lat) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , data = dat_param)
+mod <- gam(log_CONC ~ te(Lon, Lat) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , data = dat_param)
 
 summary(mod)
 
@@ -158,12 +193,13 @@ visreg::visreg2d(mod, "Lon", "Lat")
 
 param <- "CD"
 tissue <- "Lever"
+tissue <- "Whole soft body"
 
 dat_param <- dat2 %>%
   filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
   add_random_data() %>%
-  mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
-  select(STATION_CODE, log_VALUE_WW, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
+  mutate(log_CONC = log10(VALUE_WW)) %>%
+  select(STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
   filter(complete.cases(.))
 
 complete.cases(dat_param) %>% mean()
@@ -194,7 +230,7 @@ ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
 ### Ordinary (pseudoreplicated) GAM
 ```{r}
 
-mod <- gam(log_VALUE_WW ~ s(Dist_along_coast) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , 
+mod <- gam(log_CONC ~ s(Dist_along_coast) + s(MYEAR) + s(LNMEA) + s(FAT_PERC) , 
            data = dat_param)
 
 summary(mod)
@@ -207,11 +243,11 @@ Function 1 - to use for each station
 ```{r, fig.height=3, fig.width=9}
 
 # Use this function for each station
-# Adds log_VALUE_WW_adj to the data
+# Adds log_CONC_adj to the data
 add_adjusted_value_station <- function(data, LNMEA_mean, FAT_PERC_mean,
                                        plot = FALSE){
   data$fMYEAR <- factor(data$MYEAR)
-  mod <- lm(log_VALUE_WW  ~ LNMEA + FAT_PERC + fMYEAR, data = data)
+  mod <- lm(log_CONC  ~ LNMEA + FAT_PERC + fMYEAR, data = data)
   if (plot){
     par(mfrow = c(1,3), mar = c(4,5,2,1))
     visreg::visreg(mod)
@@ -221,7 +257,7 @@ add_adjusted_value_station <- function(data, LNMEA_mean, FAT_PERC_mean,
   pred_data$LNMEA <- rep(LNMEA_mean, n)
   pred_data$FAT_PERC <- rep(FAT_PERC_mean, n)
   pred <- predict(mod, pred_data)
-  data$log_VALUE_WW_adj <- pred + residuals(mod)
+  data$log_CONC_adj <- pred + residuals(mod)
   as.data.frame(data %>% select(-fMYEAR))
 
 }
@@ -251,13 +287,13 @@ if (FALSE){
 
 if (FALSE){
 
-  ggplot(test, aes(log_VALUE_WW, log_VALUE_WW_adj)) +
+  ggplot(test, aes(log_CONC, log_CONC_adj)) +
     geom_point()
   
-  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, LNMEA)) +
+  ggplot(test, aes(log_CONC_adj - log_CONC, LNMEA)) +
     geom_point()
   
-  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, FAT_PERC)) +
+  ggplot(test, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
     geom_point()
   
 }
@@ -269,21 +305,29 @@ Function 2 - perform function 1 for all stations
 ```{r, fig.height=3, fig.width=9}
 
 add_adjusted_value <- function(data, plot = FALSE){
-
-  LNMEA_mean <- mean(data$LNMEA, na.rm = TRUE)
-  FAT_PERC_mean <- mean(data$FAT_PERC, na.rm = TRUE)
   
-  stations <- unique(data$STATION_CODE)
- 
-  result <- stations %>%
-    map_dfr(
-      function(station)
-        add_adjusted_value_station(
-          data %>% filter(STATION_CODE == station), 
-          LNMEA_mean, FAT_PERC_mean, plot = plot) 
-    )
+  if (data$TISSUE_NAME[1] == "Whole soft body"){
+    result <- data %>%
+      mutate(log_CONC_adj = log_CONC)
+  } else {
+    
+    LNMEA_mean <- mean(data$LNMEA, na.rm = TRUE)
+    FAT_PERC_mean <- mean(data$FAT_PERC, na.rm = TRUE)
+    
+    stations <- unique(data$STATION_CODE)
+    
+    result <- stations %>%
+      map_dfr(
+        function(station)
+          add_adjusted_value_station(
+            data %>% filter(STATION_CODE == station), 
+            LNMEA_mean, FAT_PERC_mean, plot = plot) 
+      )
+  }
+  result
 }
 
+# debugonce(add_adjusted_value)
 dat_param2 <- add_adjusted_value(dat_param)
 
 if (FALSE){
@@ -291,13 +335,13 @@ if (FALSE){
 
   test <- add_adjusted_value(dat_param, plot = TRUE)
  
-  ggplot(test, aes(log_VALUE_WW, log_VALUE_WW_adj)) +
+  ggplot(test, aes(log_CONC, log_CONC_adj)) +
     geom_point()
   
-  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, LNMEA)) +
+  ggplot(test, aes(log_CONC_adj - log_CONC, LNMEA)) +
     geom_point()
   
-  ggplot(test, aes(log_VALUE_WW_adj - log_VALUE_WW, FAT_PERC)) +
+  ggplot(test, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
     geom_point()
   
 }
@@ -310,26 +354,28 @@ Use gls with AR1 model
 ```{r}
 
 dat_param3 <- dat_param2 %>%
-  select(STATION_CODE, log_VALUE_WW_adj, MYEAR, Dist_along_coast) %>%
+  select(STATION_CODE, log_CONC_adj, MYEAR, Dist_along_coast) %>%
   filter(complete.cases(.))  # %>%
   # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
-  # summarize(log_VALUE_WW_adj = mean(log_VALUE_WW_adj))
+  # summarize(log_CONC_adj = mean(log_CONC_adj))
 
 complete.cases(dat_param3) %>% mean()
 
 # PSeudorepl
-mod0 <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = dat_param3)
+mod0 <- gls(log_CONC_adj ~ MYEAR + Dist_along_coast, data = dat_param3)
 acf(residuals(mod0), type = "partial")
 
-mod10 <- gls(log_VALUE_WW_adj ~ 1, data = dat_param3,
+mod10 <- gls(log_CONC_adj ~ 1, data = dat_param3,
             correlation = corAR1(form = ~1 | STATION_CODE))
-mod1a <- gls(log_VALUE_WW_adj ~ MYEAR, data = dat_param3,
+mod1a <- gls(log_CONC_adj ~ MYEAR, data = dat_param3,
             correlation = corAR1(form = ~1 | STATION_CODE))
-mod1b <- gls(log_VALUE_WW_adj ~ Dist_along_coast, data = dat_param3,
+mod1b <- gls(log_CONC_adj ~ Dist_along_coast, data = dat_param3,
             correlation = corAR1(form = ~1 | STATION_CODE))
-mod1c <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = dat_param3,
+
+mod1c <- gls(log_CONC_adj ~ MYEAR + Dist_along_coast, data = dat_param3,
             correlation = corAR1(form = ~1 | STATION_CODE))
-mod1d <- gls(log_VALUE_WW_adj ~ MYEAR*Dist_along_coast, data = dat_param3,
+
+mod1d <- gls(log_CONC_adj ~ MYEAR*Dist_along_coast, data = dat_param3,
             correlation = corAR1(form = ~1 | STATION_CODE))
 
 aic <- AIC(mod0, mod10, mod1a, mod1b, mod1c, mod1d)
@@ -358,20 +404,20 @@ summary(mod1c)$tTable[2:3,] %>% matrix(nrow = 1) %>% data.frame()
 run_gls <- function(data){
   
   data <- data %>%
-    select(STATION_CODE, log_VALUE_WW_adj, MYEAR, Dist_along_coast) %>%
+    select(STATION_CODE, log_CONC_adj, MYEAR, Dist_along_coast) %>%
     filter(complete.cases(.))  # %>%
   # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
-  # summarize(log_VALUE_WW_adj = mean(log_VALUE_WW_adj))
+  # summarize(log_CONC_adj = mean(log_CONC_adj))
   
-  mod10 <- gls(log_VALUE_WW_adj ~ 1, data = data,
+  mod10 <- gls(log_CONC_adj ~ 1, data = data,
                correlation = corAR1(form = ~1 | STATION_CODE))
-  mod1a <- gls(log_VALUE_WW_adj ~ MYEAR, data = data,
+  mod1a <- gls(log_CONC_adj ~ MYEAR, data = data,
                correlation = corAR1(form = ~1 | STATION_CODE))
-  mod1b <- gls(log_VALUE_WW_adj ~ Dist_along_coast, data = data,
+  mod1b <- gls(log_CONC_adj ~ Dist_along_coast, data = data,
                correlation = corAR1(form = ~1 | STATION_CODE))
-  mod1c <- gls(log_VALUE_WW_adj ~ MYEAR + Dist_along_coast, data = data,
+  mod1c <- gls(log_CONC_adj ~ MYEAR + Dist_along_coast, data = data,
                correlation = corAR1(form = ~1 | STATION_CODE))
-  mod1d <- gls(log_VALUE_WW_adj ~ MYEAR*Dist_along_coast, data = data,
+  mod1d <- gls(log_CONC_adj ~ MYEAR*Dist_along_coast, data = data,
                correlation = corAR1(form = ~1 | STATION_CODE))
   
   aic <- AIC(mod10, mod1a, mod1b, mod1c, mod1d)
@@ -403,8 +449,8 @@ analysis_one_par_one_repl <- function(param, tissue, data){
   data_selected <- data %>%
     filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
     add_random_data() %>%
-    mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
-    select(STATION_CODE, log_VALUE_WW, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
+    mutate(log_CONC = log10(VALUE_WW_r)) %>%
+    select(STATION_CODE, TISSUE_NAME, log_CONC, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
     filter(complete.cases(.))
   
   stations <- unique(data_selected$STATION_CODE)
@@ -481,9 +527,75 @@ result_list <- seq(1:nrow(dat_param_tissue)) %>%
   )
 
 ```
+### Save/Load
+```{r}
+
+# saveRDS(result_list, "Data/120_result_list.rds")
+
+# result_list <- readRDS("Data/120_result_list.rds")
+
+```
 
 ### Extract results
 ```{r}
+
+result_list <- transpose(result_list)
+
+ok <- result_list[[2]] %>% map_lgl(is.null)
+sum(ok)
+
+result <- result_list[[1]][ok] %>% 
+  bind_rows()
+
+```
+
+```{r, fig.width=9, fig.height=6}
+
+result_coef <- result %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(mean) %>%
+  filter(TISSUE_NAME %in% "Lever")
+
+ggplot(result_coef, aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  geom_hline(yintercept = 0)
+    
+  
+
+```
+
+```{r, fig.width=9, fig.height=6}
+
+result_coef <- result %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(mean) %>%
+  filter(TISSUE_NAME %in% "Whole soft body")
+
+ggplot(result_coef, aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  geom_hline(yintercept = 0)
+  
+  
+
+```
+
+
+
+```{r}
+
+ggplot(result_coef, aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Year_est - 2*Year_se,
+                      ymax = Year_est + 2*Year_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  geom_hline(yintercept = 0)
+  
 
 ```
 
