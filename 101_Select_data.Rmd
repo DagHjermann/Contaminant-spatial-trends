@@ -113,17 +113,113 @@ mean(sel)  # 1 yes we have
 
 ```
 
+### Fix MSTAT for our purpose  
+```{r}
+
+if (FALSE){
+  df_stations %>%
+    filter(STATION_CODE %in% stations) %>% 
+    select(Station_Name:MSTAT, Lon, Lat) %>%
+    arrange(MSTAT) %>%
+    View()
+}
+
+df_stations <- df_stations %>%
+  mutate(MSTAT = case_when(
+    grepl("13B", Station_Name) ~ "IH",
+    grepl("I969", Station_Name) ~ "IH",
+    grepl("53F", Station_Name) ~ "IH",
+    TRUE ~ MSTAT
+  ))
+
+```
+
+### Interactive map
+```{r}
+
+library(leaflet)
+
+lookup_colors <- tibble(
+  MSTAT = c("B", "RH", "IH"),
+  color = c("blue", "green", "red")
+)
+
+df <- df_stations %>%
+  filter(STATION_CODE %in% stations) %>%
+  left_join(lookup_colors)
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = df$color
+  )
+
+leaflet(df) %>%
+  addTiles() %>%
+  addAwesomeMarkers(~Lon, ~Lat, icon=icons, label=~as.character(Station_Name))
+
+```
+
+
+
+
+
 ### Test map of stations
 ```{r}
 
-df_stations %>%
-  filter(STATION_CODE %in% stations) %>%
-  ggplot(aes(Lon, Lat)) +
-  annotation_map(simple_map, fill = "lightgreen") +
-  geom_point() +
-  coord_map("lambert", parameters = c(10.4, 59.3))
+gg <- df_stations %>%
+  filter(STATION_CODE %in% stations) %>% 
+  mutate(Impacted = (MSTAT %in% "IH")) %>%
+  ggplot(aes(Lon, Lat, color = MSTAT)) +
+  scale_color_manual(values = c("blue4", "red", "green3")) +
+  annotation_map(simple_map, fill = "grey20") +
+  geom_point()
+
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3)) +
+  facet_grid(cols = vars(Impacted))
+
+# Southern
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(4,12), ylim = c(58, 62)) +
+  facet_grid(cols = vars(Impacted))
+  
+# Detail: Oslofjorden
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(8,12), ylim = c(58, 60)) +
+  facet_grid(cols = vars(Impacted))
+
+# Detail: Sørfjorden og Bømlo
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(5,7), ylim = c(59.3, 60.5)) +
+  facet_grid(cols = vars(Impacted))
+
+# Mid
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(4,12), ylim = c(61.5, 64.5)) +
+  facet_grid(cols = vars(Impacted))
+  
+# Nordland
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(10, 18), ylim = c(64, 68)) +
+  facet_grid(cols = vars(Impacted))
+  
+# Detail: Ranfjorden
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(12,14.5), ylim = c(66, 66.5)) +
+  facet_grid(cols = vars(Impacted))
+  
+# Troms og Finnmark
+gg +
+  coord_map("lambert", parameters = c(10.4, 59.3), xlim = c(16,31), ylim = c(68, 72)) +
+  facet_grid(cols = vars(Impacted))
+  
+  
 
 ```
+
+
 
 ## 5. Pick parameters  
 Number of station-years during the last 10 years  
@@ -143,26 +239,30 @@ df
 ```{r}
 
 params <- df %>%
-  filter(n > 115) %>%
+  filter(n >= 30) %>%
   pull(PARAM) %>%
   sort()
 
 # dput(params)
 
-params <- c(
-  "AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
-  "NI", "PB", "ZN",
-  "4-T-NP", 
-  "BDE100", "BDE28", "BDE47", "BDE6S", "BDE99", "CB_S7", 
-  "CB101", "CB105", "CB118", "CB123", "CB126", "CB138", "CB153", "CB156", "CB157", 
-  "CB167", "CB169", "CB180", "CB28", "CB52", "CB77", 
-  "DDEPP", "DDTEP", 
-  "HBCDA", "HBCDB", "HBCDD", "HBCDG", 
-  "HCB", "HCHA", "HCHG", 
-  "MCCP", "QCB", "SCCP", "TBBPA", "TDEPP",
-  "Delta13C", "Delta15N"
-  )
+if (FALSE){
 
+    params <- c(
+    "AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
+    "NI", "PB", "ZN",
+    "4-T-NP", 
+    "BDE100", "BDE28", "BDE47", "BDE6S", "BDE99", "CB_S7", 
+    "CB101", "CB105", "CB118", "CB123", "CB126", "CB138", "CB153", "CB156", "CB157", 
+    "CB167", "CB169", "CB180", "CB28", "CB52", "CB77", 
+    "DDEPP", "DDTEP", 
+    "HBCDA", "HBCDB", "HBCDD", "HBCDG", 
+    "HCB", "HCHA", "HCHG", 
+    "MCCP", "QCB", "SCCP", "TBBPA", "TDEPP",
+    "PFOS",
+    "Delta13C", "Delta15N"
+  )
+  
+}
 
 ```
 
