@@ -1,0 +1,249 @@
+---
+title: "104_Isotopes_and_trophic_level"
+author: "DHJ"
+date: "19 5 2020"
+output: html_document
+---
+
+
+Mail fra Anders 13.05.2020:  
+  
+Trofisk nivå for de enkelte torskeindivider regnes ut slik:
+  
+TL_torsk = 2 + (Delta15N_torsk - Delta15N_blåskjell)/3.8  
+  
+Her er Delta15N_torsk verdien av d15N for den enkelte torsken, mens Delta15N_blåskjell er gjennomsnittlig verdi av d15N i blåskjell fra den nærmeste blåskjellstasjonen.  
+
+Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå ca. 2 (altså at de er primærkonsumenter) og at d15N øker med 3.8 for hvert (hele) trofiske nivå i næringskjeden.
+
+
+1. Libraries  
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+
+library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
+
+
+```
+
+
+## 2. Data
+
+### Read files  
+```{r}
+
+# Raw data  
+dat <- readRDS("Data/101_Selected_data.rds")
+
+# Extra isotope data
+dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+
+# Station metadata
+df_stations <- readRDS("Data/103_Selected_stations.rds")
+
+# Station metadata needs to be summarised  
+df_stations <- df_stations %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE %in% "I969" ~ "RH",
+    TRUE ~ MSTAT)) %>%
+  group_by(STATION_CODE, MSTAT) %>%
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE)
+
+
+
+
+```
+
+### Add position       
+```{r}
+
+dat_isotopes <- dat_isotopes %>%
+  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
+                 check = "CV",
+                 by = "STATION_CODE")
+
+```
+
+## 3. Plot data  
+```{r, fig.height=4, fig.width=9}
+
+dat_isotopes_means1 <- dat_isotopes %>%
+  group_by(TISSUE_NAME, STATION_CODE, Lat, Lon, MYEAR) %>%
+  summarise_at(c("Delta13C", "Delta15N"), mean, na.rm = TRUE) %>%
+  ungroup()
+
+dat_isotopes_means1 %>%
+  filter(TISSUE_NAME %in% "Muskel") %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
+  geom_tile() +
+  viridis::scale_fill_viridis()
+  
+dat_isotopes_means1 %>%
+  filter(TISSUE_NAME %in% "Whole soft body") %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0))
+  
+  
+
+```
+
+
+## 3. Find closest mussel station for each cod station   
+
+### Leaflet map  
+```{r}
+
+dat_isotopes_stations <- dat_isotopes_means1 %>%
+  group_by(TISSUE_NAME, STATION_CODE, Lat, Lon) %>%
+  summarise(Years = paste(MYEAR, collapse = ", ")) 
+
+
+df <- dat_isotopes_stations %>% filter(TISSUE_NAME %in% c("Muskel", "Whole soft body"))
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = case_when(
+    df$TISSUE_NAME == "Whole soft body" ~ "blue",
+    df$TISSUE_NAME == "Muskel" ~ "red")
+)
+
+leaflet(df) %>%
+  addTiles() %>%
+  addAwesomeMarkers(~Lon, ~Lat, icon = icons,
+                    label =  ~STATION_CODE)
+  
+```
+
+
+### Closest/corresponding mussel station   
+Set based on map above  
+```{r}
+
+data_closest_mussel_station <- read.csv(textConnection("
+Cod_station, Mussel_station
+30B,I304
+33F,35A
+02B,I024
+36F,36A1
+71B,I712
+13B,I133
+15B,15A
+23B,22A
+24B,I241
+80B,91A2
+96B,I969
+98B1,98A2
+43B2,98A2
+45B2,98A2
+10B,11X
+"),
+stringsAsFactors = FALSE
+)
+
+# Pretty far from eacah other: 80B, 91A2
+
+```
+
+### Plot N15 for these cod and mussel stations  
+```{r}
+dat_isotopes %>%
+  filter(TISSUE_NAME %in% "Muskel" &
+           STATION_CODE %in% data_closest_mussel_station$Cod_station) %>%
+  ggplot(aes(MYEAR, Delta15N)) +
+  geom_point() +
+  facet_wrap(vars(STATION_CODE))
+
+dat_isotopes %>%
+  filter(TISSUE_NAME %in% "Whole soft body" &
+         STATION_CODE %in% data_closest_mussel_station$Mussel_station) %>%
+  ggplot(aes(MYEAR, Delta15N)) +
+  geom_point() +
+  facet_wrap(vars(STATION_CODE))
+
+```
+
+### Summarise mussel data  
+For each station (not year-specific means)  
+```{r}
+
+data_mussel_means <- dat_isotopes %>%
+  filter(TISSUE_NAME %in% "Whole soft body" & 
+           STATION_CODE %in% data_closest_mussel_station$Mussel_station) %>%
+  filter(!(STATION_CODE %in% "I024" & MYEAR %in% 2017)) %>%
+  group_by(STATION_CODE) %>%
+  summarise_at(c("Delta13C", "Delta15N"), mean, na.rm = TRUE) %>%
+  rename(Delta13C_mussel = Delta13C,
+         Delta15N_mussel = Delta15N) %>%
+  ungroup()
+
+data_closest_mussel_station <- data_closest_mussel_station %>%
+  left_join(data_mussel_means, by = c("Mussel_station" = "STATION_CODE"))
+
+```
+
+
+
+## 4. Add data to main data   
+```{r}
+
+dat2 <- dat %>%
+  # Add Delta13C, Delta15N for each individual
+  left_join(
+    dat_isotopes %>% 
+      select(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2, Delta13C, Delta15N), 
+    by = c("MYEAR", "STATION_CODE", "TISSUE_NAME", "SAMPLE_NO2")
+  ) %>%
+  # Add Delta13C, Delta15N for closest mussel station
+  left_join(
+    data_closest_mussel_station, 
+    by = c("STATION_CODE" = "Cod_station")) %>%
+  # Calculate trophic level (TL)
+  mutate(TL = case_when(
+    TISSUE_NAME %in% c("Lever", "Muskel") ~ 2 + (Delta15N - Delta15N_mussel)/3.8,
+    TISSUE_NAME %in% "Whole soft body" ~ 2)
+  )
+
+
+```
+
+
+### Plots  
+```{r}
+
+dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" &
+           PARAM %in% "HG" &
+           STATION_CODE %in% data_closest_mussel_station$Cod_station &
+           !is.na(TL)) %>%
+  ggplot(aes(MYEAR, TL)) +
+  geom_jitter(width = 0.25) +
+  facet_wrap(vars(STATION_CODE))
+
+
+dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" &
+           PARAM %in% "HG" &
+           STATION_CODE %in% data_closest_mussel_station$Cod_station &
+           !is.na(TL)) %>%
+  ggplot(aes(LNMEA, TL, color = factor(MYEAR))) +
+  geom_point() +
+  facet_wrap(vars(STATION_CODE))
+
+```
+
+
+## 5. Save data  
+```{r}
+
+if (FALSE){
+  saveRDS(dat2, "Data/104_Selected_data.rds")
+}
+```
+
