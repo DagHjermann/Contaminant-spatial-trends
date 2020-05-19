@@ -1,0 +1,301 @@
+Parameter.Code;Parameter.Name;IUPAC;CAS;Component.Name;Substance.Group
+4-N-NP;4-n-NP;4-nonylphenol;104-40-5;4-n-nonylphenol;Phenols/chlorophenols
+4-N-OP;4-n-OP;4-n-octylphenol;1806-26-4;4-n-octylphenol;Phenols/chlorophenols
+4-T-NP;4-t-NP;4-nonylphenol;68152-92-1;4-t-nonylphenol;Phenols/chlorophenols
+4-T-OP;4-t-OP;4-(2,4,4-trimethylpentan-2-yl)phenol;140-66-9;4-tert-octylphenol;Phenols/chlorophenols
+ACNE;ACNE;1,2-dihydroacenaphthylene;83-32-9;acenaphthene;Polycyclic aromatic hydrocarbons (PAHs)
+ACNLE;ACNLE;acenaphthylene;208-96-8;acenaphthylene;Polycyclic aromatic hydrocarbons (PAHs)
+AG;Ag;silver;7440-22-4;silver;Metals and metalloids
+ALAD;ALAD;;;delta-aminolevulinic acid dehydratase;Biological effects: molecular/biochemical/cellular/assays
+ANT;ANT;Anthracene;120-12-7;Anthracene;Polycyclic aromatic hydrocarbons (PAHs)
+AS;As;arsenic;7440-38-2;arsenic;Metals and metalloids
+AY;AY;;;;
+BA;Ba;barium;7440-39-3;barium;Metals and metalloids
+BAA;BAA;benzo[a]anthracene;56-55-3;benzo[a]anthracene;Polycyclic aromatic hydrocarbons (PAHs)
+BAP;BAP;benzo[a]pyrene;50-32-8;benzo[a]pyrene;Polycyclic aromatic hydrocarbons (PAHs)
+BAP3O;BAP3O;benzo[a]pyren-3-ol;13345-21-6;3-hydroxy benzo(a)pyrene;Biological effects: molecular/biochemical/cellular/assays
+BBF;BBF;;205-99-2;benzo[b]fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+BBJF;BBJF;;GM;benzo[b+j]fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+BBJKF;BBJKF;;GM;benzo[b+j k]fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+BBP;BBP;2-O-benzyl 1-O-butyl benzene-1,2-dicarboxylate;85-68-7;butylbenzyl phthalate;Organic esters
+BD100;BD100;1,3,5-tribromo-2-(2,4-dibromophenoxy)benzene;189084-64-8;2 2' 4 4' 6-pentabromodiphenyl ether (BD(E)100);Organobromines
+BD138;BD138;1,2,3-tribromo-4-(2,4,5-tribromophenoxy)benzene;182677-30-1;2 2' 3 4 4' 5'-hexabromodiphenyl ether (BD(E)138);Organobromines
+BD153;BD153;1,2,4-tribromo-5-(2,4,5-tribromophenoxy)benzene;68631-49-2;2 2' 4 4' 5 5'-hexabromodiphenyl ether (BD(E)153);Organobromines
+BD154;BD154;1,2,4-tribromo-5-(2,4,6-tribromophenoxy)benzene;207122-15-4;2 2' 4 4' 5 6'-hexabromodiphenyl ether (BD(E)154);Organobromines
+BD183;BD183;1,2,3,5-tetrabromo-4-(2,4,5-tribromophenoxy)benzene;207122-16-5;2 2' 3 4 4' 5' 6-heptabromodiphenyl ether (BD(E)183);Organobromines
+BD209;BD209;1,2,3,4,5-pentabromo-6-(2,3,4,5,6-pentabromophenoxy)benzene;1163-19-5;decabromodiphenyl ether (BD(E)209);Organobromines
+BDE100;BDE100;1,3,5-tribromo-2-(2,4-dibromophenoxy)benzene;189084-64-8;2 2' 4 4' 6-pentabromodiphenyl ether (BD(E)100);Organobromines
+BDE119;BDE119;1,3,5-tribromo-2-(3,4-dibromophenoxy)benzene;189084-66-0;2 3' 4 4' 6-pentabromodiphenyl ether (BD(E)119);Organobromines
+BDE126;BDE126;1,2,3-tribromo-5-(3,4-dibromophenoxy)benzene;366791-32-4;3 3' 4 4' 5-pentabromodiphenyl ether (BD(E)126);Organobromines
+BDE138;BDE138;1,2,3-tribromo-4-(2,4,5-tribromophenoxy)benzene;182677-30-1;2 2' 3 4 4' 5'-hexabromodiphenyl ether (BD(E)138);Organobromines
+BDE153;BDE153;1,2,4-tribromo-5-(2,4,5-tribromophenoxy)benzene;68631-49-2;2 2' 4 4' 5 5'-hexabromodiphenyl ether (BD(E)153);Organobromines
+BDE154;BDE154;1,2,4-tribromo-5-(2,4,6-tribromophenoxy)benzene;207122-15-4;2 2' 4 4' 5 6'-hexabromodiphenyl ether (BD(E)154);Organobromines
+BDE183;BDE183;1,2,3,5-tetrabromo-4-(2,4,5-tribromophenoxy)benzene;207122-16-5;2 2' 3 4 4' 5' 6-heptabromodiphenyl ether (BD(E)183);Organobromines
+BDE196;BDE196;1,2,3,4-tetrabromo-5-(2,3,4,5-tetrabromophenoxy)benzene;32536-52-0;Octabromodiphenyl ether (BD(E) 196);Organobromines
+BDE205;BDE205;1,2,3,4,5-pentabromo-6-(3,4,5-tribromophenoxy)benzene;446255-56-7;Benzene  1 2 3 4 5-pentabromo-6-(3 4 5-tribromophenoxy)- (PBDE205);Organobromines
+BDE209;BDE209;1,2,3,4,5-pentabromo-6-(2,3,4,5,6-pentabromophenoxy)benzene;1163-19-5;decabromodiphenyl ether (BD(E)209);Organobromines
+BDE28;BDE28;2,4-dibromo-1-(4-bromophenoxy)benzene;41318-75-6;2 4 4'-tribromodiphenyl ether (BDE28);Organobromines
+BDE47;BDE47;2,4-dibromo-1-(2,4-dibromophenoxy)benzene;5436-43-1;2 2' 4 4'-tetrabromodiphenyl ether (BDE47);Organobromines
+BDE49;BDE49;1,4-dibromo-2-(2,4-dibromophenoxy)benzene;243982-82-3;2 2' 4 5'-tetrabromodiphenyl ether (BDE49);Organobromines
+BDE5S;BDE5S;;;;Organobromines
+BDE66;BDE66;1,2-dibromo-4-(2,4-dibromophenoxy)benzene;189084-61-5;2 3' 4 4'-tetrabromodiphenyl ether (BDE66);Organobromines
+BDE6S;BDE6S;;;sum BDE-28, -47, -99, -100, -153, og -154;Organobromines
+BDE71;BDE71;1,2-dibromo-4-(2,6-dibromophenoxy)benzene;189084-62-6;2 3' 4' 6-tetrabromodiphenyl ether (BDE71);Organobromines
+BDE77;BDE77;1,2-dibromo-4-(3,4-dibromophenoxy)benzene;93703-48-1;3 3' 4 4'-tetrabromodiphenyl ether  (BDE77);Organobromines
+BDE85;BDE85;1,2,3-tribromo-4-(2,4-dibromophenoxy)benzene;182346-21-0;2 2' 3 4 4'-pentabromodiphenyl ether (BDE85);Organobromines
+BDE99;BDE99;1,2,4-tribromo-5-(2,4-dibromophenoxy)benzene;60348-60-9;2 2' 4 4' 5-pentabromodiphenyl ether (BDE99);Organobromines
+BDESS;BDESS;;;Sum all PBDEs;Organobromines
+BEP;BEP;benzo[e]pyrene;192-97-2;benzo[e]pyrene;Polycyclic aromatic hydrocarbons (PAHs)
+BGHIP;BGHIP;;191-24-2;benzo[ghi]perylene;Polycyclic aromatic hydrocarbons (PAHs)
+BILIV;BILIV;;;;
+BIPN;BIPN;1,1'-biphenyl;92-52-4;biphenyl;Polycyclic aromatic hydrocarbons (PAHs)
+BJKF;BJKF;;GM;benzo[j k]fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+BKF;BKF;benzo[k]fluoranthene;207-08-9;Benzo[k]fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+BLOPR;BLOPR;;;;
+BPA;BPA;4-[2-(4-hydroxyphenyl)propan-2-yl]phenol;80-05-7;Bisfenol A;Phenols/chlorophenols
+C/N;Delta15C/Delta13N;;;Ratio Delta15C/Delta13N;Isotopes
+CA;Ca;calcium;7440-70-2;calcium;Metals and metalloids
+CB_S7;PCB7;;;Sum of PCB-28, 52, 101, 118, 138 and 180 (Dutch seven);Chlorobiphenyls
+CB101;CB101;1,2,4-trichloro-5-(2,5-dichlorophenyl)benzene;37680-73-2;2 2' 4 5 5'-pentachlorobiphenyl (CB101);Chlorobiphenyls
+CB105;CB105;1,2,3-trichloro-4-(3,4-dichlorophenyl)benzene;32598-14-4;2 3 3' 4 4'-pentachlorobiphenyl;Chlorobiphenyls
+CB114;CB114;1,2,3,4-tetrachloro-5-(4-chlorophenyl)benzene;74472-37-0;2 3 4 4' 5-pentachlorobiphenyl;Chlorobiphenyls
+CB118;CB118;1,2,4-trichloro-5-(3,4-dichlorophenyl)benzene;31508-00-6;2 3' 4 4' 5-pentachlorobiphenyl;Chlorobiphenyls
+CB122;CB122;1,2,3-trichloro-5-(2,3-dichlorophenyl)benzene;76842-07-4;1,1'-Biphenyl, 2,3,3',4',5'-pentachloro-;Chlorobiphenyls
+CB123;CB123;1,2,3-trichloro-5-(2,4-dichlorophenyl)benzene;65510-44-3;1 1'-Biphenyl  2 3' 4 4' 5'-pentachloro-;Chlorobiphenyls
+CB126;CB126;1,2,3-trichloro-5-(3,4-dichlorophenyl)benzene;57465-28-8;3 3' 4 4' 5-pentachlorobiphenyl;Chlorobiphenyls
+CB128;CB128;1,2,3-trichloro-4-(2,3,4-trichlorophenyl)benzene;38380-07-3;2 2' 3 3' 4 4'-hexachlorobiphenyl;Chlorobiphenyls
+CB138;CB138;1,2,3-trichloro-4-(2,4,5-trichlorophenyl)benzene;35065-28-2;2 2' 3 4 4' 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB141;CB141;1,2,3,4-tetrachloro-5-(2,5-dichlorophenyl)benzene;52712-04-6;2 2' 3 4 5 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB149;CB149;1,2,4-trichloro-3-(2,4,5-trichlorophenyl)benzene;38380-04-0;2 2' 3 4' 5' 6-hexachlorobiphenyl;Chlorobiphenyls
+CB153;CB153;1,2,4-trichloro-5-(2,4,5-trichlorophenyl)benzene;35065-27-1;2 2' 4 4' 5 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB156;CB156;1,2,3,4-tetrachloro-5-(3,4-dichlorophenyl)benzene;38380-08-4;2 3 3' 4 4' 5-hexachlorobiphenyl;Chlorobiphenyls
+CB157;CB157;1,2,3-trichloro-4-(3,4,5-trichlorophenyl)benzene;69782-90-7;2 3 4 3' 4' 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB167;CB167;1,2,3-trichloro-5-(2,4,5-trichlorophenyl)benzene;52663-72-6;2' 3 4 4' 5 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB169;CB169;1,2,3-trichloro-5-(3,4,5-trichlorophenyl)benzene;32774-16-6;3 3' 4 4' 5 5'-hexachlorobiphenyl;Chlorobiphenyls
+CB170;CB170;1,2,3,4-tetrachloro-5-(2,3,4-trichlorophenyl)benzene;35065-30-6;2 2' 3 3' 4 4' 5-heptachlorobiphenyl;Chlorobiphenyls
+CB18;CB18;1,4-dichloro-2-(2-chlorophenyl)benzene;37680-65-2;2 2' 5-trichlorobiphenyl;Chlorobiphenyls
+CB180;CB180;1,2,3,4-tetrachloro-5-(2,4,5-trichlorophenyl)benzene;35065-29-3;2 2' 3 4 4' 5 5'-heptachlorobiphenyl;Chlorobiphenyls
+CB183;CB183;1,2,3,5-tetrachloro-4-(2,4,5-trichlorophenyl)benzene;52663-69-1;2 2' 3 4 4' 5' 6-heptachlorobiphenyl;Chlorobiphenyls
+CB187;CB187;1,2,4,5-tetrachloro-3-(2,4,5-trichlorophenyl)benzene;52663-68-0;2 2' 3 4' 5 5' 6-heptachlorobiphenyl;Chlorobiphenyls
+CB189;CB189;1,2,3,4-tetrachloro-5-(3,4,5-trichlorophenyl)benzene;39635-31-9;2 3 3' 4 4' 5 5'-heptachlorobiphenyl;Chlorobiphenyls
+CB194;CB194;1,2,3,4-tetrachloro-5-(2,3,4,5-tetrachlorophenyl)benzene;35694-08-7;2 2' 3 3' 4 4' 5 5'-octachlorobiphenyl;Chlorobiphenyls
+CB209;CB209;1,2,3,4,5-pentachloro-6-(2,3,4,5,6-pentachlorophenyl)benzene;2051-24-3;2 2' 3 3' 4 4' 5 5' 6 6'-decachlorobiphenyl;Chlorobiphenyls
+CB28;CB28;2,4-dichloro-1-(4-chlorophenyl)benzene;7012-37-5;2 4 4'-trichlorobiphenyl;Chlorobiphenyls
+CB31;CB31;1,4-dichloro-2-(4-chlorophenyl)benzene;16606-02-3;2 4' 5-trichlorobiphenyl;Chlorobiphenyls
+CB33;CB33;1,2-dichloro-4-(2-chlorophenyl)benzene;38444-86-9;2' 3 4-trichlorobiphenyl;Chlorobiphenyls
+CB37;CB37;1,2-dichloro-4-(4-chlorophenyl)benzene;38444-90-5;3 4 4'-Trichlorobiphenyl;Chlorobiphenyls
+CB47;CB47;2,4-dichloro-1-(2,4-dichlorophenyl)benzene;2437-79-8;2 2' 4 4'-tetrachlorobiphenyl;Chlorobiphenyls
+CB52;CB52;1,4-dichloro-2-(2,5-dichlorophenyl)benzene;35693-99-3;2 2' 5 5'-tetrachlorobiphenyl;Chlorobiphenyls
+CB66;CB66;1,2-dichloro-4-(2,4-dichlorophenyl)benzene;32598-10-0;2 3' 4 4'-tetrachlorobiphenyl;Chlorobiphenyls
+CB77;CB77;1,2-dichloro-4-(3,4-dichlorophenyl)benzene;32598-13-3;3 3' 4 4'-tetrachlorobiphenyl;Chlorobiphenyls
+CB81;CB81;1,2,3-trichloro-5-(4-chlorophenyl)benzene;70362-50-4;3 4 4' 5-tetrachlorobiphenyl;Chlorobiphenyls
+CB99;CB99;1,2,4-trichloro-5-(2,4-dichlorophenyl)benzene;38380-01-7;2 2' 4 4' 5-pentachlorobiphenyl;Chlorobiphenyls
+CCDAN;CCDAN;;5103-71-9;cis-chlordane (alpha-chlordane);Cyclodienes
+CD;Cd;cadmium;7440-43-9;cadmium;Metals and metalloids
+CDD1N;CDD1N;1,2,3,7,8-pentachlorodibenzo-p-dioxin;40321-76-4;1 2 3 7 8-pentachlorodibenzo-p-dioxin;Dioxins
+CDD4X;CDD4X;1,2,3,4,7,8-hexachlorodibenzo-p-dioxin;39227-28-6;1 2 3 4 7 8-hexachlorodibenzo-p-dioxin;Dioxins
+CDD6P;CDD6P;1,2,3,4,6,7,8-heptachlorodibenzo-p-dioxin;35822-46-9;1 2 3 4 6 7 8-heptachlorodibenzo-p-dioxin;Dioxins
+CDD6X;CDD6X;1,2,3,6,7,8-hexachlorodibenzo-p-dioxin;57653-85-7;1 2 3 6 7 8-hexachlorodibenzo-p-dioxin;Dioxins
+CDD9X;CDD9X;1,2,3,7,8,9-hexachlorodibenzo-p-dioxin;19408-74-3;1 2 3 7 8 9-hexachlorodibenzo-p-dioxin;Dioxins
+CDDFS;CDDFS;;;;
+CDDSN;CDDSN;;GM;sum of pentachloro-dibenzo dioxin;Dioxins
+CDDSP;CDDSP;;GM;sum of heptachloro-dibenzo dioxin;Dioxins
+CDDST;CDDST;;GM;sum of tetrachloro-dibenzo dioxin;Dioxins
+CDDSX;CDDSX;;GM;sum of hexachloro-dibenzo dioxin;Dioxins
+CDF2N;CDF2N;2,3,4,7,8-pentachlorodibenzofuran;57117-31-4;2 3 4 7 8-pentachlorodibenzofuran;Dioxins
+CDF2T;CDF2T;2,3,7,8-tetrachlorodibenzofuran;51207-31-9;2 3 7 8-tetrachloro-dibenzofuran;Dioxins
+CDF4X;CDF4X;2,3,4,6,7,8-hexachlorodibenzofuran;60851-34-5;2 3 4 6 7 8-hexachlorodibenzofuran;Dioxins
+CDF6P;CDF6P;1,2,3,4,6,7,8-heptachlorodibenzofuran;67562-39-4;1 2 3 4 6 7 8-heptachlorodibenzofuran;Dioxins
+CDF6X;CDF6X;1,2,3,6,7,8-hexachlorodibenzofuran;57117-44-9;1 2 3 6 7 8-hexachlorodibenzofuran;Dioxins
+CDF9P;CDF9P;1,2,3,4,7,8,9-heptachlorodibenzofuran;55673-89-7;1 2 3 4 7 8 9-heptachlorodibenzofuran;Dioxins
+CDF9X;CDF9X;1,2,3,7,8,9-hexachlorodibenzofuran;72918-21-9;1 2 3 7 8 9-hexachlorodibenzofuran;Dioxins
+CDFDN;CDFDN;;GM;1 2 3 7 8/1 2 3 4 8-pentachloro-dibenzofuran;Dioxins
+CDFDX;CDFDX;;GM;1 2 3 4 7 8/1 2 3 4 7 9-hexachloro-dibenzofuran;Dioxins
+CDFSN;CDFSN;;GM;sum of pentachloro-dibenzofuran;Dioxins
+CDFSP;CDFSP;;GM;sum of heptachloro-dibenzofuran;Dioxins
+CDFST;CDFST;;GM;sum of tetrachloro-dibenzofuran;Dioxins
+CDFSX;CDFSX;;GM;sum of hexachloro-dibenzofuran;Dioxins
+CE;Ce;cerium;7440-45-1;cerium;Metals and metalloids
+CHR;CHR;chrysene;218-01-9;chrysene;Polycyclic aromatic hydrocarbons (PAHs)
+CHRTR;CHRTR;;GM;chrysene + triphenylene;Polycyclic aromatic hydrocarbons (PAHs)
+CNONXC;CNONXC;;;;
+CO;Co;cobalt;7440-48-4;cobalt;Metals and metalloids
+COR;COR;coronene;191-07-1;coronene;Polycyclic aromatic hydrocarbons (PAHs)
+CR;Cr;chromium;7440-47-3;chromium;Metals and metalloids
+CU;Cu;copper;7440-50-8;copper;Metals and metalloids
+CYP1A;CYP1A;;;Cytochrome P4501A;Biomarkers
+DBA3A;DBA3A;;GM;dibenz[a c/a h]anthracene;Polycyclic aromatic hydrocarbons (PAHs)
+DBP;DBP;Dibutyl phthalate;84-74-2;Dibutyl phthalate;Polycyclic aromatic hydrocarbons (PAHs)
+DBPA;DBPA;;105-99-7;Dibutyladipat;Phthalates
+DBT;DBT;dibutyltin;1002-53-5;di-n-butyltin;Organo-metallic compounds
+DBTC1;DBTC1;;;C1-dibenzothiophenes;Polycyclic aromatic hydrocarbons (PAHs)
+DBTC2;DBTC2;;;C2-dibenzothiophenes;Polycyclic aromatic hydrocarbons (PAHs)
+DBTC3;DBTC3;;;C3-dibenzothiophenes;Polycyclic aromatic hydrocarbons (PAHs)
+DBTIN;DBTIN;;;Dibutyltin;Organo-metallic compounds
+DBTIO;DBTIO;;;;
+DD_S4;DD_S4;;;TDEPP+DDEPP+DDTPP+DDTEP;Dichloro-diphenyl-trichloroethane (DDTs)
+DD_SS;DD_SS;;;DDEPP+TDEOP+DDTEP+DDTPP+TDEPP+DDEOP+DDTOP;Dichloro-diphenyl-trichloroethane (DDTs)
+DDDPP;DDDPP;1-chloro-4-[2,2-dichloro-1-(4-chlorophenyl)ethyl]benzene;72-54-8;DDD (p,p');Dichloro-diphenyl-trichloroethane (DDTs)
+DDEPP;DDEPP;1-chloro-4-[2,2-dichloro-1-(4-chlorophenyl)ethenyl]benzene;72-55-9;DDE (p p');Dichloro-diphenyl-trichloroethane (DDTs)
+DDTEP;DDTEP;;GM;DDT (p p') + DDE (p p');Dichloro-diphenyl-trichloroethane (DDTs)
+DDTPP;DDTPP;1-chloro-4-[2,2,2-trichloro-1-(4-chlorophenyl)ethyl]benzene;50-29-3;DDT (p p');Dichloro-diphenyl-trichloroethane (DDTs)
+DEHA;DEHA;;;Dietylheksyladipat;Phthalates
+DEHP;DEHP;bis(2-ethylhexyl) benzene-1,2-dicarboxylate;117-81-7;Phthalic acid  bis(2-ethylhexyl) ester;Organic esters
+Delta13C;Delta13C;;;C13 to C12 ratio;Isotopes
+Delta15N;Delta15N;;;N15 to N14 ratio;Isotopes
+DEP;DEP;;;Dietylftalat;Phthalates
+DEPA;DEPA;;;Dietyladipat;Phthalates
+DI_S;DI_S;;;dicyclic PAH's;Polycyclic aromatic hydrocarbons (PAHs)
+DIBP;DIBP;bis(2-methylpropyl) benzene-1,2-dicarboxylate;84-69-5;diisobutyl phthalate;Organic esters
+DIDP;DIDP;;;Diisodekylftalat;Phthalates
+DIHP;DIHP;;;Diisoheptylftalat;Phthalates
+DINCH;DINCH;Diisononyl cyclohexane-1,2-dicarboxylate;;;Organic esters
+DIPA;DIPA;;;Diisobutyladipat;Phthalates
+DIURON;Diuron;3-(3,4-dichlorophenyl)-1,1-dimethylurea;330-54-1;Diuron;Organochlorines (general)
+DMP;DMP;;;Dimetylftalat;Phthalates
+DNOP;DNOP;dioctyl benzene-1,2-dicarboxylate;117-84-0;Di-n-octyl phthalate;Organic esters
+DOT;DOT;dioctyltin;94410-05-6?;dioctyltin;Organo-metallic compounds
+DPF;DPF(l+n);;;Dipenylftalat(l+n);Phthalates
+DPhT;DPhT;;;Diphenyltinn;Organo-metallic compounds
+DPTIN;DPTIN;;;diphenyltin - expressed as Sn-atom;Organo-metallic compounds
+EHDPP;EHDPP;2-ethylhexyl diphenyl phosphate;1241-94-7;2-ethylhexyl diphenyl phosphate;Phosphorus flame retardant (PFR)
+EPOCL;EPOCL;;;extractable persistent organically bound chlorine;Major inorganic constituents
+EROD;EROD;;;EROD - Ethoxyresorufin-O-deethylase;Biological effects: molecular/biochemical/cellular/assays
+FETT;Fett;;;Support parameters;
+FLE;FLE;9H-fluorene;86-73-7;fluorene;Polycyclic aromatic hydrocarbons (PAHs)
+FLU;FLU;fluoranthene;206-44-0;fluoranthene;Polycyclic aromatic hydrocarbons (PAHs)
+HBCDA;HBCDA;(1R,2R,5S,6R,9R,10S)-1,2,5,6,9,10-hexabromocyclododecane;134237-50-6;alpha-hexabromocyclododecane;Organobromines
+HBCDB;HBCDB;(1R,2R,5S,6R,9S,10R)-1,2,5,6,9,10-hexabromocyclododecane;134237-51-7;beta-hexabromocyclododecane;Organobromines
+HBCDD;HBCDD;1,2,5,6,9,10-hexabromocyclododecane;3194-55-6;1 2 5 6 9 10-hexabromocyclododecane;Organobromines
+HBCDG;HBCDG;(1R,2R,5R,6S,9S,10R)-1,2,5,6,9,10-hexabromocyclododecane;134237-52-8;gamma-hexabromocyclododecane;Organobromines
+HC_S2;HC_S2;;;;
+HC_S3;HC_S3;;;;
+HCB;HCB;1,2,3,4,5,6-hexachlorobenzene;118-74-1;hexachlorobenzene;Organochlorines (general)
+HCBD;HCBD;1,1,2,3,4,4-hexachlorobuta-1,3-diene;87-68-3;hexachlorobutadiene;Organochlorines (general)
+HCHA;HCHA;1,2,3,4,5,6-hexachlorocyclohexane;319-84-6;alpha-HCH (alpha-hexachlorocyclohexane);Hexachlorocyclohexanes
+HCHG;HCHG;1,2,3,4,5,6-hexachlorocyclohexane;58-89-9;gamma-HCH (gamma-hexachlorocyclohexane);Hexachlorocyclohexanes
+HG;Hg;mercury;7439-97-6;mercury;Metals and metalloids
+ICDP;ICDP;;193-39-5;indeno[1 2 3-cd]pyrene;Polycyclic aromatic hydrocarbons (PAHs)
+IRGAROL;Irgarol;2-N-tert-butyl-4-N-cyclopropyl-6-methylsulfanyl-1,3,5-triazine-2,4-diamine;28159-98-0;Irgarol;Triazines
+LA;La;lanthanum;7439-91-0;lanthanum;Metals and metalloids
+MBT;MBT;butylstannane;78763-54-9;n-Monobutyltin ion;Organo-metallic compounds
+MBTIN;MBTIN;;;Monobutyltin (MBT);Organo-metallic compounds
+MCCP;MCCP;;85535-85-9;medium chain chlorinated parrafin (C14-C17);Chlorinated paraffins
+MO;Mo;molybdenum;7439-98-7;molybdenum;Metals and metalloids
+MOT;MOT;octyltin;15231-57-9;monooctyltin;Organo-metallic compounds
+MPhT;MPhT;;;Monophenyltin;Organo-metallic compounds
+MPTIN;MPTIN;;;Monophenyltin;Organo-metallic compounds
+NAP;NAP;naphthalene;91-20-3;naphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAP1M;NAP1M;1-methylnaphthalene;90-12-0;1-methylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAP2M;NAP2M;2-methylnaphthalene;91-57-6;2-methylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPC1;NAPC1;;;C1-naphthalenes;Polycyclic aromatic hydrocarbons (PAHs)
+NAPC2;NAPC2;;;C2-naphthalenes;Polycyclic aromatic hydrocarbons (PAHs)
+NAPC3;NAPC3;;;C3-naphthalenes;Polycyclic aromatic hydrocarbons (PAHs)
+NAPD2;NAPD2;1,6-dimethylnaphthalene;575-43-9;1 6-dimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPD3;NAPD3;1,5-dimethylnaphthalene;571-61-9;1 5-dimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPDI;NAPDI;2,6-dimethylnaphthalene;581-42-0;2 6-dimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPT2;NAPT2;2,3,6-trimethylnaphthalene;829-26-5;2 3 6-trimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPT3;NAPT3;1,2,4-trimethylnaphthalene;2717-42-2;1 2 4-trimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPT4;NAPT4;1,2,3-trimethylnaphthalene;879-12-9;1 2 3-trimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+NAPTM;NAPTM;1,6,7-trimethylnaphthalene;2245-38-7;2 3 5-trimethylnaphthalene;Polycyclic aromatic hydrocarbons (PAHs)
+ND;Nd;neodymium;7440-00-8;neodymium;Metals and metalloids
+NI;Ni;nickel;7440-02-0;nickel;Metals and metalloids
+OCS;OCS;1,2,3,4,5-pentachloro-6-(1,2,2-trichloroethenyl)benzene;29082-74-4;octachlorostyrene;Organochlorines (general)
+OHBIL;OHBIL;;;;
+P_S;PAH16;;;Sum of tri- to hexacyclic PAHs (PAH16) minus naphtalene (dicyclic);Polycyclic aromatic hydrocarbons (PAHs)
+PA;PA;phenanthrene;85-01-8;phenanthrene;Polycyclic aromatic hydrocarbons (PAHs)
+PA1O;PA1O;phenanthren-1-ol;2433-56-9;1-hydroxy phenanthrene;Biological effects: molecular/biochemical/cellular/assays
+PAC1;PAC1;;;C1-phenanthrenes;Polycyclic aromatic hydrocarbons (PAHs)
+PAC2;PAC2;;;C2-phenanthrenes;Polycyclic aromatic hydrocarbons (PAHs)
+PAC3;PAC3;;;C3-phenanthrenes;Polycyclic aromatic hydrocarbons (PAHs)
+PADM1;PADM1;3,6-dimethylphenanthrene;1576-67-6;3 6-dimethylphenanthrene;Polycyclic aromatic hydrocarbons (PAHs)
+PADM2;PADM2;9,10-dimethylphenanthrene;604-83-1;9 10-dimethylphenanthrene;Polycyclic aromatic hydrocarbons (PAHs)
+PAH;PAH;;;Sum of PAH;Polycyclic aromatic hydrocarbons (PAHs)
+PAHSS;PAHSS;;;Total PAH, specific compunds not quantified;Polycyclic aromatic hydrocarbons (PAHs)
+PAM1;PAM1;1-methylphenanthrene;832-69-9;1-methylphenanthrene;Polycyclic aromatic hydrocarbons (PAHs)
+PAM2;PAM2;2-methylphenanthrene;2531-84-2;2-methylphenanthrene;Polycyclic aromatic hydrocarbons (PAHs)
+PB;Pb;lead;7439-92-1;lead;Metals and metalloids
+PCB;PCB;;1336-36-3;Polychlorinated biphenyls (PCBs);Chlorobiphenyls
+PCB74;PCB74;;;Polychlorinated biphenyls (PCBs);Chlorobiphenyls
+PCDD;PCDD;;;polychlorinated dibenzo-p-dioxins;Dioxins
+PCDF;PCDF;;;polychlorinated dibenzo-furans;Dioxins
+PECB;PeCB;;;;
+PER;PER;perylene;198-55-0;perylene;Polycyclic aromatic hydrocarbons (PAHs)
+PFAS;PFAS;;;Sum perfluorinated alkylated substances;Organofluorines
+PFBS;PFBS;"potassium;1,1,2,2,3,3,4,4,4-nonafluorobutane-1-sulfonate";29420-49-3;Kalium Perfluorbutansulfonat (PFBS_K);Organofluorines
+PFDcA;PFDCA;2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,10-nonadecafluorodecanoic acid;335-76-2;Perfluordekansyre (PFDcA);Organofluorines
+PFDCA;PFDCA;2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,10-nonadecafluorodecanoic acid;335-76-2;Perfluordekansyre (PFDcA);Organofluorines
+PFDcS;PFDCS;"azanium;1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,10-henicosafluorodecane-1-sulfonate";67906-42-7;Ammonium henicosafluorodecanesulphonate (PFDS);Organofluorines
+PFDCS;PFDCS;"azanium;1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,10-henicosafluorodecane-1-sulfonate";67906-42-7;Ammonium henicosafluorodecanesulphonate (PFDS);Organofluorines
+PFHpA;PFHpA;,2,3,3,4,4,5,5,6,6,7,7,7-tridecafluoroheptanoic acid;375-85-9;Perfluorheptansyre (PFHpA);Organofluorines
+PFHPA;PFHpA;,2,3,3,4,4,5,5,6,6,7,7,7-tridecafluoroheptanoic acid;375-85-9;Perfluorheptansyre (PFHpA);Organofluorines
+PFHxA;PFHxA;2,2,3,3,4,4,5,5,6,6,6-undecafluorohexanoic acid;307-24-4;Perfluorheksansyre (PFHxA);Organofluorines
+PFHXA;PFHxA;2,2,3,3,4,4,5,5,6,6,6-undecafluorohexanoic acid;307-24-4;Perfluorheksansyre (PFHxA);Organofluorines
+PFHxS;PFHXS;1,1,2,2,3,3,4,4,5,5,6,6,6-tridecafluorohexane-1-sulfonic acid;355-46-4;Perfluorheksansulfonat (PFHxS);Organofluorines
+PFHXS;PFHXS;1,1,2,2,3,3,4,4,5,5,6,6,6-tridecafluorohexane-1-sulfonic acid;355-46-4;Perfluorheksansulfonat (PFHxS);Organofluorines
+PFNA;PFNA;2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,9-heptadecafluorononanoic acid;375-95-1;Perfluornonansyre (PFNA);Organofluorines
+PFOA;PFOA;2,2,3,3,4,4,5,5,6,6,7,7,8,8,8-pentadecafluorooctanoic acid;335-67-1;Perfluoroktansyre (PFOA);Organofluorines
+PFOS;PFOS;1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,8-heptadecafluorooctane-1-sulfonic acid;1763-23-1;Perfluoroktylsulfonat (PFOS);Organofluorines
+PFOSA;PFOSA;1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,8-heptadecafluorooctane-1-sulfonamide;754-91-6;Perfluoroktansulfonamid (PFOSA);Organofluorines
+PFUdA;PFUDA;2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,11-henicosafluoroundecanoic;2058-94-8;Perfluorundekansyre (PFUdA);Organofluorines
+PK_S;KPAH;;;Sum carcinogen PAHs;Polycyclic aromatic hydrocarbons (PAHs)
+PR;Pr;Praseodymium;7440-10-0;Praseodymium;Metals and metalloids
+PYR;PYR;pyrene;129-00-0;pyrene;Polycyclic aromatic hydrocarbons (PAHs)
+PYR1O;PYR1O;pyren-1-ol;5315-79-7;1-hydroxy pyrene;Biological effects: molecular/biochemical/cellular/assays
+QCB;QCB;1,2,3,4,5-pentachlorobenzene;608-93-5;pentachlorobenzene;Organochlorines (general)
+RSPI;RSPI;;;;
+SCCP;SCCP;;85535-84-8;short chain chlorinated paraffin (C10-C13);Chlorinated paraffins
+SDD;SDD;;;Dinonylftalat + Diisononylftalat;Phthalates
+SE;Se;selenium;7782-49-2;selenium;Metals and metalloids
+SN;Sn;tin;7440-31-5;tin;Metals and metalloids
+TBBPA;TBBPA;2,6-dibromo-4-[2-(3,5-dibromo-4-hydroxyphenyl)propan-2-yl]phenol;79-94-7;tetrabromobiphenol-A;Organobromines
+TBEP;TBEP;tris(2-butoxyethyl) phosphate;78-51-3;tris(2-butoxyethyl) phosphate;Phosphorus flame retardant (PFR)
+TBP;TBP;tributyl phosphate;126-73-8;tributyl phosphate;Phosphorus flame retardant (PFR)
+TBT;TBT;tributyltin;688-73-3;Stannane  tributyl-;Organo-metallic compounds
+TBTIN;TBTIN;tributylstannanylium;36643-28-4;n-Tributyltin ion;Organo-metallic compounds
+TCDAN;TCDAN;;5103-74-2;trans-chlordane (gamma-chlordane);Cyclodienes
+TCDD;TCDD;;;;
+TCDDN;TCDDN;;;;
+TCEP;TCEP;tris(2-chloroethyl) phosphate;115-96-8;tris(chloroethyl)phosphate;Phosphorus flame retardant (PFR)
+TCHT;TCHT;;36580-86-6;Stannylium  tricyclohexyl-;Organo-metallic compounds
+TCPP;TCPP;tris(1-chloropropan-2-yl) phosphate;13674-84-5;tris(1-chloropropan-2-yl) phosphate;Phosphorus flame retardant (PFR)
+TCrP;TCRP;;1330-78-5;tricresyl phosphate;Phosphorus flame retardant (PFR)
+TCRP;TCRP;;1330-78-5;tricresyl phosphate;Phosphorus flame retardant (PFR)
+TDCP;TDCP;tris(1,3-dichloropropan-2-yl) phosphate;13674-87-8;tris(1,3-dichloropropan-2-yl) phosphate;Phosphorus flame retardant (PFR)
+TDEPP;TDEPP;1-chloro-4-[2,2-dichloro-1-(4-chlorophenyl)ethyl]benzene;72-54-8;TDE (p p') = DDD (p p');Dichloro-diphenyl-trichloroethane (DDTs)
+TE_CBNOI05;WHO (2005)PCB TEQ;;;;
+TECBS;TECBS;;;;
+TECBW;TECBW;;;;
+TEHP;TEHP;tris(2-ethylhexyl) phosphate;78-42-2;tris(2-ethylhexyl)phosphate;Phosphorus flame retardant (PFR)
+Ti;Ti;titanium;7440-32-6;titanium;Metals and metalloids
+TIBP;TIBP;tris(2-methylpropyl) phosphate;126-71-6;tris(2-methylpropyl) phosphate;Phosphorus flame retardant (PFR)
+TNONC;TNONC;;39765-80-5;Trans-nonachlor;Cyclodienes
+TOA;TOA;;77-90-7;Tributyl-o-acetylcitrate;Organic esters
+ToCrP;TOCRP;Phosphoric acid, tris(2-methylphenyl) ester;78-30-8;o-Trikresylphosphate;Phosphorus flame retardant (PFR)
+TOCRP;TOCRP;Phosphoric acid, tris(2-methylphenyl) ester;78-30-8;o-Trikresylphosphate;Phosphorus flame retardant (PFR)
+TPhP;TPhP;triphenyl phosphate;115-86-6;triphenyl phosphate;Phosphorus flame retardant (PFR)
+TPHP;TPhP;triphenyl phosphate;115-86-6;triphenyl phosphate;Phosphorus flame retardant (PFR)
+TPhT;TPhT;triphenylstannanylium;668-34-8;triphenyltin ion;Organo-metallic compounds
+TPHT;TPhT;triphenylstannanylium;668-34-8;triphenyltin ion;Organo-metallic compounds
+TPTIN;TPTIN;;;Triphenyltin (TPhT);Organo-metallic compounds
+TRICLOSAN;Triclosan;5-chloro-2-(2,4-dichlorophenoxy)phenol;3380-34-5;Triclosan;Organochlorines (general)
+TTBT;TTBT;tetrabutylstannane;1461-25-2;tetrabutyltin;Organo-metallic compounds
+TX26;TX26;;;;
+TX32;TX32;;;;
+TX40-41;TX40-41;;;;
+TX42A;TX42A;;;;
+TX44;TX44;;;;
+TX50;TX50;;;;
+TX62;TX62;;;;
+V;V;vanadium;7440-62-2;Vanadium;Metals and metalloids
+VDSI;VDSI;;;Vas Deferens Sequence Index (VDSI);Biomarkers
+ZN;Zn;zinc;7440-66-6;zinc;Metals and metalloids
+D4;D4;;556-67-2;Octamethylcyclotetrasiloxane;Siloxanes
+D5;D5;;541-02-6;Decamethylcyclopentasiloxane;Siloxanes
+D6;D6;;540-97-6;Dodecamethylcyclohexasiloxane;Siloxanes
+DDC_PA;DDC_PA;;135821-74-8;Dechloran plus anti;Chlorinated flame retardants
+DDC_PS;DDC_PS;;135821-03-3;Dechloran plus syn;Chlorinated flame retardants
+DDC_BBF;DDC_BBF;;13560-90-2;Dechlorane 601;Chlorinated flame retardants
+DDC_DBF;DDC_DBF;;31107-44-5;Dechlorane 602;Chlorinated flame retardants
+DDC_ANT;DDC_ANT;;13560-92-4;Dechlorane 603;Chlorinated flame retardants
+HCTBPH;HCTBPH;;34571-16-9;Dechlorane 604;Chlorinated flame retardants
