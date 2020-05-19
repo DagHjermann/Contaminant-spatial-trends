@@ -39,8 +39,27 @@ df_stations <- readRDS("Data/101_Selected_stations.rds")
 
 ```
 
+### Add stations
 
-### Coordinates along coast  
+```{r}
+
+df_stations_extra <- read.csv(textConnection("
+STATION_CODE, Station_Name, Lat, Lon, MSTAT,
+24B, 24B Bergen harbour, 60.39664, 5.27069, IH
+36A1, 36A1 Færder, 59.07357, 10.42522, RH
+28A2, 28A2 Vågsvåg, 61.93622,  5.048783333, RH
+97A3, 97A3 Bodø harbour, 67.2963, 14.3956, IH
+I714, I714 Sylterøya (Langesundfjord), 59.0514, 9.7038, IH
+"),
+stringsAsFactors = FALSE
+)
+  
+df_stations <- df_stations %>%
+  bind_rows(df_stations_extra)
+
+```
+
+### Coordinates along the coastal current  
 Made in script 102  
 ```{r}
 coast <- readRDS("Data/102_coast_coordinates.rmd")
