@@ -61,6 +61,10 @@ Note that we get stations from script 103
 dat <- readRDS("Data/101_Selected_data.rds")
 df_stations <- readRDS("Data/103_Selected_stations.rds")
 
+df_parameter_groups <- read.csv2("Input_data/47_df_par.csv", stringsAsFactors = FALSE)
+
+
+
 # xtabs(~STATION_CODE, df_stations ) %>% sort()
 df_stations <- df_stations %>%
   mutate(MSTAT = case_when(
@@ -95,17 +99,17 @@ dat2 <- dat %>%
                  by = "STATION_CODE") %>%
   safe_left_join(dat_param_loq, 
                  check = "CV",
-                 by = c("PARAM", "MYEAR", "TISSUE_NAME"))
-
-
+                 by = c("PARAM", "MYEAR", "TISSUE_NAME")) %>%
+  mutate(MSTAT = factor(MSTAT,  levels = c("IH", "RH", "B")))
 
 ```
 
 ### Use correct basis  
 ```{r}
+
 pah <- c("ACNLE", "ACNE", "FLE", "PA", "ANT", "FLU", "PYR", "BAA", 
          "CHR", "BBJF", "BKF", "BAP", "DBA3A", "BGHIP", "ICDP", "NAP", 
-         "BBJKF", "BJKF") 
+         "BBJKF", "BJKF", "PAH16", "KPAH", "P_S") 
 pfas <- c("PFOS", "PFOSA", "PFBS", "PFDcA", "PFHxA", "PFHxS", 
           "PFHpA", "PFUdA", "PFOA", "PFNA", "PFUdA")
 metals <- c("AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
@@ -114,14 +118,15 @@ metals <- c("AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN",
 dat2 <- dat2 %>%
   mutate(CONC = case_when(
     PARAM %in% c(pah, pfas, metals) ~ VALUE_DW,
-    PARAM %in% c(pah, pfas, metals) ~ VALUE_WW
+    !PARAM %in% c(pah, pfas, metals) ~ VALUE_WW
   ),
   Basis = case_when(
     PARAM %in% c(pah, pfas, metals) ~ "Dry weight",
-    PARAM %in% c(pah, pfas, metals) ~ "Wet weight"
+    !PARAM %in% c(pah, pfas, metals) ~ "Wet weight"
   )
   )
   
+table(dat2$Basis)
 
 ```
 
@@ -193,7 +198,7 @@ visreg::visreg2d(mod, "Lon", "Lat")
 
 param <- "CD"
 tissue <- "Lever"
-tissue <- "Whole soft body"
+# tissue <- "Whole soft body"
 
 dat_param <- dat2 %>%
   filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
@@ -237,17 +242,23 @@ summary(mod)
 
 ```
 
-### Adjust for length and fat, functions  
+### Adjust for length and fat (LF), functions  
 
 Function 1 - to use for each station  
 ```{r, fig.height=3, fig.width=9}
 
 # Use this function for each station
 # Adds log_CONC_adj to the data
-add_adjusted_value_station <- function(data, LNMEA_mean, FAT_PERC_mean,
+add_adjusted_value_LF_station <- function(data, LNMEA_mean, FAT_PERC_mean,
                                        plot = FALSE){
-  data$fMYEAR <- factor(data$MYEAR)
-  mod <- lm(log_CONC  ~ LNMEA + FAT_PERC + fMYEAR, data = data)
+  no_years <- data$MYEAR %>% unique() %>% length()
+  # MAke model
+  if (no_years > 1){   # Check if several years for this station; if not, no need to adjust for year
+    data$fMYEAR <- factor(data$MYEAR)
+    mod <- lm(log_CONC  ~ LNMEA + FAT_PERC + fMYEAR, data = data)
+  } else {
+    mod <- lm(log_CONC  ~ LNMEA + FAT_PERC, data = data)
+  }
   if (plot){
     par(mfrow = c(1,3), mar = c(4,5,2,1))
     visreg::visreg(mod)
@@ -258,14 +269,19 @@ add_adjusted_value_station <- function(data, LNMEA_mean, FAT_PERC_mean,
   pred_data$FAT_PERC <- rep(FAT_PERC_mean, n)
   pred <- predict(mod, pred_data)
   data$log_CONC_adj <- pred + residuals(mod)
-  as.data.frame(data %>% select(-fMYEAR))
-
+  # remove fMYEAR, if needed
+  if (no_years > 1){
+    result <- as.data.frame(data %>% select(-fMYEAR))
+  } else {
+    result <- as.data.frame(data)
+  }
+  result
 }
 
 stations <- unique(dat_param$STATION_CODE)
 
-# debugonce(add_adjusted_value_station)
-test <- add_adjusted_value_station(
+# debugonce(add_adjusted_value_LF_station)
+test_LF <- add_adjusted_value_LF_station(
   dat_param %>% filter(STATION_CODE == stations[1]),
   mean(dat_param$LNMEA, na.rm = TRUE),
   mean(dat_param$FAT_PERC, na.rm = TRUE),
@@ -275,7 +291,121 @@ test <- add_adjusted_value_station(
 if (FALSE){
   for (i in seq_along(stations)){
     
-    test <- add_adjusted_value_station(
+    test <- add_adjusted_value_LF_station(
+      dat_param %>% filter(STATION_CODE == stations[i]),
+      mean(dat_param$LNMEA, na.rm = TRUE),
+      mean(dat_param$FAT_PERC, na.rm = TRUE),
+      plot = TRUE
+    )
+    
+  }
+}
+
+if (FALSE){
+
+  ggplot(test, aes(log_CONC, log_CONC_adj)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, LNMEA)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
+    geom_point()
+  
+}
+
+```
+
+
+Function 2 - perform function 1 for all stations    
+All stations with at least 3 measurements   
+```{r, fig.height=3, fig.width=9}
+
+add_adjusted_value_LF <- function(data, plot = FALSE){
+  
+  if (data$TISSUE_NAME[1] == "Whole soft body"){
+    result <- data %>%
+      mutate(log_CONC_adj = log_CONC)
+  } else {
+    
+    LNMEA_mean <- mean(data$LNMEA, na.rm = TRUE)
+    FAT_PERC_mean <- mean(data$FAT_PERC, na.rm = TRUE)
+    
+    # Keep all stations with at least 5 measurements
+    tab <- table(data$STATION_CODE)
+    stations <- names(tab[tab >= 5])
+    
+    result <- stations %>%
+      map_dfr(
+        function(station)
+          add_adjusted_value_LF_station(
+            data %>% filter(STATION_CODE == station), 
+            LNMEA_mean, FAT_PERC_mean, plot = plot) 
+      )
+  }
+  result
+}
+
+# debugonce(add_adjusted_value_LF)
+dat_param2a <- add_adjusted_value_LF(dat_param)
+
+if (FALSE){
+
+
+  test <- add_adjusted_value_LF(dat_param, plot = TRUE)
+ 
+  ggplot(test, aes(log_CONC, log_CONC_adj)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, LNMEA)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
+    geom_point()
+  
+}
+
+```
+
+
+
+### Adjust for length only (L), functions  
+
+Function 1 - to use for each station  
+```{r, fig.height=3, fig.width=9}
+
+# Use this function for each station
+# Adds log_CONC_adj to the data
+add_adjusted_value_L_station <- function(data, LNMEA_mean, 
+                                       plot = FALSE){
+  data$fMYEAR <- factor(data$MYEAR)
+  mod <- lm(log_CONC  ~ LNMEA + fMYEAR, data = data)
+  if (plot){
+    par(mfrow = c(1,3), mar = c(4,5,2,1))
+    visreg::visreg(mod)
+  }
+  pred_data <- data
+  n <- nrow(data)
+  pred_data$LNMEA <- rep(LNMEA_mean, n)
+  pred <- predict(mod, pred_data)
+  data$log_CONC_adj <- pred + residuals(mod)
+  as.data.frame(data %>% select(-fMYEAR))
+
+}
+
+stations <- unique(dat_param$STATION_CODE)
+
+# debugonce(add_adjusted_value_L_station)
+test_L <- add_adjusted_value_L_station(
+  dat_param %>% filter(STATION_CODE == stations[1]),
+  mean(dat_param$LNMEA, na.rm = TRUE),
+  plot = TRUE
+)
+
+if (FALSE){
+  for (i in seq_along(stations)){
+    
+    test <- add_adjusted_value_L_station(
       dat_param %>% filter(STATION_CODE == stations[i]),
       mean(dat_param$LNMEA, na.rm = TRUE),
       mean(dat_param$FAT_PERC, na.rm = TRUE),
@@ -304,7 +434,7 @@ if (FALSE){
 Function 2 - perform function 1 for all stations    
 ```{r, fig.height=3, fig.width=9}
 
-add_adjusted_value <- function(data, plot = FALSE){
+add_adjusted_value_L <- function(data, plot = FALSE){
   
   if (data$TISSUE_NAME[1] == "Whole soft body"){
     result <- data %>%
@@ -312,28 +442,29 @@ add_adjusted_value <- function(data, plot = FALSE){
   } else {
     
     LNMEA_mean <- mean(data$LNMEA, na.rm = TRUE)
-    FAT_PERC_mean <- mean(data$FAT_PERC, na.rm = TRUE)
-    
-    stations <- unique(data$STATION_CODE)
+
+    # Keep all stations with at least 5 measurements
+    tab <- table(data$STATION_CODE)
+    stations <- names(tab[tab >= 5])
     
     result <- stations %>%
       map_dfr(
         function(station)
-          add_adjusted_value_station(
+          add_adjusted_value_L_station(
             data %>% filter(STATION_CODE == station), 
-            LNMEA_mean, FAT_PERC_mean, plot = plot) 
+            LNMEA_mean, plot = plot) 
       )
   }
   result
 }
 
-# debugonce(add_adjusted_value)
-dat_param2 <- add_adjusted_value(dat_param)
+# debugonce(add_adjusted_value_L)
+dat_param2b <- add_adjusted_value_L(dat_param)
 
 if (FALSE){
 
 
-  test <- add_adjusted_value(dat_param, plot = TRUE)
+  test <- add_adjusted_value_L(dat_param, plot = TRUE)
  
   ggplot(test, aes(log_CONC, log_CONC_adj)) +
     geom_point()
@@ -349,11 +480,12 @@ if (FALSE){
 ```
 
 
+
 ### Linear analysis by year and dist. along coast   
 Use gls with AR1 model  
 ```{r}
 
-dat_param3 <- dat_param2 %>%
+dat_param3 <- dat_param2a %>%
   select(STATION_CODE, log_CONC_adj, MYEAR, Dist_along_coast) %>%
   filter(complete.cases(.))  # %>%
   # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
@@ -388,12 +520,11 @@ list(mod0, mod10, mod1a, mod1b, mod1c, mod1d) %>% map_int(~summary(.)$dims$N)
 
 # summary(mod1d) %>% str()
 summary(mod1a)$tTable
-summary(mod1d)$tTable
-summary(mod1c)$tTable
 
-summary(mod1c)$tTable
-
-summary(mod1c)$tTable[2:3,] %>% matrix(nrow = 1) %>% data.frame()
+# summary(mod1d)$tTable
+# summary(mod1c)$tTable
+# summary(mod1c)$tTable
+# summary(mod1c)$tTable[2:3,] %>% matrix(nrow = 1) %>% data.frame()
 
 
 ```
@@ -426,7 +557,7 @@ run_gls <- function(data){
   best_model <- which.min(aic$AIC)
   
   result_values <- summary(mod1c)$tTable[2:3,] %>% as.numeric()
-  result <- c(best_model, result_values) %>% matrix(nrow = 1) %>%data.frame()
+  result <- c(best_model, result_values) %>% matrix(nrow = 1) %>% data.frame()
   names(result) <- c("Best_model",
                      "Year_est", "Position_est",
                      "Year_se", "Position_se",
@@ -436,7 +567,7 @@ run_gls <- function(data){
 }
 
 # debugonce(run_gls)
-run_gls(dat_param2)
+run_gls(dat_param2a)
 
 ```
 
@@ -456,15 +587,25 @@ analysis_one_par_one_repl <- function(param, tissue, data){
   stations <- unique(data_selected$STATION_CODE)
   
   # Add adjusted value
-  data_selected <- add_adjusted_value(data_selected)
+  if (tissue %in% "Whole soft body"){
+    data_selected <- add_adjusted_value_L(data_selected)
+  } else {
+    data_selected <- add_adjusted_value_LF(data_selected)
+  }
   
   # Run analysis
   result <- run_gls(data_selected)
-  data.frame(PARAM = param, TISSUE_NAME = tissue, result)
+  data.frame(PARAM = param, TISSUE_NAME = tissue, result,
+             stringsAsFactors = FALSE)
   
 }
 
+# Testing 
 analysis_one_par_one_repl("CD", "Lever", dat2)
+# analysis_one_par_one_repl("CD", "Whole soft body", dat2)
+# debugonce(analysis_one_par_one_repl)
+# debugonce(add_adjusted_value_LF)
+# analysis_one_par_one_repl("HG", "Muskel", dat2)
 
 # 1:5 %>% set_names()
 ```
@@ -483,7 +624,7 @@ analysis_one_par_one_repl("CD", "Lever", dat2)
 ```
 
 ### Function for the whole thing, n replicates  
-Replicates needed for the 'add_random_data' part
+Replicates needed since 'add_random_data' will give different results each time  
 ```{r}
 
 analysis_one_par <- function(param, tissue, data, nrepl = 5){
@@ -500,24 +641,155 @@ analysis_one_par <- function(param, tissue, data, nrepl = 5){
 
 
 analysis_one_par("CD", "Lever", dat2)
+analysis_one_par("HG", "Muskel", dat2, nrepl = 2)
 
 
 ```
 
 ## 5. Run for all parameters + tissues
-```{r, warning=FALSE, message=FALSE}
+
+
+### Number of data   
+Naturally higher for cod than for blue mussel
+```{r}
+
+dat2 %>%
+  count(PARAM, TISSUE_NAME) %>%
+  ggplot(aes(n)) + 
+  geom_histogram(binwidth = 200) +
+  facet_wrap(vars(TISSUE_NAME))
+
+dat2 %>%
+  count(PARAM, TISSUE_NAME) %>% 
+  ggplot(aes(n)) + 
+  geom_histogram(binwidth = 25) +
+  facet_wrap(vars(TISSUE_NAME)) +
+  coord_cartesian(xlim = c(0,500))
+
+```
+
+### Number of stations 
+```{r}
+# Number of stations 
+df_acceptable_stations <- dat2 %>%
+  count(PARAM, TISSUE_NAME, STATION_CODE, MSTAT, Lat, MYEAR) %>%
+  filter(n >= 3) %>%  # min. number of samples per station/year 
+  count(PARAM, TISSUE_NAME, STATION_CODE, MSTAT, Lat) %>%
+  filter(n >= 3)      # min. number of samples per station/year
+
+ggplot(df_acceptable_stations, aes(Lat, fill = MSTAT)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(vars(TISSUE_NAME))
+
+df_param <- df_acceptable_stations %>%
+  mutate(Area = case_when(
+    Lat > 65 ~ "North",
+    Lat > 63 ~ "Mid",
+    TRUE ~ "South"
+  ),
+  Impacted = (MSTAT == "IH")
+  ) %>% 
+  arrange(PARAM, TISSUE_NAME, Area) %>%
+  count(PARAM, TISSUE_NAME, Area, Impacted)
+
+df_param_all <- df_param %>%
+  group_by(PARAM, TISSUE_NAME, Area) %>% 
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  tidyr::pivot_wider(names_from = "Area", values_from = "n") 
+
+df_param_notimpacted <- df_param %>%
+  filter(!Impacted) %>%
+  tidyr::pivot_wider(names_from = "Area", values_from = "n") %>%
+  select(-Impacted)
+
+df1 <- df_param_all %>%
+  mutate(Spatial_coverage = case_when(
+    North >= 2 ~ "OK",
+    TRUE ~ "Not OK")) %>%
+  count(TISSUE_NAME, Spatial_coverage) %>% # View()
+  rename(All = n)
+
+df2 <- df_param_notimpacted %>%
+  mutate(Spatial_coverage = case_when(
+    North >= 2 ~ "OK",
+    TRUE ~ "Not OK")) %>% # View()
+  count(TISSUE_NAME, Spatial_coverage) %>%
+  rename(Notimpacted = n) 
+
+left_join(df1, df2, by = c("TISSUE_NAME", "Spatial_coverage"))
+
+```
+
+### Select time series  
+Bsed on 'df_param_notimpacted'  
+```{r}
 
 dat_param_tissue <- dat2 %>%
-  count(PARAM, TISSUE_NAME) %>%
-  arrange(desc(n)) %>%
-  filter(n > 200) %>%
+  distinct(PARAM, TISSUE_NAME) %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  left_join(df_param_notimpacted, by = c("PARAM", "TISSUE_NAME")) %>%
+  filter(North >= 2) %>% 
   as.data.frame()
 
-head(dat_param_tissue)  
+# head(dat_param_tissue)  
+nrow(dat_param_tissue)  
+```
 
+Safe version of analysis_one_par  
+```{r}
 analysis_one_par_s <- safely(analysis_one_par)
+```
 
-result_list <- seq(1:nrow(dat_param_tissue)) %>%
+
+### Analysis - Not impacted stations  
+```{r, warning=FALSE, message=FALSE}
+
+dat_param_tissue_notimpacted <- dat2 %>%
+  distinct(PARAM, TISSUE_NAME) %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  left_join(df_param_notimpacted, by = c("PARAM", "TISSUE_NAME")) %>%
+  filter(North >= 2) %>% 
+  as.data.frame()
+
+nrow(dat_param_tissue_notimpacted)
+
+dat2_notimpacted <- dat2 %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  filter(!MSTAT %in% "IH") %>% 
+  as.data.frame()
+
+
+t0 <- Sys.time()
+result_list_notimpacted <- seq(1:nrow(dat_param_tissue)) %>%
+# result_list <- seq(1,10) %>%
+  map(
+    ~analysis_one_par_s(dat_param_tissue$PARAM[.], 
+                        dat_param_tissue$TISSUE_NAME[.], 
+                        dat2_notimpacted,    # NOTE
+                        nrepl = 3)
+  )
+t1 <- Sys.time()
+t1-t0
+
+
+saveRDS(result_list_notimpacted, "Data/120_result_list_notimpacted.rds")
+
+```
+
+### Analysis - all stations  
+```{r, warning=FALSE, message=FALSE}
+
+dat_param_tissue_allstations <- dat2 %>%
+  distinct(PARAM, TISSUE_NAME) %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  left_join(df_param_all, by = c("PARAM", "TISSUE_NAME")) %>%
+  filter(North >= 2) %>% 
+  as.data.frame()
+nrow(dat_param_tissue_allstations)
+
+t0 <- Sys.time()
+result_list_allstations <- seq(1:nrow(dat_param_tissue)) %>%
 # result_list <- seq(1,10) %>%
   map(
     ~analysis_one_par_s(dat_param_tissue$PARAM[.], 
@@ -525,47 +797,181 @@ result_list <- seq(1:nrow(dat_param_tissue)) %>%
                         dat2,
                         nrepl = 3)
   )
+t1 <- Sys.time()
+t1-t0
+
+
+saveRDS(result_list_allstations, "Data/120_result_list_allstations.rds")
 
 ```
-### Save/Load
+
+
+
+
+### Load, if needed 
 ```{r}
 
-# saveRDS(result_list, "Data/120_result_list.rds")
-
-# result_list <- readRDS("Data/120_result_list.rds")
+# result_list_allstations <- readRDS("Data/120_result_list_allstations.rds")
+# result_list_notimpacted <- readRDS("Data/120_result_list_notimpacted.rds")
 
 ```
 
-### Extract results
+### Extract coefficients, function
+
 ```{r}
 
-result_list <- transpose(result_list)
+get_coefficients <- function(result_list, parameter_groups = df_parameter_groups){
+  
+  # Transpose result list (so results are list part [[1]] and errors are list part [[2]])
+  result_list <- purrr::transpose(result_list)
+  
+  #### Make data frame (result)
 
-ok <- result_list[[2]] %>% map_lgl(is.null)
-sum(ok)
+  ok <- result_list[[2]] %>% map_lgl(is.null)
+  sum(ok)
+  
+  result <- result_list[[1]][ok] %>% 
+    bind_rows()
+  
+  #### Met mean coefficients from model
+  
+  result_coef <- result %>%
+    group_by(PARAM, TISSUE_NAME) %>%
+    summarise_at(vars(Year_est:Position_t), mean, na.rm = TRUE) %>%
+    ungroup()
+  
+  #### Sort order
+  
+  group_order <- c("Metals and metalloids", "Chlorobiphenyls", "Polycyclic aromatic hydrocarbons (PAHs)",
+                   "Organobromines", "Organochlorines (general)", "Organofluorines",
+                   "Phosphorus flame retardant (PFR)",
+                   "Chlorinated paraffins", "Dichloro-diphenyl-trichloroethane (DDTs)", 
+                   "Hexachlorocyclohexanes", "Others"  
+  )
+  
+  result_coef <- result_coef %>%
+    left_join(parameter_groups %>% select(Parameter.Code, Substance.Group),
+              by = c("PARAM" = "Parameter.Code"))
+  
+  # Add some parameters that are lacking
+  result_coef <- result_coef %>%
+    mutate(Substance.Group = case_when(
+      PARAM %in% c("MCCP eksl. LOQ", "MCCP eksl. LOQ") ~ "Chlorinated paraffins",
+      PARAM %in% c("KPAH", "PAH16") ~ "Polycyclic aromatic hydrocarbons (PAHs)",
+      PARAM %in% "Sum HBCD" ~ "Organobromines",
+      is.na(Substance.Group) ~ "Others",
+      TRUE ~ Substance.Group
+    )) %>%
+    mutate(Substance.Group = factor(Substance.Group, levels = group_order)) %>%
+    arrange(Substance.Group) %>%
+    mutate(PARAM = forcats::fct_inorder(PARAM))
+  
+  if (FALSE){
+    result_coef %>% select(PARAM, Substance.Group)
+  }
+  
+  result_coef
+  
+}
 
-result <- result_list[[1]][ok] %>% 
-  bind_rows()
+# debugonce(get_coefficients)
+# result_coef_notimpacted <- get_coefficients(result_list_notimpacted)
 
 ```
 
+
+### Plot liver results  
+```{r, fig.width=10, fig.height=6}
+
+result_coef_notimpacted <- get_coefficients(result_list_notimpacted)
+
+gg <- result_coef_notimpacted %>%
+  filter(TISSUE_NAME %in% "Lever") %>%
+  ggplot(aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0),
+        plot.margin = margin(6, 45, 6, 6)) +
+  geom_hline(yintercept = 0) +
+  labs(title = "Concentrations along coast - not impacted stations -  fish liver", 
+       ylab = "Effect of position along coast")
+    
+ggsave("Figures/120_Coasteffect_notimpaced_liver.png", gg, width = 12, height = 6)
+
+gg
+
+```
+
+#### Plot muscle results  
+```{r, fig.width=10, fig.height=6}
+
+gg <- result_coef_notimpacted %>%
+  filter(TISSUE_NAME %in% "Muskel") %>%
+  ggplot(aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0),
+        plot.margin = margin(6, 45, 6, 6)) +
+  geom_hline(yintercept = 0) +
+  labs(title = "Concentrations along coast - not impacted stations - fish muscle", 
+       ylab = "Effect of position along coast")
+    
+ggsave("Figures/120_Coasteffect_notimpaced_muscle.png", gg, width = 12, height = 6)
+
+gg
+
+```
+
+#### Plot blue mussel results  
+```{r, fig.width=10, fig.height=6}
+
+gg <- result_coef_notimpacted %>%
+  filter(TISSUE_NAME %in% "Whole soft body") %>%
+  ggplot(aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0),
+        plot.margin = margin(6, 45, 6, 6)) +
+  geom_hline(yintercept = 0) +
+  labs(title = "Concentrations along coast - not impacted stations - blue mussels", 
+       ylab = "Effect of position along coast")
+    
+ggsave("Figures/120_Coasteffect_notimpaced_mussel.png", gg, width = 12, height = 6)
+
+gg
+
+```
+#### Soft tissue (blue mussel)
 ```{r, fig.width=9, fig.height=6}
-
-result_coef <- result %>%
-  group_by(PARAM, TISSUE_NAME) %>%
-  summarise_all(mean) %>%
-  filter(TISSUE_NAME %in% "Lever")
-
-ggplot(result_coef, aes(PARAM, Position_est)) +
+result_coef %>%
+  filter(TISSUE_NAME %in% "Whole soft body") %>%
+  ggplot(aes(PARAM, Position_est)) +
   geom_point() +
   geom_pointrange(aes(ymin = Position_est - 2*Position_se,
                       ymax = Position_est + 2*Position_se)) +
   theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
   geom_hline(yintercept = 0)
     
-  
 
 ```
+
+#### Muscle
+```{r, fig.width=9, fig.height=6}
+result_coef %>%
+  filter(TISSUE_NAME %in% "Muskel") %>%
+  ggplot(aes(PARAM, Position_est)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = Position_est - 2*Position_se,
+                      ymax = Position_est + 2*Position_se)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  geom_hline(yintercept = 0)
+    
+
+```
+
 
 ```{r, fig.width=9, fig.height=6}
 
