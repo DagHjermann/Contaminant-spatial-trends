@@ -21,6 +21,8 @@ library(lme4cens)
 
 ```
 
+
+
 ### Function  
 ```{r}
 
@@ -57,10 +59,16 @@ add_random_data <- function(data){
 ## 2. Data   
 Note that we get stations from script 103  
 ```{r}
+# Data including trophic level
+dat <- readRDS("Data/104_Selected_data.rds")
 
-dat <- readRDS("Data/101_Selected_data.rds")
+# Extra isotope data
+dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+
+# Station metadata
 df_stations <- readRDS("Data/103_Selected_stations.rds")
 
+# Parameter metadata (for sorting)
 df_parameter_groups <- read.csv2("Input_data/47_df_par.csv", stringsAsFactors = FALSE)
 
 
@@ -83,6 +91,9 @@ if (nrow(check) > 0){
 }
   
 ```
+
+
+
 
 ### Combine data  
 ```{r}
@@ -129,6 +140,8 @@ dat2 <- dat2 %>%
 table(dat2$Basis)
 
 ```
+
+
 
 ## 3. Single parameter, with long-lat  
 
@@ -217,7 +230,8 @@ complete.cases(dat_param) %>% mean()
 df_summ <- dat2 %>%
   filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
   group_by(STATION_CODE, MYEAR) %>%
-  summarise(n = n(), median = median(VALUE_WW), below_loq = mean(!is.na(FLAG1)), loq = mean(LOQ)) 
+  summarise(n = n(), median = median(VALUE_WW), below_loq = mean(!is.na(FLAG1)), loq = mean(LOQ),
+            has_LNMEA = mean(!is.na(LNMEA)), has_TL = mean(!is.na(TL))) 
 
 ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
   geom_tile(aes(fill = n))
@@ -228,6 +242,11 @@ ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
 ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
   geom_tile(aes(fill = loq))
 
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = has_LNMEA))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = has_TL))
 ```
 
 
@@ -315,6 +334,8 @@ if (FALSE){
 }
 
 ```
+
+
 
 
 Function 2 - perform function 1 for all stations    
@@ -1005,3 +1026,108 @@ ggplot(result_coef, aes(PARAM, Position_est)) +
 
 ```
 
+
+## 6. Include trophic level on per-station basis   
+
+
+
+## 7. Include trophic level on individual basis   
+
+- First adjust for length and fat, separately for each station  
+- Then analyse the adjusted values by year and distance along coast  
+- Test for one series
+
+### Data
+```{r}
+
+param <- "CD"
+tissue <- "Lever"
+# tissue <- "Whole soft body"
+
+dat_param <- dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
+  add_random_data() %>%
+  mutate(log_CONC = log10(VALUE_WW)) %>%
+  select(STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, MYEAR, Dist_along_coast, LNMEA, FAT_PERC) %>%
+  filter(complete.cases(.))
+
+complete.cases(dat_param) %>% mean()
+  
+```
+
+
+### Adjust for length, fat and trophic level (LFT), functions  
+
+Function 1 - to use for each station  
+```{r, fig.height=3, fig.width=9}
+
+# Use this function for each station
+# Adds log_CONC_adj to the data
+add_adjusted_value_LFT_station <- function(data, LNMEA_mean, FAT_PERC_mean, TL_mean,
+                                       plot = FALSE){
+  no_years <- data$MYEAR %>% unique() %>% length()
+  # MAke model
+  if (no_years > 1){   # Check if several years for this station; if not, no need to adjust for year
+    data$fMYEAR <- factor(data$MYEAR)
+    mod <- lm(log_CONC  ~ LNMEA + FAT_PERC + TL + fMYEAR, data = data)
+  } else {
+    mod <- lm(log_CONC  ~ LNMEA + FAT_PERC + TL, data = data)
+  }
+  if (plot){
+    par(mfrow = c(1,3), mar = c(4,5,2,1))
+    visreg::visreg(mod)
+  }
+  pred_data <- data
+  n <- nrow(data)
+  pred_data$LNMEA <- rep(LNMEA_mean, n)
+  pred_data$FAT_PERC <- rep(FAT_PERC_mean, n)
+  pred_data$TL <- rep(TL_mean, n)
+  pred <- predict(mod, pred_data)
+  data$log_CONC_adj <- pred + residuals(mod)
+  # remove fMYEAR, if needed
+  if (no_years > 1){
+    result <- as.data.frame(data %>% select(-fMYEAR))
+  } else {
+    result <- as.data.frame(data)
+  }
+  result
+}
+
+stations <- unique(dat_param$STATION_CODE)
+
+# debugonce(add_adjusted_value_LF_station)
+test_LFT <- add_adjusted_value_LFT_station(
+  dat_param %>% filter(STATION_CODE == stations[1]),
+  mean(dat_param$LNMEA, na.rm = TRUE),
+  mean(dat_param$FAT_PERC, na.rm = TRUE),
+  mean(dat_param$TL, na.rm = TRUE),
+  plot = TRUE
+)
+
+if (FALSE){
+  for (i in seq_along(stations)){
+    
+    test <- add_adjusted_value_LF_station(
+      dat_param %>% filter(STATION_CODE == stations[i]),
+      mean(dat_param$LNMEA, na.rm = TRUE),
+      mean(dat_param$FAT_PERC, na.rm = TRUE),
+      plot = TRUE
+    )
+    
+  }
+}
+
+if (FALSE){
+
+  ggplot(test, aes(log_CONC, log_CONC_adj)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, LNMEA)) +
+    geom_point()
+  
+  ggplot(test, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
+    geom_point()
+  
+}
+
+```
