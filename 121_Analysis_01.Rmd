@@ -1,0 +1,1625 @@
+---
+title: "121 Analysis 01"
+author: "DHJ"
+date: "6 5 2020"
+output: html_document
+---
+
+Based on script 120   
+
+
+## 1. Libraries  
+```{r, message=FALSE, warning=FALSE, results='hide'}
+
+
+library(rlang)
+
+library(devtools)
+library(lme4)
+library(usethis)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(ggplot2)
+library(mgcv)
+library(visreg)
+
+# devtools::install_github("moodymudskipper/safejoin")
+library(safejoin)
+
+# devtools::install_github("lenz99-/lme4cens")
+library(lme4cens)
+
+# For SpatialPoints() function in part 2, used for map in part 8
+library(sp)
+
+# For combining plots
+library(cowplot)
+
+# For get_point_on_coastline()
+# Used in part 8  
+source("103_Distance_along_coast_functions.R")
+
+```
+
+
+
+### Function   
+Makes new variable 'VALUE_WW_r' with random values for data under LOQ
+```{r}
+
+#
+# Make new variable 'VALUE_WW_r' with random values between
+# 0.5*LOQ and LOQ for data undcer LOQ
+#
+# Returns data set
+#
+add_random_data <- function(data){
+  
+  # Set todata frame (not tibble)
+  data <- as.data.frame(data)
+  
+  # Under LOQs
+  sel <- !is.na(data$FLAG1)
+  
+  # Test that runif works for vactors of min, max:
+  # runif(2, min = c(1,50), max = c(10,100))
+  data$VALUE_WW_r <- data$VALUE_WW
+  data$VALUE_WW_r[sel] <- runif(
+    n = sum(sel), 
+    min = data$LOQ[sel]/2,
+    max = data$VALUE_WW[sel]
+  )
+  
+  data
+  
+}
+
+```
+
+
+
+## 2. Data   
+Note that we get stations from script 103  
+```{r}
+# Data including trophic level
+dat <- readRDS("Data/104_Selected_data.rds")
+
+# Extra isotope data
+dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+
+# Station metadata
+df_stations <- readRDS("Data/103_Selected_stations.rds")
+
+
+
+
+# xtabs(~STATION_CODE, df_stations ) %>% sort()
+df_stations <- df_stations %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE %in% "I969" ~ "RH",
+    TRUE ~ MSTAT)) %>%
+  group_by(STATION_CODE, MSTAT) %>%
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean)
+
+check <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  mutate(n = n()) %>%
+  filter(n > 1)
+
+if (nrow(check) > 0){
+  cat("Some stations have >1 MSTAT codes - check 'check'! \n")
+}
+  
+```
+
+### Parameter metadata (for sorting)
+```{r}
+
+group_order <- c("Metals and metalloids", "Chlorobiphenyls", 
+                 "Polycyclic aromatic hydrocarbons (PAHs)",
+                 "Organobromines", "Organochlorines (general)", "Organofluorines",
+                 "Phosphorus flame retardant (PFR)",
+                 "Phenols/chlorophenols", "Bisphenols",
+                 "Chlorinated paraffins", "Dichloro-diphenyl-trichloroethane (DDTs)", 
+                 "Hexachlorocyclohexanes", 
+                 "Biological effects: molecular/biochemical/cellular/assays", 
+                 "Organic esters", "Isotopes", "Cyclodienes", "Dioxins", "Biomarkers", 
+                 "Phthalates", "Organo-metallic compounds", "Major inorganic constituents", 
+                 "Triazines", "Siloxanes", "Chlorinated flame retardants",
+                 "Others")
+
+df_parameter_groups <- read.csv2("Input_data/47_df_par.csv", stringsAsFactors = FALSE)
+
+df <- textConnection("
+Parameter.Code;Substance.Group
+MCCP inkl. LOQ;Chlorinated paraffins
+MCCP eksl. LOQ;Chlorinated paraffins
+SCCP eksl. LOQ;Chlorinated paraffins
+KPAH;Polycyclic aromatic hydrocarbons (PAHs)
+PAH16;Polycyclic aromatic hydrocarbons (PAHs)
+Sum HBCD;Organobromines
+% C;Others
+% N;Others
+BDE156;Organobromines
+BDE17;Organobromines
+BDE184;Organobromines
+BDE191;Organobromines
+BDE197;Organobromines
+BDE206;Organobromines
+BDE207;Organobromines
+BPA;Bisphenols
+C/N;Others
+Delta15N;Others
+DRYWT%;Others
+Fett;Others
+Oktaklorstyren (OCS);Organochlorines (general)
+Pentaklorbenzen (QCB);Chlorobiphenyls
+") %>% 
+  read.csv2(stringsAsFactors = FALSE) %>%
+  mutate(Parameter.Name = Parameter.Code)
+# df
+
+df_parameter_groups <- bind_rows(df_parameter_groups, df)
+
+sel <- df_parameter_groups$Substance.Group == ""
+df_parameter_groups$Substance.Group[sel] <- "Others"
+
+# Check that 'Parameter.Code' covers all PARAM in the data
+# (not completey but good enough; check later using e.g. 'par  <- series_param_tissue$PARAM')
+par  <- unique(dat$PARAM)
+par[!par %in% df_parameter_groups$Parameter.Code]
+
+# Check that 'group_order' covers all groups
+groups <- df_parameter_groups$Substance.Group %>% unique()
+groups[!groups %in% group_order] %>% dput()
+
+# Order groups  
+df_parameter_groups <- df_parameter_groups  %>% # filter(grepl("PAH", PARAM))
+  mutate(Substance.Group = factor(Substance.Group, levels = group_order))
+
+df_parameter_groups %>%
+  filter(is.na(Substance.Group)) %>%
+  select(Parameter.Code,Substance.Group) %>%
+  nrow()
+
+```
+
+
+### Isotopes in 'dat'   
+Already added in script 104.  
+  
+It is not that easy as we heading out at here, since we need to couple isotopes (given for muscle) to 
+chemical data (usually given for liver). See script 87 in `Milkys` project instead  
+
+```{r}
+
+if (FALSE){
+  
+  dat %>%
+    filter(PARAM %in% c("Delta13C", "Delta15N") & MYEAR >= 2014) %>%
+    xtabs(~MYEAR, .)
+  
+  #dat %>%
+  #  filter(PARAM %in% c("Delta13C", "Delta15N") & MYEAR >= 2014) %>% View()
+  
+  dat %>%
+    filter(PARAM %in% c("Delta13C", "Delta15N") & MYEAR >= 2014) %>%
+    select(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2, PARAM, VALUE_WW) %>%
+    tidyr::pivot_wider(names_from = PARAM, values_from = VALUE_WW) %>%
+    arrange(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2)
+  
+}
+
+```
+
+
+
+### dat2 - combined data  
+Adding
+- position data + MSTAT (type of station - industry-impacted, representative or background)  
+- LOQ  
+- mean trophic level per station  
+
+```{r}
+
+# Median LOQ (per year and tissue only - should be the same for all stations)
+dat_param_loq <- dat %>%
+  filter(!is.na(FLAG1)) %>%
+  group_by(PARAM, MYEAR, TISSUE_NAME) %>%
+  summarise(LOQ = median(VALUE_WW))
+
+dat2 <- dat %>%
+  ungroup() %>%
+  # Add position data + MSTAT (type of station - industry-impacted, representative or background)
+  safe_left_join(df_stations %>% 
+                   select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT),
+                 check = "CV",
+                 by = "STATION_CODE",
+                 na_matches = "never") %>%
+  # Add LOQ
+  safe_left_join(dat_param_loq,
+                 check = "CV",
+                 by = c("PARAM", "MYEAR", "TISSUE_NAME"),
+                 na_matches = "never") %>%
+  mutate(MSTAT = factor(MSTAT,  levels = c("IH", "RH", "B"))) %>%
+  # Add mean trophic level per station
+  group_by(STATION_CODE) %>%
+  mutate(TL_mean = mean(TL, na.rm = TRUE)) %>%
+  ungroup()
+
+# dat2 <- dat
+
+
+```
+
+### Test add_random_data() function  
+```{r}
+
+# Check parameters with ca 50% under LOQ
+dat2 %>%
+  filter(MYEAR > 2014) %>%
+  group_by(PARAM) %>%
+  summarise(less_thans = mean(!is.na(FLAG1))) %>%
+  filter(less_thans < 0.5) %>%
+  arrange(desc(less_thans))
+
+# Just pick 10 randm PFUdA records
+test <- dat2 %>%
+  filter(PARAM %in% "PFUdA") %>%
+  select(MYEAR, STATION_CODE, VALUE_WW, FLAG1, LOQ) %>%
+  head(10)
+
+test
+# debugonce(add_random_data)
+test %>% add_random_data()
+test %>% add_random_data()
+
+```
+
+
+### Use correct basis  
+```{r}
+
+pah <- c("ACNLE", "ACNE", "FLE", "PA", "ANT", "FLU", "PYR", "BAA", 
+         "CHR", "BBJF", "BKF", "BAP", "DBA3A", "BGHIP", "ICDP", "NAP", 
+         "BBJKF", "BJKF", "PAH16", "KPAH", "P_S") 
+pfas <- c("PFOS", "PFOSA", "PFBS", "PFDcA", "PFHxA", "PFHxS", 
+          "PFHpA", "PFUdA", "PFOA", "PFNA", "PFUdA")
+metals <- c("AG", "AS", "CD", "CO", "CR", "CU", "HG", "SN", 
+            "NI", "PB", "ZN")
+
+dat2 <- dat2 %>%
+  mutate(CONC = case_when(
+    PARAM %in% c(pah, pfas, metals) ~ VALUE_DW,
+    !PARAM %in% c(pah, pfas, metals) ~ VALUE_WW
+  ),
+  Basis = case_when(
+    PARAM %in% c(pah, pfas, metals) ~ "Dry weight",
+    !PARAM %in% c(pah, pfas, metals) ~ "Wet weight"
+  )
+  )
+  
+table(dat2$Basis)
+
+```
+
+
+### Data for plotting maps  
+Used in part 8  
+```{r}
+#
+# Get Norway map data
+#
+test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
+sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
+# test$names[!sel]
+map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
+map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+
+#
+# Add UTM coordinates (x and y) to map
+#
+coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
+SP <- sp::SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+                    proj4string=CRS(crs_longlat)
+)
+SP.UTM <- sp::spTransform(SP, CRS(crs_utm))
+# Add transformed coords to data set
+map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
+map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+
+
+#
+# "Coast" data (coordinates for segments along the coast)
+#
+coast <- readRDS("Data/102_coast_coordinates.rmd")
+
+#
+# Make 'coastsegment_distance'   
+#
+# Distances for start points of the coast segments
+segment_dx <- diff(coast$x)/1000
+segment_dy <- diff(coast$y)/1000
+coastsegment_distance <- sqrt(segment_dx^2 + segment_dy^2) %>% cumsum()
+coastsegment_distance <- c(0, coastsegment_distance)
+
+
+```
+
+## 3. dat_param - data for one parameter
+```{r}
+
+# All metals  
+dat2 %>%
+  filter(nchar(PARAM) == 2 & MYEAR >= 2014) %>%
+  xtabs(~PARAM + MYEAR, .)
+
+param <- "NI"
+# tissue <- "Lever"
+tissue <- "Whole soft body"
+
+dat_param <-  dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>% 
+  add_random_data() %>%
+  mutate(log_CONC = log10(VALUE_WW)) %>%
+  select(PARAM, STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, MYEAR, Dist_along_coast, LNMEA, FAT_PERC, TL, TL_mean) # %>%
+
+
+# Check missing values per year
+dat_param %>%
+  filter(MYEAR >= 2014) %>%
+  split(.$MYEAR) %>%
+  purrr::map(~apply(is.na(.), 2, mean))
+
+dat_param %>%
+  filter(MYEAR >= 2014) %>%
+  xtabs(~STATION_CODE + MYEAR, .)
+
+
+```
+
+## 4. Test: dist_along_coast, adjust separetely for each station     
+- First adjust for length, fat and trophic level, separately for each station  
+- Then analyse the adjusted values by year and distance along coast  
+- Test for one series
+
+### Check data patterns  
+```{r}
+
+df_summ <- dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>%
+  group_by(STATION_CODE, MYEAR) %>%
+  summarise(n = n(), median = median(VALUE_WW), below_loq = mean(!is.na(FLAG1)), loq = mean(LOQ),
+            has_LNMEA = mean(!is.na(LNMEA)), has_TL = mean(!is.na(TL))) 
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = n))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = below_loq))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = loq))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = has_LNMEA))
+
+ggplot(df_summ, aes(MYEAR, STATION_CODE)) +
+  geom_tile(aes(fill = has_TL))
+```
+
+
+
+### Adjust for length and fat (LF), functions    
+We do not include trophic level (TL) as there are data only since 2015  
+So it will (somehow) be included in the analysese on a per-station basis instead   
+  
+#### Function - to use for each parameter     
+Adds the variable log_CONC_adj  
+May also remove some records 
+Note that you can select the response variable you want
+```{r, fig.height=3, fig.width=9}
+
+add_adjusted_value_LF <- function(data, 
+                                  LNMEA_fixed = 500, FAT_PERC_fixed = 40,
+                                  response_variable = "log_CONC",
+                                  plot = FALSE){
+  
+  # Rename given 'response_variable' to 'Response'
+  sel <- names(data) == response_variable
+  if (sum(sel) != 1)
+    stop(paste("variable", response_variable, "not found!"))
+  names(data)[sel] <- "Response" 
+  
+  # Select complete records only
+  sel <- complete.cases(data %>% select(Response, LNMEA, FAT_PERC, STATION_CODE, MYEAR))
+  data <- data[sel,]
+  
+  # Number of stations*years
+  no_stationyears <- paste(data$STATION_CODE, data$MYEAR, sep = "_") %>% 
+    unique() %>% length()
+  
+  if (no_stationyears > 1){   # Check if several years for this station; if not, no need to adjust for year
+    data$fSTATION_CODE <- factor(data$STATION_CODE)
+    data$fMYEAR <- factor(data$MYEAR)
+    mod <- lm(Response  ~ LNMEA + FAT_PERC + fSTATION_CODE*fMYEAR, data = data)
+  } else {
+    mod <- lm(Response  ~ LNMEA + FAT_PERC, data = data)
+  }
+
+  if (plot){
+    par(mfrow = c(1,4), mar = c(4,5,2,1))
+    visreg::visreg(mod)
+  }
+
+
+  # summary(mod)
+
+  pred_data <- data
+  n <- nrow(data)
+  pred_data$LNMEA <- rep(LNMEA_fixed, n)
+  pred_data$FAT_PERC <- rep(FAT_PERC_fixed, n)
+  pred <- predict(mod, pred_data)
+  data$Response_adj <- pred + residuals(mod)
+  
+  
+  # Change names back
+  sel <- names(data) == "Response"
+  names(data)[sel] <- response_variable
+  sel <- names(data) == "Response_adj"
+  names(data)[sel] <- paste0(response_variable, "_adj")
+
+  # remove fMYEAR, if needed
+  if (no_stationyears > 1){
+    result <- as.data.frame(data %>% select(-fMYEAR,-fSTATION_CODE))
+  } else {
+    result <- as.data.frame(data)
+  }
+  invisible(result)
+
+}
+
+
+# debugonce(add_adjusted_value_LF_station)
+
+#
+# Note: add_adjusted_value_LF() may remove some records
+#
+dim(dat_param)
+dat_param2 <- add_adjusted_value_LF(dat_param, LNMEA_fixed = 500, FAT_PERC_fixed = 40, plot = FALSE)
+cat("\n")
+dim(dat_param2)
+
+# names(dat_param)
+# names(dat_param2)
+
+
+```
+
+
+#### Plots of 'dat_param2'  
+```{r}
+
+ggplot(dat_param2, aes(log_CONC, log_CONC_adj)) +
+  geom_point()
+
+dat_param2 %>%
+  group_by(MYEAR, STATION_CODE) %>%
+  summarise_at(vars(log_CONC, log_CONC_adj), list(mean=mean, min=min, max=max)) %>%
+  ggplot(aes(MYEAR, log_CONC_mean)) +
+  geom_pointrange(aes(ymin = log_CONC_min, ymax = log_CONC_max), size = rel(0.2)) +
+  geom_pointrange(aes(x = MYEAR + 0.35, y = log_CONC_adj_mean, 
+                      ymin = log_CONC_adj_min, ymax = log_CONC_adj_max),
+                  color = "red", size = rel(0.2)) +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Log concentrations (mean, min and max)", subtitle = "Black = raw concentration, red = adjusted")
+
+ggplot(dat_param2, aes(log_CONC_adj - log_CONC, LNMEA)) +
+  geom_point()
+
+ggplot(dat_param2, aes(log_CONC_adj - log_CONC, FAT_PERC)) +
+  geom_point()
+
+```
+
+
+#### Test using random values
+```{r}
+
+dat_param2_random <- dat2 %>%
+  filter(PARAM %in% "PFUdA" & TISSUE_NAME %in% "Lever") %>% 
+  add_random_data() %>%
+  mutate(log_CONC = log10(VALUE_WW),
+         log_CONC_r = log10(VALUE_WW_r)) %>%
+  select(STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, log_CONC_r, MYEAR, Dist_along_coast, LNMEA, FAT_PERC, TL, TL_mean) %>%
+  add_adjusted_value_LF(LNMEA_fixed = 500, FAT_PERC_fixed = 40, plot = FALSE, response_variable = "log_CONC_r")
+
+names(dat_param2_random)
+
+```
+
+### Adjust for fat only    
+For blue mussel, where we lack length for a lot of years  
+
+#### Function - to use for each parameter     
+```{r, fig.height=3, fig.width=9}
+
+
+add_adjusted_value_F <- function(data, 
+                                  LNMEA_fixed = 500, FAT_PERC_fixed = 40,
+                                  response_variable = "log_CONC",
+                                  plot = FALSE){
+  
+  # Rename given 'response_variable' to 'Response'
+  sel <- names(data) == response_variable
+  if (sum(sel) != 1)
+    stop(paste("variable", response_variable, "not found!"))
+  names(data)[sel] <- "Response" 
+  
+  # Select complete records only
+  sel <- complete.cases(data %>% select(Response, FAT_PERC, STATION_CODE, MYEAR))
+  data <- data[sel,]
+  
+  # Number of stations*years
+  no_stationyears <- paste(data$STATION_CODE, data$MYEAR, sep = "_") %>% 
+    unique() %>% length()
+  
+  if (no_stationyears > 1){   # Check if several years for this station; if not, no need to adjust for year
+    data$fSTATION_CODE <- factor(data$STATION_CODE)
+    data$fMYEAR <- factor(data$MYEAR)
+    mod <- lm(Response  ~ FAT_PERC + fSTATION_CODE*fMYEAR, data = data)
+  } else {
+    mod <- lm(Response  ~ FAT_PERC, data = data)
+  }
+
+  if (plot){
+    par(mfrow = c(1,4), mar = c(4,5,2,1))
+    visreg::visreg(mod)
+  }
+
+
+  # summary(mod)
+
+  pred_data <- data
+  n <- nrow(data)
+  pred_data$FAT_PERC <- rep(FAT_PERC_fixed, n)
+  pred <- predict(mod, pred_data)
+  data$Response_adj <- pred + residuals(mod)
+  
+  
+  # Change names back
+  sel <- names(data) == "Response"
+  names(data)[sel] <- response_variable
+  sel <- names(data) == "Response_adj"
+  names(data)[sel] <- paste0(response_variable, "_adj")
+
+  # remove fMYEAR, if needed
+  if (no_stationyears > 1){
+    result <- as.data.frame(data %>% select(-fMYEAR,-fSTATION_CODE))
+  } else {
+    result <- as.data.frame(data)
+  }
+  invisible(result)
+
+}
+
+
+
+# debugonce(add_adjusted_value_LF_station)
+
+#
+# Note: add_adjusted_value_LF() may remove some records
+#
+dim(dat_param)
+dat_param2 <- add_adjusted_value_F(dat_param, plot = FALSE)
+cat("\n")
+dim(dat_param2)
+
+# names(dat_param)
+# names(dat_param2)
+
+
+```
+
+
+
+### Linear analysis by year and dist. along coast   
+Use gls with AR1 model  
+
+#### Test
+```{r}
+
+# PSeudorepl
+mod0 <- gls(log_CONC_adj ~ MYEAR + Dist_along_coast, data = dat_param2)
+acf(residuals(mod0), type = "partial")
+
+# Autocorrelation structure only
+mod10 <- gls(log_CONC_adj ~ 1, data = dat_param2,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+acf(residuals(mod10), type = "partial")
+
+# Year
+mod1a <- gls(log_CONC_adj ~ MYEAR, data = dat_param2,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+# Dist_along_coast
+mod1b <- gls(log_CONC_adj ~ Dist_along_coast, data = dat_param2,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+# Year + Dist_along_coast
+mod1c <- gls(log_CONC_adj ~ MYEAR + Dist_along_coast, data = dat_param2,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+# Year - Dist_along_coast - interaction
+mod1d <- gls(log_CONC_adj ~ MYEAR*Dist_along_coast, data = dat_param2,
+            correlation = corAR1(form = ~1 | STATION_CODE))
+
+aic <- AIC(mod0, mod10, mod1a, mod1b, mod1c, mod1d)
+aic$dAIC <- aic$AIC - min(aic$AIC)
+aic
+
+# AIC says that "models are not all fitted to the same number of observations"
+# BUT they are! (see below)
+cat("\n")
+list(mod0, mod10, mod1a, mod1b, mod1c, mod1d) %>% map_int(~summary(.)$dims$N)
+
+# summary(mod1d) %>% str()
+summary(mod1a)$tTable
+
+# summary(mod1d)$tTable
+# summary(mod1c)$tTable
+# summary(mod1c)$tTable
+# summary(mod1c)$tTable[2:3,] %>% matrix(nrow = 1) %>% data.frame()
+
+
+```
+
+#### Function    
+```{r}
+
+run_gls <- function(data, response_variable = "log_CONC_adj"){
+
+  # Rename given 'response_variable' to 'Response'
+  sel <- names(data) == response_variable
+  if (sum(sel) != 1)
+    stop(paste("variable", response_variable, "not found!"))
+  names(data)[sel] <- "Response" 
+  
+  
+  data <- data %>%
+    select(STATION_CODE, Response, MYEAR, Dist_along_coast) %>%
+    filter(complete.cases(.))  # %>%
+  # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
+  # summarize(log_CONC_adj = mean(log_CONC_adj))
+  
+  mod10 <- gls(Response ~ 1, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1a <- gls(Response ~ MYEAR, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1b <- gls(Response ~ Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1c <- gls(Response ~ MYEAR + Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  mod1d <- gls(Response ~ MYEAR*Dist_along_coast, data = data,
+               correlation = corAR1(form = ~1 | STATION_CODE))
+  
+  aic <- AIC(mod10, mod1a, mod1b, mod1c, mod1d)
+  aic$dAIC <- aic$AIC - min(aic$AIC)
+  
+  best_model <- which.min(aic$AIC)
+  
+  # Resuts from model with MYEAR + Dist_along_coast, without interaction
+  ttable_values <- summary(mod1c)$tTable[2:3, c(1,2,4)] %>% as.numeric()
+  result <- c(best_model, 
+              aic$dAIC[2:5],
+              ttable_values) %>% 
+    matrix(nrow = 1) %>% 
+    data.frame(stringsAsFactors = FALSE)
+  names(result) <- c("Best_model",
+                     "dAIC_yr", "dAIC_dist", "dAIC_yr_dist", "dAIC_yr_x_dist",
+                     "Year_est", "Position_est",
+                     "Year_se", "Position_se",
+                     "Year_p", "Position_p")
+  result
+}
+
+# debugonce(run_gls)
+# run_gls(dat_param2)
+
+list(dat_param2,
+     dat_param2 %>% filter(MSTAT != "IH")) %>% 
+  map_df(run_gls)
+
+
+```
+
+#### Test using random values  
+```{r}
+run_gls(dat_param2_random,  response_variable = "log_CONC_r_adj") 
+run_gls(dat_param2_random,  response_variable = "log_CONC") 
+
+```
+
+
+### Function for one replicate      
+```{r}
+
+analysis_one_par_one_repl <- function(param, tissue, data){
+
+  # Select data, addrandom values for data below LOC, and calculate the log concentration
+  data_selected <- data %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>% 
+    add_random_data() %>%
+    mutate(log_CONC = log10(VALUE_WW),
+           log_CONC_r = log10(VALUE_WW_r)) %>%
+    select(STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, log_CONC_r, MYEAR, Dist_along_coast, LNMEA, FAT_PERC, TL, TL_mean)
+  
+
+  # Add adjusted value
+  if (tissue %in% "Whole soft body"){
+    data_selected <- add_adjusted_value_F(data_selected,
+                                          FAT_PERC_fixed = 40, 
+                                          plot = FALSE, 
+                                          response_variable = "log_CONC_r")
+  } else {
+    data_selected <- add_adjusted_value_LF(data_selected,
+                                           LNMEA_fixed = 500, FAT_PERC_fixed = 40, 
+                                           plot = FALSE, 
+                                           response_variable = "log_CONC_r")
+  }
+  
+  # Run analysis
+  result <- run_gls(data_selected,  response_variable = "log_CONC_r_adj") 
+
+  # Output
+  data.frame(PARAM = param, TISSUE_NAME = tissue, result,
+             stringsAsFactors = FALSE)
+  
+}
+
+# Testing 
+analysis_one_par_one_repl("NI", "Lever", dat2)
+analysis_one_par_one_repl("NI", "Whole soft body", dat2)
+analysis_one_par_one_repl("PFUdA", "Lever", dat2)
+# analysis_one_par_one_repl("CD", "Whole soft body", dat2)
+# debugonce(analysis_one_par_one_repl)
+# debugonce(add_adjusted_value_LF)
+# analysis_one_par_one_repl("HG", "Muskel", dat2)
+
+# 1:5 %>% set_names()
+```
+
+### N replicates  
+
+#### Test
+```{r}
+
+
+1:3 %>% 
+  set_names() %>% 
+  map_dfr(
+  ~analysis_one_par_one_repl(param = "PFUdA", 
+                             tissue = "Lever", 
+                             data = dat2),
+  .id = "Repl"
+)
+
+
+```
+
+#### Function for n replicates  
+Replicates needed since 'add_random_data' will give different results each time  
+```{r}
+
+analysis_one_par <- function(param, tissue, data, nrepl = 5){
+  
+  seq(1, nrepl) %>%
+    set_names() %>%
+    map_dfr(
+      ~analysis_one_par_one_repl(param = param, 
+                                 tissue = tissue, 
+                                 data = data),
+      .id = "Repl")
+  
+}
+
+
+analysis_one_par("NI", "Lever", dat2, nrepl = 2)
+analysis_one_par("PFUdA", "Lever", dat2, nrepl = 5)
+
+
+```
+
+## 5. Run for all parameters + tissues
+
+
+### Number of data   
+Naturally higher for cod than for blue mussel
+```{r}
+
+dat2 %>%
+  count(PARAM, TISSUE_NAME) %>%
+  ggplot(aes(n)) + 
+  geom_histogram(binwidth = 200) +
+  facet_wrap(vars(TISSUE_NAME))
+
+dat2 %>%
+  count(PARAM, TISSUE_NAME) %>% 
+  ggplot(aes(n)) + 
+  geom_histogram(binwidth = 25) +
+  facet_wrap(vars(TISSUE_NAME)) +
+  coord_cartesian(xlim = c(0,500))
+
+```
+
+### Number of stations 
+```{r}
+# Number of parameters/stations 
+df_acceptable_stations <- dat2 %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  mutate(sample_size = n()) %>%
+  count(PARAM, TISSUE_NAME, STATION_CODE, MSTAT, Lat, MYEAR, sample_size) %>%
+  filter(n >= 3) %>%  # min. number of samples per parameter/station/year 
+  count(PARAM, TISSUE_NAME, STATION_CODE, MSTAT, Lat, sample_size) %>%
+  filter(n >= 3)      # min. number of years per parameter/station
+
+# Plot
+ggplot(df_acceptable_stations, aes(Lat, fill = MSTAT)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(vars(TISSUE_NAME)) +
+  labs(title = "Number of acceptable parameters*stations (y) by latitude (x)")
+
+
+# One line per parameter/tissue/region/impact, n = number of stations  
+df_param <- df_acceptable_stations %>%
+  mutate(Area = case_when(
+    Lat > 65 ~ "North",
+    Lat > 63 ~ "Mid",
+    TRUE ~ "South"
+  ),
+  Impacted = (MSTAT == "IH")
+  ) %>% 
+  arrange(PARAM, TISSUE_NAME, Area) %>%
+  count(PARAM, TISSUE_NAME, Area, Impacted, sample_size)
+
+# One line per parameter/tissue - one column per region (all stations)
+df_param_all <- df_param %>%
+  group_by(PARAM, TISSUE_NAME, Area, sample_size) %>% 
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  tidyr::pivot_wider(names_from = "Area", values_from = "n") 
+
+# One line per parameter/tissue - one column per region (unimpacted stations)
+df_param_notimpacted <- df_param %>%
+  filter(!Impacted) %>%
+  tidyr::pivot_wider(names_from = "Area", values_from = "n") %>%
+  select(-Impacted)
+
+# One line per tissue/coverage - number gives number of parameters
+df1 <- df_param_all %>%
+  mutate(Spatial_coverage = case_when(
+    North >= 2 ~ "OK",
+    TRUE ~ "Not OK")) %>%
+  count(TISSUE_NAME, Spatial_coverage) %>% # View()
+  rename(All = n)
+
+# One line per tissue/coverage - number gives number of parameters (unimpacted stations)
+df2 <- df_param_notimpacted %>%
+  mutate(Spatial_coverage = case_when(
+    North >= 2 ~ "OK",
+    TRUE ~ "Not OK")) %>% # View()
+  count(TISSUE_NAME, Spatial_coverage) %>%
+  rename(Notimpacted = n) 
+
+# One line per tissue/coverage - number gives number of parameters
+left_join(df1, df2, by = c("TISSUE_NAME", "Spatial_coverage"),
+          na_matches = "never")
+
+```
+
+### Select time series  
+Based on 'df_param_notimpacted'  
+```{r}
+
+series_param_tissue <- dat2 %>%
+  distinct(PARAM, TISSUE_NAME) %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  left_join(df_param_notimpacted, 
+            by = c("PARAM", "TISSUE_NAME"),
+            na_matches = "never") %>%
+  filter(North >= 2) %>% 
+  as.data.frame()
+
+# head(dat_param_tissue)  
+nrow(series_param_tissue)  
+
+```
+
+Safe version of analysis_one_par  
+```{r}
+analysis_one_par_s <- safely(analysis_one_par)
+```
+
+```{r}
+series_param_tissue[12:13,]
+
+dat2_notimpacted <- dat2 %>%
+  # Only difference from the next: using 'df_param_notimpacted' here:
+  filter(!MSTAT %in% "IH") %>% 
+  as.data.frame()
+
+# Test
+if (FALSE){
+  
+  analysis_one_par_s("ZN", "Lever", dat2_notimpacted, nrepl = 3)
+  analysis_one_par_s("CB_S7", "Lever", dat2_notimpacted, nrepl = 3)
+  analysis_one_par_S("PFUdA", "Lever", dat2_notimpacted, nrepl = 3)
+  
+  # Test 2
+  result_list <- 12:13 %>%
+    # result_list <- seq(1,10) %>%
+    purrr::map(
+      ~analysis_one_par_s(series_param_tissue$PARAM[.], 
+                          series_param_tissue$TISSUE_NAME[.], 
+                          dat2_notimpacted,    # NOTE
+                          nrepl = 3)
+    ) %>%
+    purrr::transpose()
+  
+  ok <- result_list[[2]] %>% map_lgl(is.null)
+  sum(ok)
+  
+  result <- result_list[[1]][ok] %>% bind_rows()
+
+  
+}
+
+```
+
+### Run analysis for all non-impacted stations  
+```{r, warning=FALSE, message=FALSE}
+
+# run_analysis <- TRUE
+run_analysis <- FALSE
+
+if (run_analysis){
+  
+  # For taking the time 
+  t0 <- Sys.time()
+  
+  result_list <- 1:nrow(series_param_tissue) %>%
+    # result_list <- seq(1,10) %>%
+    purrr::map(
+      ~analysis_one_par_s(series_param_tissue$PARAM[.], 
+                          series_param_tissue$TISSUE_NAME[.], 
+                          dat2_notimpacted,    # NOTE
+                          nrepl = 3)
+    ) %>%
+    purrr::transpose()
+  
+  # For takng the time 
+  t1 <- Sys.time()
+  t1-t0     # 6.75 minutes
+  
+} else {
+  
+  # If run_analysis = FALSE, we just use the saved data
+  result_list <- readRDS("Data/120_result_list_notimpacted.rds")
+
+}
+
+```
+
+### Save   
+We only run the "savRDS" line if we have run a new analysis (run_analysis = TRUE)  
+Otherwise we just read the saved data  
+```{r}
+
+if (run_analysis){
+  saveRDS(result_list, "Data/120_result_list_notimpacted.rds")
+} else {
+  result_list <- readRDS("Data/120_result_list_notimpacted.rds")
+}
+
+```
+
+
+### linear_results - result as data frame
+```{r}
+
+ok <- result_list[[2]] %>% map_lgl(is.null)
+sum(ok)
+mean(ok)
+
+series_param_tissue$Result_nonimpact <- ok
+
+linear_results <- result_list[[1]][ok] %>% 
+  bind_rows() %>% 
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"),
+            na_matches = "never") %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group)
+
+```
+
+## 6. Check results  
+
+### Best AIC
+```{r}
+
+xtabs(~Best_model + TISSUE_NAME, linear_results)
+
+```
+
+### Estimates  
+As a beautiful (?) kable table  
+```{r}
+library(knitr)
+library(kableExtra)
+
+linear_results %>%
+  filter(TISSUE_NAME %in% "Lever") %>%
+  group_by(Substance.Group, PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Position_est_mean = (1000*Position_est_mean) %>% round(3),
+         Position_se_mean = (1000*Position_se_mean) %>% round(3),
+         P = case_when(
+           Position_p_median < 0.001 ~ "< 0.001",
+           Position_p_median < 0.01 ~ round(Position_p_median, 3) %>% as.character(),
+           Position_p_median <= 1 ~ round(Position_p_median, 2) %>% as.character()
+         ),
+         Parameter = cell_spec(
+           PARAM, "html", 
+           color = ifelse(Position_p_median < 0.05, "red", "black")),
+         Distance_along_coast = cell_spec(
+           Position_est_mean, "html", 
+           color = ifelse(Position_p_median < 0.05, "red", "black")),
+         SE = cell_spec(
+           Position_se_mean, "html",
+           color = ifelse(Position_p_median < 0.05, "red", "black")),
+         `P-value` = cell_spec(
+           P, "html", 
+           color = ifelse(Position_p_median < 0.05, "red", "black")),
+  ) %>%
+  select(Parameter, Distance_along_coast, SE, `P-value`) %>%
+  knitr::kable(format = "html", escape = FALSE) %>%
+  kableExtra::kable_styling(bootstrap_options = "condensed")
+
+# writeLines(table, "clipboard")
+# table
+
+
+```
+
+## 7. Use GAMM instead    
+
+We use a bit different approach than in part 4-5:     
+- run_gamm() returns a list of two data frames (run_gls returned just a one.line data frame)  
+- thus, to avoid too many "list layers" in the final result, we skip the analysis_one_par()
+  function (see "function for n replicates, above)  
+- the final run runs through a data frame (listno_replicate) with e.g. 3 rows per 
+  parameter/tissue (for 3 replicates of below-LOQ numbers)   
+  
+#### Functions for GAMM    
+
+
+```{r, fig.width = 8, fig.height=3.5}
+
+#
+# Function 1
+#
+run_gamm_model <- function(data, response_variable = "log_CONC_adj"){
+
+  # Rename given 'response_variable' to 'Response'
+  sel <- names(data) == response_variable
+  if (sum(sel) != 1)
+    stop(paste("variable", response_variable, "not found!"))
+  names(data)[sel] <- "Response" 
+  
+  data <- data %>%
+    select(PARAM, TISSUE_NAME, STATION_CODE, Response, MYEAR, Dist_along_coast) %>%
+    filter(complete.cases(.))  # %>%
+  # group_by(STATION_CODE, MYEAR, Dist_along_coast) %>%
+  # summarize(log_CONC_adj = mean(log_CONC_adj))
+  
+  mod <- gamm(Response ~ s(MYEAR, k = 4) + s(Dist_along_coast, k = 8), 
+                data = data,
+                correlation = corAR1(form = ~1 | STATION_CODE))
+  
+  list(mod = mod, data = data)
+
+  }
+
+#
+# Function 2
+#
+run_gamm_extract_results <- function(model, data, repl = 1){
+
+  # Get parameter and tissue (will be saved in resulting data frames)
+  parameter <- data$PARAM %>% unique() %>% paste(collapse = ",")
+  tissue_name <- data$TISSUE_NAME %>% unique() %>% paste(collapse = ",")
+  
+  
+  #
+  # 1. "ttable" object (t-table)
+  #
+  # Get t-table from model (data frame of 1 row)
+  ttable_values <- summary(model$gam)$s.table[,c(1,3,4)] %>% as.numeric()
+  # Add parameter and tissue to t values
+  ttable <- c(parameter, tissue_name,
+              repl,
+              ttable_values) %>%
+    matrix(nrow = 1) %>% 
+    data.frame(stringsAsFactors = FALSE)
+  names(ttable) <- c(
+    "PARAM", "TISSUE_NAME", "Repl",
+    "Year_edf", "Position_esdf",
+    "Year_F", "Position_F",
+    "Year_p", "Position_p")
+  
+  #
+  # 2. "plotvalues" object 
+  #
+  # Get plot values (data frame of 100 rows)
+  model$gam$data <- data   # needed, otherwise visreg doesn't work
+  plotvalues <- visreg::visreg(
+    model$gam, "Dist_along_coast", plot = FALSE)$fit
+  
+  # Add parameter and tissue to plot values
+  plotvalues <- plotvalues %>%
+    mutate(PARAM = parameter,
+           TISSUE_NAME = tissue_name,
+           Repl = repl) %>%
+    select(PARAM, TISSUE_NAME, Repl, everything())
+  
+  # Final result = list of two data frames
+  list(ttable=ttable, plotvalues=plotvalues)
+
+}
+
+#
+# Function 3 - main function which calls the two others  
+#
+run_gamm <- function(data, response_variable = "log_CONC_adj", repl = 1){
+  model_and_data <- run_gamm_model(data = data, 
+                                   response_variable = response_variable)
+  run_gamm_extract_results(model = model_and_data$mod, 
+                           data = model_and_data$data, 
+                           repl = repl)
+  
+}
+
+if (FALSE){
+
+  # Test function 1
+  x <- run_gamm_model(dat_param2)
+  str(x, 1)
+  str(x$mod, 1)
+
+  # "Standard plot
+  par(mfrow = c(1,2), mar = c(4,5,2,1))
+  plot(x$mod$gam, res = TRUE)
+  
+  # visreg plot
+  x$mod$gam$data <- x$data   # needed, otherwise visreg doesn't work
+  par(mfrow = c(1,2), mar = c(4,5,2,1))
+  visreg::visreg(x$mod$gam, "MYEAR")
+  visreg::visreg(x$mod$gam, "Dist_along_coast")
+
+  # Test function 2
+  debugonce(run_gamm_extract_results)
+  y <- run_gamm_extract_results(x$mod, x$data, repl = 1)
+  str(y, 1)
+  y$ttable
+
+  }
+  
+# Test function 3
+z <- run_gamm(dat_param2, repl = 1)
+str(z, 1)
+
+
+```
+
+
+
+### Function for one replicate      
+```{r}
+
+gamm_one_par_one_repl <- function(param, tissue, data, repl = 1){
+
+  # Select data, addrandom values for data below LOC, and calculate the log concentration
+  data_selected <- data %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>% 
+    add_random_data() %>%
+    mutate(log_CONC = log10(VALUE_WW),
+           log_CONC_r = log10(VALUE_WW_r)) %>%
+    select(PARAM, STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, log_CONC_r, 
+           MYEAR, Dist_along_coast, LNMEA, FAT_PERC, TL, TL_mean)
+  
+
+  # Add adjusted value
+  if (tissue %in% "Whole soft body"){
+    data_selected <- add_adjusted_value_F(
+      data_selected,
+      FAT_PERC_fixed = 40, 
+      plot = FALSE, 
+      response_variable = "log_CONC_r")
+  } else {
+    data_selected <- add_adjusted_value_LF(
+      data_selected,
+      LNMEA_fixed = 500, FAT_PERC_fixed = 40, 
+      plot = FALSE, 
+      response_variable = "log_CONC_r")
+  }
+  
+  # Run analysis
+  result <- run_gamm(data_selected,  response_variable = "log_CONC_r_adj", repl = repl) 
+  # Output
+  result
+  
+}
+
+#
+# Testing one series
+#
+x1 <- gamm_one_par_one_repl("NI", "Lever", dat2)
+
+ggplot(x1$plotvalues, aes(Dist_along_coast, visregFit)) +
+  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "grey70") +
+  geom_line()
+
+#
+# Adding another series, show both
+#
+x2 <- gamm_one_par_one_repl("PFUdA", "Lever", dat2)
+
+# Show t values
+list(x1, x2) %>% map_df(~.$ttable)
+
+# Show plot
+list(x1, x2) %>% 
+  map_df(~.$plotvalues) %>%
+  ggplot(aes(Dist_along_coast, visregFit)) +
+    geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr, fill = PARAM), alpha = 0.5) +
+    geom_line(aes(color = PARAM))
+
+  
+
+```
+
+
+### Run for all parameters and replicates
+
+#### Test   
+Two parameters only  
+```{r}
+
+if (FALSE){ 
+  
+  # 1:nrow(series_param_tissue) %>%
+  
+  nrow <- 2  # number of parameters/tissues
+  nrep <- 2  # number of replicates
+  
+  # Data frame with two columns, col. 1 for parameter/tissue, col. 2 for replicate  
+  listno_replicate <- data.frame(
+    listno = rep(1:nrow, each = nrep),
+    replicate = rep(1:nrep, nrow)
+  )
+  nrow(listno_replicate)  # 4
+  
+  # GAM analyses  
+  x <- 1:nrow(listno_replicate) %>%
+    map(
+      ~gamm_one_par_one_repl(
+        series_param_tissue$PARAM[listno_replicate$listno[.]], 
+        series_param_tissue$TISSUE_NAME[listno_replicate$listno[.]],
+        repl = listno_replicate$listno[.],
+        data = dat2)
+    )
+  
+  str(x, 1)            # list of 4 lists
+  str(x[[1]], 1)       # list of 2, ttable and plotvalues
+  
+}
+
+
+```
+
+#### All  
+```{r}
+
+# Safe version
+gamm_one_par_one_repl_s <- safely(gamm_one_par_one_repl)
+
+# Set up
+nrow <- nrow(series_param_tissue)  # number of parameters/tissues
+nrep <- 3                          # number of replicates
+
+# Set up data frame with two columns, col. 1 for parameter/tissue, col. 2 for replicate  
+listno_replicate <- data.frame(
+  listno = rep(1:nrow, each = nrep),
+  replicate = rep(1:nrep, nrow)
+)
+nrow(listno_replicate)  # 555
+
+run_analysis <- TRUE  
+# run_analysis <- FALSE  
+
+if (run_analysis) {
+  
+  # For taking the time 
+  t0 <- Sys.time()
+  
+  # GAM analyses  
+  gamm_list <- 1:nrow(listno_replicate) %>%
+    map(
+      ~gamm_one_par_one_repl_s(
+        series_param_tissue$PARAM[listno_replicate$listno[.]], 
+        series_param_tissue$TISSUE_NAME[listno_replicate$listno[.]],
+        repl = listno_replicate$replicate[.],
+        data = dat2)
+    ) %>%
+    purrr::transpose()
+  
+  # For takng the time 
+  t1 <- Sys.time()
+  t1-t0     # 16 minutes
+  
+  
+} else {
+
+  # Use the saved results
+  gamm_list <- readRDS("Data/120_gamm_list_notimpacted.rds")
+  
+}
+
+str(gamm_list, 1)              # list of 2 lists, "result" and "error"
+length(gamm_list$result)       # list of 555
+str(gamm_list$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
+
+```
+
+### Save  
+Only done once, when we have run the entire analysis  
+```{r}
+
+if (run_analysis)
+  saveRDS(gamm_list, "Data/120_gamm_list_notimpacted.rds")
+
+```
+
+## 8. Check GAMM results  
+
+### Get analyses that dodn't fail  
+
+```{r}
+
+ok <- gamm_list[["error"]] %>% map_lgl(is.null)
+sum(ok)
+mean(ok)  # 0.96
+
+# Save "ok" in data frame used to run analysis
+listno_replicate$Result_ok <- ok
+
+```
+
+### Extract t-values and plot values (fitted lines)  
+- Also take the median fitted lines (across replicates)   
+- Also add 'Substance.Group'  
+```{r, warning=FALSE, results='hide', message=FALSE}
+
+# Extract the one-line t-tables and combine
+ttable_gamm <- gamm_list[["result"]][ok] %>% 
+  map_df(~.[["ttable"]]) %>%
+  # Add substance group
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"))
+
+# Extract the line fits for the "Positopn" effects  
+plotvalues_gamm <- gamm_list[["result"]][ok] %>% 
+  map_df(~.[["plotvalues"]])
+
+# Median fitted lines (across replicates)
+plotvalues_gamm_med <- plotvalues_gamm %>%
+  group_by(PARAM, TISSUE_NAME, Dist_along_coast) %>%
+    summarise_at(
+    vars(visregFit, visregLwr, visregUpr),
+    median) %>%
+  # Add substance group
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"))
+
+# Check 'plotvalues_gamm' and 'plotvalues_gamm_med' for 
+#   a parameter with many <LOQ values (BAP)
+if (FALSE){
+plotvalues_gamm %>%
+  filter(PARAM == "BAP") %>%
+  # We cheat a bit to recreate how Repl should actually be (because of code error; now fixed):
+  mutate(Repl = rep(1:3, each = 101)) %>%   # xtabs(~TISSUE_NAME + Repl, .) 
+  ggplot(aes(Dist_along_coast, visregFit)) + 
+  geom_path(aes(color = factor(Repl)), size = 2) +
+  geom_path(
+    data = plotvalues_gamm_med %>% filter(PARAM == "BAP"),
+    aes(Dist_along_coast, visregFit),
+    linetype = 2
+  )
+}
+
+```
+
+### Check p-values and the fit's degrees of freedom    
+- fit's degrees of freedom > 1 means non-linear fit  
+```{r}
+
+# All numbers are character, set to numeric
+vars <- c("Repl", 
+          "Year_edf", "Position_esdf", "Year_F", 
+          "Position_F", "Year_p", "Position_p")
+for (var in vars)
+  ttable_gamm[[var]] <- as.numeric(ttable_gamm[[var]])
+
+ttable_gamm %>%
+  ggplot(aes(Position_p)) + geom_histogram()
+ttable_gamm %>%
+  ggplot(aes(Position_p, Position_esdf)) + geom_point()
+
+ttable_gamm %>%
+  xtabs(~(Position_p < 0.05) + (Position_esdf > 1), .)
+
+ttable_gamm %>%
+  xtabs(~ addNA(Substance.Group) + (Position_p < 0.05) + TISSUE_NAME, .)
+
+ttable_gamm %>%
+  filter(is.na(Substance.Group)) %>%
+  xtabs(~PARAM, .) %>%
+  names() %>%
+  paste(collapse = ";")
+
+
+```
+
+### Plot fits     
+Both horizontally and vertically
+```{r, fig.width = 8, fig.height = 6} 
+
+group <- "Organobromines"
+
+gg <- plotvalues_gamm_med %>%
+  # Add 'Position_p' (p-values) to data
+  left_join(ttable_gamm %>% select(PARAM, TISSUE_NAME, Position_p)) %>%
+  mutate(Significant = ifelse(Position_p < 0.05, "Significant", "Not significant")) %>%
+  filter(Substance.Group %in% group &
+           TISSUE_NAME %in% "Lever"
+           ) %>% 
+  ggplot(aes(Dist_along_coast, visregFit, color = PARAM, linetype = Significant)) + 
+  geom_line() + 
+  scale_linetype_manual(values = c(2,1))
+
+gg
+
+gg +
+  coord_flip()
+
+```
+
+### Plot results with map   
+Example: Organobromines   
+- Pick only the most common ones, and those with a geographic pattern  
+```{r, fig.height=5, fig.width=9}
+
+group <- "Organobromines"
+
+# Get positions for km's to show:
+points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+
+gg1 <- plotvalues_gamm_med %>%
+  # Pick data
+  filter(Substance.Group %in% group &
+           TISSUE_NAME %in% "Lever"
+           ) %>% 
+  # Add 'Position_p' (p-values) to data
+  left_join(ttable_gamm %>% select(PARAM, TISSUE_NAME, Position_p), 
+            by = c("PARAM", "TISSUE_NAME")) %>%
+  mutate(Significant = ifelse(Position_p < 0.05, "Significant", "Not significant")) %>%
+  # Find mean value (next 3 lines)
+  group_by(PARAM) %>%
+  mutate(mean_value = mean(visregFit)) %>%
+  ungroup() %>%
+  # Pick only the most common parameters (next 4 lines)
+  filter(mean_value > (-0.8) & Significant == "Significant") %>%
+  # Set factors in order following mean_value
+  mutate(PARAM = forcats::fct_reorder(PARAM, mean_value, .desc = TRUE)) %>%
+  # Plot
+  ggplot(aes(Dist_along_coast, visregFit, color = PARAM)) + 
+  geom_line(size = rel(1)) + 
+  geom_vline(data = points, 
+             aes(xintercept = distance),
+             linetype = "dashed") +  
+  annotate("vline", xintercept = points$distance) +
+  labs(x = "Distance along coast", y = "log(Concentration in cod liver)") +
+  theme_bw() 
+
+# Direction of text labels:
+points$Text_direction <- "West"
+points$Text_direction[c(1,6,7)] <- "East"
+
+# PLot
+gg2 <- ggplot(map_df, aes(x, y)) +
+  geom_path() +
+  coord_fixed() +
+  geom_path(data = coast, color = "red") +
+  geom_point(data = points, color = "blue") +
+  geom_text(data = points %>% filter(Text_direction == "West"), 
+            aes(x = x - 20000, label = paste(distance, "km")), color = "blue", hjust = 1, size = rel(3)) +
+  geom_text(data = points %>% filter(Text_direction == "East"), 
+            aes(x = x + 20000, label = paste(distance, "km")), color = "blue", hjust = 0, size = rel(3)) +
+  expand_limits(x = c(min(map_df$x, na.rm = TRUE) - 150000,
+                      max(map_df$x, na.rm = TRUE) + 200000)) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+cowplot::plot_grid(gg1, gg2, nrow = 1, rel_widths = c(2, 1))
+  
+```
+
+
+## 9. Combine linear + non-linear results in table  
+
+```{r}
+tab1 <- linear_results %>%
+  filter(TISSUE_NAME %in% "Lever" & !is.na(Position_est)) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Position_est_mean) ~ "-",
+    Position_est_mean < 0 ~ "Decreasing",
+    Position_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Position_p_median) ~ "-",
+      Position_p_median < 0.001 ~ "< 0.001",
+      Position_p_median < 0.01 ~ round(Position_p_median, 3) %>% as.character(),
+      Position_p_median <= 1 ~ round(Position_p_median, 2) %>% as.character()
+    )) %>%
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)
+
+tab1
+
+tab2 <- ttable_gamm %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_at(vars(Position_esdf, Position_p), median) %>%
+  mutate(Non_linear_df = round(Position_esdf, 2), 
+    Non_linear_p = case_when(
+      is.na(Position_p) ~ "-",
+      Position_p < 0.001 ~ "< 0.001",
+      Position_p < 0.01 ~ round(Position_p, 3) %>% as.character(),
+      Position_p <= 1 ~ round(Position_p, 2) %>% as.character()
+    )) %>% 
+  select(PARAM, TISSUE_NAME, Non_linear_df, Non_linear_p)
+
+tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
+    # Add substance group
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code")) %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group)
+
+
+kable(tab_comb %>% select(-Substance.Group)) # %>%
+#   kableExtra::group_rows(Substance.Group)
+
+
+```
+
+
+
+
