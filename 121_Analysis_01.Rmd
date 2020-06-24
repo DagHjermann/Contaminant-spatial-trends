@@ -1090,6 +1090,7 @@ linear_results %>%
 # table
 
 
+
 ```
 
 ## 7. Use GAMM instead    
@@ -1345,8 +1346,8 @@ listno_replicate <- data.frame(
 )
 nrow(listno_replicate)  # 555
 
-run_analysis <- TRUE  
-# run_analysis <- FALSE  
+# run_analysis <- TRUE  
+run_analysis <- FALSE  
 
 if (run_analysis) {
   
@@ -1614,11 +1615,87 @@ tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
   arrange(Substance.Group)
 
 
-kable(tab_comb %>% select(-Substance.Group)) # %>%
+
+
+sel1 <- unique(tab_comb$PARAM) %in% pars_pcb
+sel2 <- unique(tab_comb$PARAM) %in% pars_bde
+unique(tab_comb$PARAM)[!(sel1 | sel2)] 
+
 #   kableExtra::group_rows(Substance.Group)
 
 
+kabletab <- kable(tab_comb %>% select(-Substance.Group)) %>%
+  kable_styling(bootstrap_options = "condensed")
+
+# tab
+
+for (category in levels(tab_comb$Substance.Group)){
+  sel <- tab_comb$Substance.Group %in% category
+  if (sum(sel) > 0){
+    i <- which(sel) %>% range()
+    kabletab <- kabletab %>% pack_rows(category, i[1], i[2])
+  }
+}
+
+kabletab
+
 ```
+
+### Order variables  
+```{r}
+sort_by_number <- function(x){
+  number <- stringr::str_extract(x, "[0-9]+") %>% as.numeric()
+  number[is.na(number)] <- 0
+  order <- order(number)
+  x[order]
+}
+
+move_to_back <- function(x, pattern){
+  sel <- grepl(pattern, x)
+  c(x[!sel], x[sel])
+}
+# move_behind(LETTERS, "B")
+
+move_to_front <- function(x, pattern){
+  sel <- grepl(pattern, x)
+  c(x[sel], x[!sel])
+}
+
+pars_pcb <- tab_comb %>% 
+  filter(Substance.Group %in% "Chlorobiphenyls") %>%
+  pull(PARAM) %>% 
+  sort_by_number() %>%
+  move_to_back("Pentaklorbenzen (QCB)")
+
+pars_bde <- unique(tab_comb$PARAM) %>% grep("^BD", ., value = TRUE) %>%
+  sort_by_number()
+
+pars_hbcd <- unique(tab_comb$PARAM) %>% grep("HBCD", ., value = TRUE) %>%
+  sort() %>%
+  move_to_front("Sum HBCD")
+
+pars_pfas <- tab_comb %>% 
+  filter(Substance.Group %in% "Organofluorines") %>%
+  pull(PARAM) %>% 
+  move_to_front("PFOSA$") %>% 
+  move_to_front("PFOS$") %>% 
+  move_to_front("PFAS$")
+
+pars_pfas
+
+pars_pcb
+pars_bde
+pars_hbcd
+
+sel1 <- unique(tab_comb$PARAM) %in% pars_pcb
+sel2 <- unique(tab_comb$PARAM) %in% pars_bde
+sel3 <- unique(tab_comb$PARAM) %in% pars_hbcd
+tab_comb[!(sel1 | sel2 | sel3),] %>%
+  select(Substance.Group, PARAM)
+
+```
+
+
 
 
 
