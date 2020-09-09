@@ -182,3 +182,41 @@ if (FALSE){
                              df_segments_distances = coastsegment_distance)
 }
 
+
+
+#
+# Give distance along the coastline, get the coordinates in return  
+# Only works for a single distance  
+# Note that the '
+#
+get_point_on_coastline <- function(distance = 1000, 
+                                   df_segments = coast,
+                                   df_segments_distances = coastsegment_distance){
+  # First, which segment are we on;
+  segment_no <- which(df_segments_distances < distance) %>% tail(1)
+  if (length(segment_no) > 0){
+    # Distance from start of segment to the coordinate
+    distanceleft <- distance - df_segments_distances[segment_no]
+    # SAme, as fraction of the distance length
+    distanceleft_fraction <- distanceleft/diff(df_segments_distances[segment_no:(segment_no+1)])
+    # Start and end coordinates of the segment
+    segment_start <- df_segments[segment_no, c("x", "y")]
+    segment_end <- df_segments[segment_no + 1, c("x", "y")]
+    # The coordinate we want
+    x <- segment_start["x"] + distanceleft_fraction*(segment_end["x"] - segment_start["x"])
+    y <- segment_start["y"] + distanceleft_fraction*(segment_end["y"] - segment_start["y"])
+    # Include 'distance' in the result (for use in map_df)
+    result <- data.frame(distance = distance, x = as.numeric(x), y = as.numeric(y))
+  } else {
+    # If the input is distance = 0 (start of the 'df_segments' data)
+    result <- data.frame(distance = distance, x = df_segments$x[1], y = df_segments$y[1])
+  }
+  result
+}
+
+# Test
+if (FALSE){
+  # debugonce(get_point_on_coastline)
+  get_point_on_coastline(1000)
+  get_point_on_coastline(0) %>% str()
+}
