@@ -2,7 +2,10 @@
 title: "104_Isotopes_and_trophic_level"
 author: "DHJ"
 date: "19 5 2020"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
+    toc: true
 ---
 
 
@@ -17,7 +20,7 @@ Her er Delta15N_torsk verdien av d15N for den enkelte torsken, mens Delta15N_bl�
 Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå ca. 2 (altså at de er primærkonsumenter) og at d15N øker med 3.8 for hvert (hele) trofiske nivå i næringskjeden.
 
 
-1. Libraries  
+## 1. Libraries  
 ```{r}
 
 library(dplyr)
@@ -32,14 +35,21 @@ library(safejoin)  # package from https://github.com/moodymudskipper/safejoin
 
 ## 2. Data
 
-### Read files  
+### Read files   
+NOTE: the file `87_df_isotopes.rds` is created in the `Milkys` project and copied from there
 ```{r}
 
 # Raw data  
 dat <- readRDS("Data/101_Selected_data.rds")
 
-# Extra isotope data
+cat("\nRaw data: \n")
+xtabs(~MYEAR, dat)
+
+# Extra isotope data  
+# created in the `Milkys` project and copied from there
 dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+cat("\n\nIsotope data: \n")
+xtabs(~MYEAR, dat_isotopes)
 
 # Station metadata
 df_stations <- readRDS("Data/103_Selected_stations.rds")
@@ -56,12 +66,23 @@ df_stations <- df_stations %>%
 
 
 ```
+#### Check  
+```{r}
+
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  xtabs(~STATION_CODE + MYEAR, .)
+
+
+```
 
 ### Add position       
+Using `df_stations` 
 ```{r}
 
 dat_isotopes <- dat_isotopes %>%
   safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
+                 na_matches = "never",
                  check = "CV",
                  by = "STATION_CODE")
 
@@ -74,21 +95,23 @@ dat_isotopes_means1 <- dat_isotopes %>%
   group_by(TISSUE_NAME, STATION_CODE, Lat, Lon, MYEAR) %>%
   summarise_at(c("Delta13C", "Delta15N"), mean, na.rm = TRUE) %>%
   ungroup()
+xtabs(~MYEAR, dat_isotopes_means1)
 
 dat_isotopes_means1 %>%
   filter(TISSUE_NAME %in% "Muskel") %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
-  viridis::scale_fill_viridis()
+  viridis::scale_fill_viridis() +
+  labs(title = "Muskel")
   
 dat_isotopes_means1 %>%
   filter(TISSUE_NAME %in% "Whole soft body") %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
   viridis::scale_fill_viridis() +
-  theme(axis.text.x = element_text(angle = -45, hjust = 0))
-  
-  
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  labs(title = "Whole soft body")
+
 
 ```
 
@@ -151,20 +174,27 @@ stringsAsFactors = FALSE
 
 ```
 
+### Plot stations  
+```{r}
+
+
+
+```
+
 ### Plot N15 for these cod and mussel stations  
 ```{r}
 dat_isotopes %>%
   filter(TISSUE_NAME %in% "Muskel" &
            STATION_CODE %in% data_closest_mussel_station$Cod_station) %>%
   ggplot(aes(MYEAR, Delta15N)) +
-  geom_point() +
+  geom_jitter(width = 0.1) +
   facet_wrap(vars(STATION_CODE))
 
 dat_isotopes %>%
   filter(TISSUE_NAME %in% "Whole soft body" &
          STATION_CODE %in% data_closest_mussel_station$Mussel_station) %>%
   ggplot(aes(MYEAR, Delta15N)) +
-  geom_point() +
+  geom_jitter(width = 0.1) +
   facet_wrap(vars(STATION_CODE))
 
 ```
@@ -190,7 +220,8 @@ data_closest_mussel_station <- data_closest_mussel_station %>%
 
 
 
-## 4. Add data to main data   
+## 4. Add mussel data columns to main data   
+And calculate trophic level (TL)
 ```{r}
 
 dat2 <- dat %>%
@@ -238,6 +269,34 @@ dat2 %>%
 
 ```
 
+### Simple analysis  
+```{r}
+
+dat2b <- dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" & TL < 6) # cod - and remive one outlier 
+
+m1 <- lm(TL ~ factor(MYEAR), dat2b)
+m2 <- lm(TL ~ STATION_CODE, dat2b)
+m3 <- lm(TL ~ factor(MYEAR) + STATION_CODE, dat2b)
+m4 <- lm(TL ~ factor(MYEAR)*STATION_CODE, dat2b)    # Very slow!
+
+cat("===========================================\n")
+cat("\nEffect of STATION_CODE: \n\n")
+anova(m1, m3)
+cat("===========================================\n")
+cat("\nEffect of MYEAR: \n\n")
+anova(m2, m3)
+cat("===========================================\n")
+cat("\nEffect of STATION_CODE*MYEAR interaction: \n\n")
+anova(m3, m4)
+
+```
+
+### Show Station effect  
+```{r, fig.width=8.5, fig.height=5}
+visreg::visreg(fit = m3, xvar = "STATION_CODE")
+```
+
 
 ## 5. Save data  
 ```{r}
@@ -245,5 +304,6 @@ dat2 %>%
 if (FALSE){
   saveRDS(dat2, "Data/104_Selected_data.rds")
 }
+
 ```
 
