@@ -16,6 +16,7 @@ library(ggplot2)
 library(safejoin)   # github moodymudskipper
 
 library(maps)
+# install.packages("mapdata")
 library(mapdata)
 
 simple_map <- map_data("worldHires", "Norway")
@@ -28,11 +29,48 @@ simple_map <- map_data("worldHires", "Norway")
 ### Main data
 ```{r}
 
-dat <- readRDS("../Milkys/Data/10_data_all.RData") %>%
+dat_old <- readRDS("../Milkys/Data/10_data_all.RData") %>%
   filter(MYEAR >= 1994)
 
-```
+# "Input_data/"
+dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+  filter(MYEAR >= 1994)
 
+names(dat)
+names(dat_old)
+
+xtabs(~MYEAR, dat)
+
+```
+### Some tables  
+```{r}
+
+cat("---------------------------------------------------------------- \n")
+cat("PARAMETERS \n")
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  xtabs(~PARAM + MYEAR, .)
+
+cat("---------------------------------------------------------------- \n")
+cat("STATIONS \n")
+cat("Urban ones: 24B = Bergen, 43B2 = Tromsø harbour, 30B = Oslo \n")
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  xtabs(~STATION_CODE + MYEAR, .)
+
+
+if (FALSE){
+  dat %>%
+    filter(STATION_CODE %in% "24B" & MYEAR >= 2005) %>%
+    xtabs(~PARAM + MYEAR, .)
+  
+  # Ålesund: no PFAS analysed
+  dat %>%
+    filter(STATION_CODE %in% "28B" & MYEAR >= 2005) %>%
+    xtabs(~PARAM + MYEAR, .)
+}
+
+```
 
 ### Coordinates  
 ```{r}
@@ -47,9 +85,7 @@ col_spec <- cols(
   Organisation = col_character(),
   Station_Name = col_character(),
   ReplacedBy = col_character(),
-  MSTAT = col_character(),
-  Description = col_character(),
-  Other_area = col_logical(),
+  MSTAT = col_character(),  Other_area = col_logical(),
   WLTYP = col_character(),
   Geometry = col_character(),
   All_Data_Types = col_character(),
@@ -84,11 +120,11 @@ df
 
 ```
 
-### Pick stations with >= 6 of the last 10 years  
+### Pick stations with >= 4 of the last 10 years  
 ```{r}
 
 stations <- df %>%
-  filter(n >= 6) %>%
+  filter(n >= 4) %>%
   pull(STATION_CODE)
 
 # Snail stations 
@@ -96,7 +132,7 @@ sel <- grepl("G", stations)
 # stations[sel]
 
 stations <- stations[!sel]
-stations
+stations %>% sort()
 
 ```
 
