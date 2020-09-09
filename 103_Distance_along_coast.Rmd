@@ -93,6 +93,7 @@ ggplot(map_df, aes(Longitude, Latitude)) +
 ```
 
 
+
 ## 4. Add UTM coordinates (x and y) to map
 ```{r}
 #
@@ -131,6 +132,51 @@ coastsegment_distance <- c(0, coastsegment_distance)
 coastsegment_distance
 
 ```
+
+### Show some "fixed km" along the coast on map    
+Using function get_point_on_coastline()   
+```{r}
+
+# Get positions for these km's:
+points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+
+# Direction of text labels:
+points$Text_direction <- "West"
+points$Text_direction[c(1,6,7)] <- "East"
+
+# PLot
+ggplot(map_df, aes(x, y)) +
+  geom_path() +
+  coord_fixed() +
+  geom_path(data = coast, color = "red") +
+  geom_point(data = points, color = "blue") +
+  geom_text(data = points %>% filter(Text_direction == "West"), 
+            aes(x = x - 20000, label = paste(distance, "km")), color = "blue", hjust = 1) +
+  geom_text(data = points %>% filter(Text_direction == "East"), 
+            aes(x = x + 20000, label = paste(distance, "km")), color = "blue", hjust = 0) +
+  expand_limits(x = c(min(map_df$x, na.rm = TRUE) - 150000,
+                      max(map_df$x, na.rm = TRUE) + 200000)) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+### Plot 
+```{r}
+
+ggplot(map_df, aes(x, y)) + 
+  geom_path() +
+  coord_fixed() +
+  geom_path(data = coast, color = "red") +
+  
+
+```
+
 
 ### Test 'get_distance_along_coast' and 'check_distance_along_coast'  
 ```{r}
