@@ -18,6 +18,8 @@ library(purrr)
 library(safejoin)
 library(leaflet)
 
+library(knitr)    # for function kable()
+
 source("202_Airport_analysis_functions.R")
 
 
@@ -53,10 +55,17 @@ dat_airports <- readRDS("Data/201_dat_airports.rds")
 # dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
 #   filter(MYEAR >= 1994)
 dat <- readRDS("Data/201_dat3.rds") %>%
-  filter(MYEAR >= 1994)
+  filter(MYEAR >= 1994 & substr(PARAM, 1, 2) == "PF")
 
+station_order <- dat %>%
+  distinct(STATION_CODE, Dist_along_coast) %>%
+  arrange(Dist_along_coast) %>%
+  pull(STATION_CODE)
 
-# Add 'Dist_along_coast'
+dat <- dat %>%
+  mutate(STATION_CODE = factor(STATION_CODE, levels = station_order))
+
+         # Add 'Dist_along_coast'
 df_distance <- readRDS("Data/201_df_distance.rds")%>%
   safe_left_join(meta_stations,
                  by = "STATION_CODE", na_matches = "never", check = "bCV")
@@ -68,20 +77,22 @@ df_distance <- readRDS("Data/201_df_distance.rds")%>%
 ### a2 Tables
 ```{r, echo = FALSE, results='hold'}
 
-cat("=============================================================================\n")
-cat("PFAS by substance/year (cod liver only) \n")
-cat("-----------------------------------------------------------------------------\n")
 tab <- dat %>%
   filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
+  distinct(STATION_CODE, MYEAR, PARAM) %>%
   xtabs(~PARAM + MYEAR, .)
-tab
 
-cat("=============================================================================\n")
-cat("PFAS by station/year ('B' stations = cod stations, the rest is blue mussel) \n")
-cat("-----------------------------------------------------------------------------\n")
+# flextable(tab)
+knitr::kable(tab, caption = "Number of stations by substance/year (cod liver only)")
+
 dat %>%
   filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
-  xtabs(~STATION_CODE + MYEAR, .)
+  distinct(STATION_CODE, MYEAR, SAMPLE_NO2) %>%
+  xtabs(~STATION_CODE + MYEAR, .) %>%
+  knitr::kable(
+    caption = 
+      "Sample size station/year ('B' stations = cod stations, the rest is blue mussel)")
+
 
 if (FALSE){
   dat %>%
@@ -111,20 +122,22 @@ params <- c("PFOS", "PFOSA", "PFUdA",
 
 ### a4. Detection frequency    
 Since 2005  
-```{r, echo = FALSE}
+```{r, echo = FALSE, results='hold'}
 
 dat %>%
-  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
   mutate(PARAM = factor(PARAM, levels = params)) %>%
   group_by(PARAM) %>%
-  summarise(Percentage_detection = 100*mean(is.na(FLAG1)) %>% round(3), .groups = "drop")
+  summarise(Percentage_detection = 100*mean(is.na(FLAG1)) %>% round(3), .groups = "drop") %>%
+  kable(caption = "Percentage detection (cod liver only)" )
 
 dat %>%
-  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
   mutate(PARAM = factor(PARAM, levels = params)) %>%
   group_by(PARAM, MYEAR) %>%
   summarise(Percentage_detection = 100*mean(is.na(FLAG1)) %>% round(3), .groups = "drop") %>%
-  tidyr::pivot_wider(values_from = "Percentage_detection", names_from = "MYEAR")
+  tidyr::pivot_wider(values_from = "Percentage_detection", names_from = "MYEAR")  %>%
+  kable(caption = "Percentage detection per year (cod liver only)" )
 
 
 ```
@@ -213,7 +226,7 @@ leaflet(df) %>%
 
 ```
 
-### f. Plot PFAS in cod liver time series    
+### f1. Plot cod liver PFAS time series    
 Stations are arranged by distance to airport    
 **Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
 ```{r, echo = FALSE, fig.width = 9, fig.height=4}
@@ -246,6 +259,55 @@ for (param in params){
 ```
 
 
+
+
+### f2. Time trends of PFAS in cod liver        
+Order = from Oslofjord (30B) to Tromsø (43B2)  
+**Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE, fig.width=9, fig.height=6}
+library(broom)
+get_reg_coef <- function(df) {
+  lm <- lm(log_VALUE_WW ~ MYEAR, data = df)
+  tidy(lm) %>%
+    filter(term == "MYEAR") %>%
+    mutate(PARAM = df$PARAM[1], 
+           STATION_CODE = df$STATION_CODE[1],
+           N_years = length(unique(df$MYEAR)))
+}
+
+results <- dat %>%
+  filter(PARAM %in% params & TISSUE_NAME %in% "Lever") %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW),
+         PARAM = factor(PARAM, levels = params)) %>%
+  group_by(PARAM, STATION_CODE) %>%
+  group_split() %>%
+  map_df(~get_reg_coef(.))
+
+results %>%
+  select(PARAM, STATION_CODE, estimate) %>%
+  mutate(estimate = round(estimate, 4)) %>%
+  tidyr::pivot_wider(names_from = STATION_CODE, values_from = estimate) %>%
+  kable(caption = "Slope of time regression (log10-transformed w.w. concentration)")
+
+results %>%
+  select(PARAM, STATION_CODE, p.value) %>%
+  mutate(p.value = round(p.value, 4)) %>%
+  tidyr::pivot_wider(names_from = STATION_CODE, values_from = p.value) %>%
+  kable(caption = "P-value of time regression (log10-transformed w.w. concentration)")
+
+results %>%
+  filter(N_years >= 4) %>%
+  ggplot(aes(STATION_CODE, estimate)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_pointrange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_wrap(vars(PARAM)) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
+  labs(title = "Slope of time regression (log10-transformed w.w. concentration)", 
+       subtitle = "Range = conf.int. Only series of >= 4 years included")
+
+```
+
 ### g. Plot PFASs against each other      
 Stations are arranged by distance to airport  
 ```{r, echo = FALSE, fig.width = 9, fig.height=9}
@@ -263,7 +325,14 @@ df_wide %>%
 df_wide %>%
   select(-MYEAR, -SAMPLE_NO2, -STATION_CODE) %>%
   cor(use = "pairwise.complete.obs") %>%
-  round(2)
+  round(2) %>%
+  kable(caption = "Correlation matrix (cod liver only)")
+
+```
+
+
+### h. Box plot  
+```{r}
 
 ```
 
@@ -321,7 +390,7 @@ for (param in params){
   
   gg <- dat %>%
     filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
-    mutate(log_VALUE_WW = log(VALUE_WW)) %>% # select(MYEAR, log_VALUE_WW, STATION_CODE)
+    mutate(log_VALUE_WW = log10(VALUE_WW)) %>% # select(MYEAR, log_VALUE_WW, STATION_CODE)
     ggplot(aes(MYEAR, log_VALUE_WW)) +
     geom_point() +
     geom_smooth(method = "lm", formula = 'y ~ x', se = FALSE) +
@@ -394,3 +463,71 @@ for (param in params){
                                    
 ```
 
+## 5. Boxplot  
+Note:   
+- 2009 were lacking for 2009 data were lacking for 13B and 15B, where we used 2007 (13B) and 2007-08 (15B)  
+- For PFUdA there is no 2009 data (or perhaps they are in the database, if I dig a little?).  
+    - So we use 2012-2014 vs 2018-19 for PFUdA   
+- Stations are ordered following their position along the coast (that can be changed)    
+- EQS added for PFOS. No EQS for PFOSA (PFOA has EQS = 91)
+```{r, echo = FALSE}
+
+plot1 <- function(param, data){
+  data %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
+    mutate(Year = case_when(
+      STATION_CODE %in% "13B" & MYEAR %in% 2007 ~ "2009",
+      STATION_CODE %in% "15B" & MYEAR %in% 2006:2007 ~ "2009",
+      MYEAR %in% 2009 ~ "2009",
+      MYEAR %in% 2019 ~ "2019",
+      TRUE ~ as.character(NA))
+    ) %>%
+    filter(!is.na(Year)) %>%
+    ggplot(aes(STATION_CODE, VALUE_WW)) +
+    geom_boxplot(aes(fill = Year), position = position_dodge2(preserve = "single")) +
+    labs(title = param,
+         caption = "Note: 2009 data were lacking for 13B and 15B, where we used 2007 (13B) and 2007-08 (15B)")
+}
+
+plot2 <- function(param, data){
+  data %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
+    mutate(Year = case_when(
+      MYEAR %in% 2012:2014 ~ "2012-2014",
+      MYEAR %in% 2018:2019 ~ "2018-2019",
+      TRUE ~ as.character(NA))
+    ) %>%
+    filter(!is.na(Year)) %>%
+    ggplot(aes(STATION_CODE, VALUE_WW)) +
+    geom_boxplot(aes(fill = Year), position = position_dodge2(preserve = "single")) +
+    scale_fill_brewer(palette = "Set3") +
+    labs(title = param)
+}
+
+gg1 <- plot1("PFOS", data = dat)
+gg2 <- plot1("PFOSA", data = dat)
+gg3 <- plot2("PFUdA", data = dat)
+# gg1 
+# gg2
+# gg3
+gg1 + 
+  geom_hline(aes(yintercept = 9.1), color = "red2", linetype = 2) +
+  scale_y_log10(sec.axis = sec_axis(~ ., breaks = 9.1, labels = function(x) "EQS")) +
+  theme(axis.text.y.right = element_text(color = "red2", size = rel(1.5)))
+
+gg2 + scale_y_log10()
+gg3 + scale_y_log10()
+
+```
+
+## 6. Map   
+Coming up
+```{r}
+
+```
+
+## 7. PCA      
+Coming up
+```{r}
+
+```
