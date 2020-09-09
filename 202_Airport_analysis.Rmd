@@ -1,0 +1,396 @@
+---
+title: "202_Airport_analysis"
+author: "DHJ"
+date: "8 9 2020"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+## 1. Packages  
+```{r, echo = FALSE, message=FALSE, results='hide', error=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(purrr)
+# devtools::install_github("moodymudskipper/safejoin")
+library(safejoin)
+library(leaflet)
+
+source("202_Airport_analysis_functions.R")
+
+
+options(width = 110) # 100 character with for tables etc.
+
+
+```
+
+
+## 2. Data  
+PFOS PFOSA PFUnDA 
+Ta med havner  
+Gradient rød - grå - blå  eller lillatone for conc 2019  
+PCA for log-transformert + fett + fiskelengde + år + stasjon    
+
+### a1. Read data prepared in script 201   
+
+```{r, echo = FALSE}
+
+dat_stations <- readRDS("Data/201_dat_stations.rds")
+
+# Metadata from script 103- contains distance along coast
+# Coul also use Station_Name
+meta_stations <- readRDS("Data/103_Selected_stations.rds") %>% # View()   
+  filter(STATION_CODE %in% unique(dat_stations$STATION_CODE)) %>% 
+  select(STATION_CODE, Dist_along_coast) %>%
+  group_by(STATION_CODE) %>%
+  summarise_all(first)
+
+dat_airports <- readRDS("Data/201_dat_airports.rds")
+
+# "Input_data/"
+# dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+#   filter(MYEAR >= 1994)
+dat <- readRDS("Data/201_dat3.rds") %>%
+  filter(MYEAR >= 1994)
+
+
+# Add 'Dist_along_coast'
+df_distance <- readRDS("Data/201_df_distance.rds")%>%
+  safe_left_join(meta_stations,
+                 by = "STATION_CODE", na_matches = "never", check = "bCV")
+
+
+
+```
+
+### a2 Tables
+```{r, echo = FALSE, results='hold'}
+
+cat("=============================================================================\n")
+cat("PFAS by substance/year (cod liver only) \n")
+cat("-----------------------------------------------------------------------------\n")
+tab <- dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
+  xtabs(~PARAM + MYEAR, .)
+tab
+
+cat("=============================================================================\n")
+cat("PFAS by station/year ('B' stations = cod stations, the rest is blue mussel) \n")
+cat("-----------------------------------------------------------------------------\n")
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  xtabs(~STATION_CODE + MYEAR, .)
+
+if (FALSE){
+  dat %>%
+    filter(STATION_CODE %in% "24B" & MYEAR >= 2005) %>%
+    xtabs(~PARAM + MYEAR, .)
+}
+
+```
+### a3 Define parameters and their order  
+Order:  
+- First "PFOS", "PFOSA", "PFUdA" (most important)  
+- Then acids from 6 carbons (PFHxA) to 10 carbons (PFDcA)  
+- Then sulfonates: PFBS (4 carbons() and PFHxS (6 carbons)
+```{r}
+
+rownames(tab) %>% dput()
+# PFAS parameters
+# rownames(tab) %>% dput()
+# Order:
+
+
+params <- c("PFOS", "PFOSA", "PFUdA", 
+            "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDcA", 
+            "PFBS", "PFHxS")
+
+```
+
+### a4. Detection frequency    
+Since 2005  
+```{r, echo = FALSE}
+
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  mutate(PARAM = factor(PARAM, levels = params)) %>%
+  group_by(PARAM) %>%
+  summarise(Percentage_detection = 100*mean(is.na(FLAG1)) %>% round(3), .groups = "drop")
+
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  mutate(PARAM = factor(PARAM, levels = params)) %>%
+  group_by(PARAM, MYEAR) %>%
+  summarise(Percentage_detection = 100*mean(is.na(FLAG1)) %>% round(3), .groups = "drop") %>%
+  tidyr::pivot_wider(values_from = "Percentage_detection", names_from = "MYEAR")
+
+
+```
+
+
+### b. Map data
+```{r 2b, echo = FALSE}
+
+# MAp data (Norway w/o Svalbard + Jan Mayen)
+test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
+sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
+map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
+map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+
+#
+# Add UTM coordinates (x and y) to map
+#
+crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
+crs_utm <- "+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m"
+
+coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
+SP <- sp::SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+                    proj4string = sp::CRS(crs_longlat))
+SP.UTM <- sp::spTransform(SP, sp::CRS(crs_utm))
+# Add transformed coords to data set
+map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
+map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+
+cat("'map_df' created")
+
+```
+
+### c. Distance to airport        
+**Distance1** = closest airport  
+**Distance2** = closest 'upstream' airport (assuming Norwegian Coastal current going along the coast)  
+**Dist_along_coast** = Distance along coast  
+```{r}
+df_distance
+
+```
+
+### d. Plot cod stations + airports    
+```{r, fig.width=8, fig.height=6}
+
+plots <- purrr::map(1:6, ~plot_closest(., dat_stations, dat_airports))
+cowplot::plot_grid(plotlist = plots, nrow = 2)
+
+plots <- purrr::map(7:11, ~plot_closest(., dat_stations, dat_airports))
+cowplot::plot_grid(plotlist = plots, nrow = 2)
+
+```
+
+### e. Leaflet map  
+```{r, echo = FALSE}
+
+df <- dat %>%
+  filter(PARAM %in% params & TISSUE_NAME %in% c("Lever", "Whole soft body")) %>% 
+  distinct(STATION_CODE, TISSUE_NAME, Lon, Lat, MYEAR) %>%
+  count(STATION_CODE, TISSUE_NAME, Lon, Lat)
+
+icons_stations <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = case_when(
+    df$TISSUE_NAME == "Whole soft body" ~ "orange",
+    df$TISSUE_NAME == "Muskel" ~ "red")
+)
+
+icons_stations <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = case_when(
+    df$TISSUE_NAME == "Whole soft body" ~ "orange",
+    df$TISSUE_NAME == "Muskel" ~ "red")
+)
+
+
+leaflet(df) %>%
+  addTiles() %>%
+  addAwesomeMarkers(~Lon, ~Lat, icon = icons_stations,
+                    label =  ~STATION_CODE) %>%
+  addMarkers(~dat_airports$Lon, ~dat_airports$Lat,
+             label = ~dat_airports$LUFTHAVN)
+
+```
+
+### f. Plot PFAS in cod liver time series    
+Stations are arranged by distance to airport    
+**Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
+```{r, echo = FALSE, fig.width = 9, fig.height=4}
+
+for (param in params){
+  
+  gg <- dat %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
+    arrange(Distance1) %>%
+    mutate(Distance_f = 
+             as.factor(paste0(STATION_CODE, " - ", round(Distance1, 1), " km")), 
+           STATION_CODE = forcats::fct_inorder(Distance_f),
+           LOQ = case_when(
+             !is.na(FLAG1) ~ "Under LOQ",  
+             is.na(FLAG1) ~ "Over LOQ")
+           ) %>%
+    ggplot(aes(MYEAR, VALUE_WW)) +
+    geom_point(aes(color = LOQ)) +
+    geom_smooth(method = "lm", formula = 'y~x', se = FALSE) +
+    scale_y_log10() +
+    scale_x_continuous(breaks = seq(2005,2020,5), minor_breaks = 2005:2020) +
+    scale_color_manual(values = c("black", "red2")) +
+    facet_wrap(vars(STATION_CODE), nrow = 2) +
+    theme_bw() +
+    labs(title = param)
+  
+  print(gg)
+}
+
+```
+
+
+### g. Plot PFASs against each other      
+Stations are arranged by distance to airport  
+```{r, echo = FALSE, fig.width = 9, fig.height=9}
+
+df_wide <- dat %>%
+  filter(PARAM %in% params & TISSUE_NAME %in% "Lever") %>%
+  mutate(log_value = VALUE_WW) %>%
+  select(PARAM, MYEAR, STATION_CODE, SAMPLE_NO2, log_value) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "log_value")
+
+df_wide %>%
+  select(-MYEAR, -SAMPLE_NO2, -STATION_CODE) %>%
+  plot()
+
+df_wide %>%
+  select(-MYEAR, -SAMPLE_NO2, -STATION_CODE) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  round(2)
+
+```
+
+
+## 3. Analysis I - estimated concentration in 2019 {.tabset}     
+Assuming that all time series are declining equally fast (on log scale) - see previous graphs   
+Log wet weight concentration estimated for 2019   
+**Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
+
+
+### a. Distance to closest airport   
+```{r 3a, fig.width=6, fig.height=4}
+
+# result <- get_estimates_parallel(param = "PFOS", dat, df_distance)
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "parallel",
+                 distance_measure = "Distance1") %>%
+    print()
+  }
+                                   
+
+```
+
+### b. Distance to closest 'upstream' airport     
+```{r 3b, fig.width=6, fig.height=4}
+
+# result <- get_estimates_parallel(param = "PFOS", dat, df_distance)
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "parallel",
+                 distance_measure = "Distance2") %>%
+    print()
+  }
+                                   
+
+```
+
+
+## 4. Analysis II - analysis of max measured concentration {.tabset}     
+Regression assuming independent chance over time for each station  
+Log w.w. concentration estimated for the year with highest concentration    
+**Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
+
+### a. Estimates     
+The red dot is Log w.w. concentration estimated for the year with highest concentration  
+```{r 4a, fig.width = 9, fig.height=4, echo = FALSE}
+
+for (param in params){
+  
+  result <- get_estimates_max(param = param, dat, df_distance)
+  # result$anova
+  
+  gg <- dat %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
+    mutate(log_VALUE_WW = log(VALUE_WW)) %>% # select(MYEAR, log_VALUE_WW, STATION_CODE)
+    ggplot(aes(MYEAR, log_VALUE_WW)) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = 'y ~ x', se = FALSE) +
+    geom_point(data = result$estimates, color = "red2") +
+    scale_x_continuous(breaks = seq(2005,2020,5), minor_breaks = 2005:2020) +
+    facet_wrap(vars(STATION_CODE), nrow = 2) +
+    theme_bw() +
+    labs(title = param)
+  print(gg)
+  
+}
+
+```
+
+### b. Closest airport     
+
+```{r 4b, fig.width=6, fig.height=4}
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "max",
+                 distance_measure = "Distance1") %>%
+    print()
+  }
+                                   
+
+```
+
+### c. Closest 'upstream' airport     
+```{r 4c, fig.width=6, fig.height=4}
+
+# result <- get_estimates_parallel(param = "PFOS", dat, df_distance)
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "max",
+                 distance_measure = "Distance2") %>%
+    print()
+  }
+                                   
+
+```
+
+
+### d. Distance along coast       
+```{r 4d, fig.width=6, fig.height=4}
+
+# result <- get_estimates_parallel(param = "PFOS", dat, df_distance)
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "max",
+                 distance_measure = "Dist_along_coast") %>%
+    print()
+  }
+                                   
+
+```
+
+### e. Coast distance + Upstream airport  
+```{r, fig.width=8, fig.height=4}
+
+# result <- get_estimates_parallel(param = "PFOS", dat, df_distance)
+
+for (param in params){
+  plot_estimates(param = param, dat, df_distance, 
+                 analysis = "max",
+                 distance_measure = "Dist_along_coast_Dist2")
+  }
+                                   
+```
+

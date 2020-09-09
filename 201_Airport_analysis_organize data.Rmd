@@ -1,0 +1,625 @@
+---
+title: "121 Analysis 01"
+author: "DHJ"
+date: "6 5 2020"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    toc_float: true 
+---
+
+Based on script 120   
+
+
+## 1. Libraries  
+```{r, message=FALSE, warning=FALSE, results='hide'}
+
+
+library(rlang)
+
+library(devtools)
+library(lme4)
+library(usethis)
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(ggplot2)
+library(mgcv)
+library(visreg)
+
+# devtools::install_github("moodymudskipper/safejoin")
+library(safejoin)
+
+# devtools::install_github("lenz99-/lme4cens")
+library(lme4cens)
+
+# For SpatialPoints() function in part 2, used for map in part 8
+library(sp)
+
+# For combining plots
+library(cowplot)
+
+# For nicer tables
+library(knitr)
+library(kableExtra)
+
+# For get_point_on_coastline()
+# Used in part 8  
+source("103_Distance_along_coast_functions.R")
+
+```
+
+
+
+### Functions   
+- add_random_data  
+    - Makes new variable 'VALUE_WW_r' with random values for data under LOQ  
+- format_p
+    - Formats p-values  
+
+```{r}
+
+#
+# Make new variable 'VALUE_WW_r' with random values between
+# 0.5*LOQ and LOQ for data undcer LOQ
+#
+# Returns data set
+#
+add_random_data <- function(data){
+  
+  # Set todata frame (not tibble)
+  data <- as.data.frame(data)
+  
+  # Under LOQs
+  sel <- !is.na(data$FLAG1)
+  
+  # Test that runif works for vactors of min, max:
+  # runif(2, min = c(1,50), max = c(10,100))
+  data$VALUE_WW_r <- data$VALUE_WW
+  data$VALUE_WW_r[sel] <- runif(
+    n = sum(sel), 
+    min = data$LOQ[sel]/2,
+    max = data$VALUE_WW[sel]
+  )
+  
+  data
+  
+}
+
+
+# Formats p-values
+format_p <- function(p){
+  case_when(
+      p < 0.001 ~ "< 0.001",
+      p < 0.01 ~ round(p, 3) %>% as.character(),
+      p <= 1 ~ round(p, 2) %>% as.character()
+      )
+}
+# format_p(0.0001)
+# format_p(0.002334324)
+# format_p(0.02334324)
+
+```
+
+
+
+## 2. Data   
+Note that we get stations from script 103  
+```{r}
+# Data including trophic level
+dat <- readRDS("Data/104_Selected_data.rds")
+
+# "Input_data/"
+# dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+#   filter(MYEAR >= 1994)
+
+
+# Extra isotope data - not needed here
+# dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+
+# Station metadata
+df_stations <- readRDS("Data/103_Selected_stations.rds")
+
+
+
+
+# xtabs(~STATION_CODE, df_stations ) %>% sort()
+df_stations <- df_stations %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE %in% "I969" ~ "RH",
+    TRUE ~ MSTAT)) %>%
+  group_by(STATION_CODE, MSTAT) %>%
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean)
+
+check <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  mutate(n = n()) %>%
+  filter(n > 1)
+
+if (nrow(check) > 0){
+  cat("Some stations have >1 MSTAT codes - check 'check'! \n")
+}
+  
+```
+
+#### Check  
+```{r}
+
+dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005) %>%
+  xtabs(~STATION_CODE + MYEAR, .)
+
+
+```
+### Airport data  
+```{r}
+
+dat_airports <- readxl::read_excel("Input_data/Lufthavner Avinor koordinater utvidet.xlsx",
+                                  range = cellranger::cell_cols(c("B", "C", "D"))) %>%
+  rename(x = UTM_ost, 
+         y = UTM_nord)
+
+# dat_airports
+
+
+```
+#### Add long, lat to airport data  
+```{r}
+library(sp)
+
+crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
+crs_utm <- "+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m"
+# note that you might want to change zone=32 to e.g. 33
+
+SP.utm <- SpatialPoints(dat_airports[,c("x", "y")], 
+                        proj4string=CRS(crs_utm)
+                        )
+SP.longlat <- spTransform(SP.utm, CRS(crs_longlat))
+
+dat_airports <- dat_airports %>% 
+  mutate(Lon = SP.longlat@coords[,1],
+        Lat = SP.longlat@coords[,2]
+  )
+
+```
+
+
+### dat2 - combined data  
+Adding
+- position data + MSTAT (type of station - industry-impacted, representative or background)  
+- LOQ  
+- mean trophic level per station  
+
+```{r}
+
+
+# Median LOQ (per year and tissue only - should be the same for all stations)
+dat_param_loq <- dat %>%
+  filter(!is.na(FLAG1)) %>%
+  group_by(PARAM, MYEAR, TISSUE_NAME) %>%
+  summarise(LOQ = median(VALUE_WW), .groups = "drop")
+
+dat2 <- dat %>%
+  ungroup() %>%
+  # Add position data + MSTAT (type of station - industry-impacted, representative or background)
+  safe_left_join(df_stations %>% 
+                   select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT),
+                 check = "CV",
+                 by = "STATION_CODE",
+                 na_matches = "never") %>%
+  # Add LOQ
+  safe_left_join(dat_param_loq,
+                 check = "CV",
+                 by = c("PARAM", "MYEAR", "TISSUE_NAME"),
+                 na_matches = "never") %>%
+  mutate(MSTAT = factor(MSTAT,  levels = c("IH", "RH", "B"))) %>%
+  # Add mean trophic level per station
+  group_by(STATION_CODE) %>%
+  mutate(TL_mean = mean(TL, na.rm = TRUE)) %>%
+  ungroup() 
+
+cat("'dat2' created. \n")
+
+# dat2 <- dat
+
+sel <- is.na(dat2$Lat)
+dat2 <- dat2[!sel,]
+cat(sum(sel), "lines without coordinates were deleted \n")
+
+```
+
+### Add UTM coordinates  
+```{r}
+
+SP <- SpatialPoints(dat2[, c("Lon", "Lat")],
+                    proj4string=CRS(crs_longlat)
+)
+SP.UTM <- spTransform(SP, CRS(crs_utm))
+# Add transformed coords to data set
+
+dat2 <- dat2 %>%
+  mutate(x = SP.UTM@coords[,1],
+         y = SP.UTM@coords[,2])
+
+
+```
+
+
+### Test add_random_data() function  
+```{r}
+
+# Check parameters with ca 50% under LOQ
+dat2 %>%
+  filter(MYEAR > 2014) %>%
+  group_by(PARAM) %>%
+  summarise(less_thans = mean(!is.na(FLAG1))) %>%
+  filter(less_thans < 0.5) %>%
+  arrange(desc(less_thans))
+
+# Just pick 10 randm PFUdA records
+test <- dat2 %>%
+  filter(PARAM %in% "PFUdA") %>%
+  select(MYEAR, STATION_CODE, VALUE_WW, FLAG1, LOQ) %>%
+  head(10)
+
+test
+# debugonce(add_random_data)
+test %>% add_random_data()
+test %>% add_random_data()
+
+```
+
+
+### Use correct basis  
+```{r}
+
+pfas <- c("PFOS", "PFOSA", "PFBS", "PFDcA", "PFHxA", "PFHxS", 
+          "PFHpA", "PFUdA", "PFOA", "PFNA", "PFUdA")
+
+```
+
+
+### Data for plotting maps  
+Used in part 8  
+```{r}
+#
+# Get Norway map data
+#
+test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
+sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
+# test$names[!sel]
+map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
+map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+
+#
+# Add UTM coordinates (x and y) to map
+#
+coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
+SP <- sp::SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+                    proj4string=CRS(crs_longlat)
+)
+SP.UTM <- sp::spTransform(SP, CRS(crs_utm))
+# Add transformed coords to data set
+map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
+map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+
+
+#
+# "Coast" data (coordinates for segments along the coast)
+#
+coast <- readRDS("Data/102_coast_coordinates.rmd")
+
+#
+# Make 'coastsegment_distance'   
+#
+# Distances for start points of the coast segments
+segment_dx <- diff(coast$x)/1000
+segment_dy <- diff(coast$y)/1000
+coastsegment_distance <- sqrt(segment_dx^2 + segment_dy^2) %>% cumsum()
+coastsegment_distance <- c(0, coastsegment_distance)
+
+
+```
+
+## 3. dat_param - data for one parameter
+```{r}
+
+param <- "PFOS"
+
+for ( tissue in c("Lever", "Whole soft body")){
+   
+   dat_param <-  dat2 %>%
+     filter(PARAM %in% param & TISSUE_NAME %in% tissue) %>% 
+     add_random_data() %>%
+     mutate(log_CONC = log10(VALUE_WW)) %>%
+     select(PARAM, STATION_CODE, TISSUE_NAME, MSTAT, log_CONC, MYEAR, Dist_along_coast, LNMEA, FAT_PERC, TL, TL_mean) # %>%
+   
+   cat("\n-----------------------------------------------------------\n")
+   cat("Sample size (since 2000) for param:", param, "and tissue:", tissue, "\n")  
+   dat_param %>%
+     filter(MYEAR >= 2000) %>%
+     xtabs(~STATION_CODE + MYEAR, .) %>%
+     print()
+   
+ } 
+ 
+ 
+# Check missing values per year
+
+
+
+```
+## 4. Map  
+
+### a. Data
+```{r}
+
+if (FALSE){
+  
+  # PLot using lon, Lat
+  df <- dat2 %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>% 
+    distinct(STATION_CODE, Lon, Lat, MYEAR) %>%
+    count(STATION_CODE, Lon, Lat)
+  
+  ggplot(map_df, aes(Longitude, Latitude)) +
+    geom_path() +
+    coord_map("lambert", lat0 = 64, lon0 = 11) +
+    geom_point(data = df, aes(Lon, Lat, fill = n), pch = 21, size = 3)
+  
+}
+
+dat_stations <- dat2 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>% 
+  distinct(STATION_CODE, x, y, MYEAR) %>%
+  count(STATION_CODE, x, y)
+
+ggplot(map_df, aes(x, y)) +
+  geom_path() +
+  coord_fixed() +
+  geom_point(data = dat_stations, aes(fill = n), pch = 21, size = 3)
+
+
+```
+
+
+### b. Airports  
+```{r}
+
+ggplot(map_df, aes(x, y)) +
+  geom_path() +
+  coord_fixed() +
+  geom_point(data = dat_airports, color = "red3")
+
+```
+
+## 5. Distance to closest airport    
+
+### a. Functions
+```{r}
+
+# Get the n_closest airports to station no. 'i' in data frame 'data'
+# Output: data frame with n_closest
+get_closest <- function(i, data, airports, n_closest = 3){
+  df <- as.data.frame(data)[i,]
+  dx <- df$x - airports$x
+  dy <- df$y - airports$y
+  dist <- sqrt((dx^2) + (dy^2))/1000
+  i_order <- order(dist)
+  i_min <- i_order[1:n_closest]
+  tibble(i = 1:n_closest,
+         STATION_CODE = df$STATION_CODE, 
+         x = df$x,
+         y = df$y,
+         Distance = dist[i_min],
+         Airport = dat_airports[i_min,] %>% pull(LUFTHAVN),
+         Airport_x = dat_airports[i_min,] %>% pull(x),
+         Airport_y = dat_airports[i_min,] %>% pull(y)
+  ) 
+}
+
+# TEST
+if (FALSE)
+  get_closest(1, dat_stations, dat_airports)
+
+
+# As get_closest, but plots the n_closest airports   
+plot_closest <- function(..., range = 200, print_plot = FALSE){
+  
+  
+  df <- get_closest(...) %>%
+    mutate(Label = paste(i, "-", Airport))
+  
+  ran <- range*1000
+  
+  gg <- ggplot(df, aes(Airport_x, Airport_y)) +
+    geom_point() +
+    geom_text(aes(x = Airport_x + 5000, label = Label), hjust = 0) +
+    geom_point(data = df[1,], aes(x=x, y=y), color = "red2") +
+    geom_path(data = map_df, aes(x=x, y=y)) +
+    coord_fixed(
+      xlim = df[1,]$x + c(-ran/2, ran/2), 
+      ylim = df[1,]$y + c(-ran/2, ran/2)
+    ) +
+    theme(
+      axis.title = element_blank(),
+      axis.text = element_blank()
+    ) +
+    labs(title = df[1,]$STATION_CODE)
+  
+  if (print_plot)
+    print(gg)
+  
+  invisible(gg)
+}
+
+if (FALSE)
+  plot_closest(1, dat_stations, dat_airports, print_plot = TRUE)
+
+```
+
+### b, Plot all  
+```{r, fig.width=8, fig.height=6}
+nrow(dat_stations)
+
+plots <- purrr::map(1:6, ~plot_closest(., dat_stations, dat_airports))
+cowplot::plot_grid(plotlist = plots, nrow = 2)
+
+plots <- purrr::map(7:11, ~plot_closest(., dat_stations, dat_airports))
+cowplot::plot_grid(plotlist = plots, nrow = 2)
+
+```
+
+### c. Get closest airport (regardless of direction)
+```{r}
+
+df_distance_1 <- 1:nrow(dat_stations) %>%
+  map_dfr(~get_closest(., dat_stations, dat_airports, n_closest = 1)
+) 
+
+```
+
+
+### d. Get closest airport 'upstream'     
+```{r}
+#
+# Go through one by one, 1-10:
+# plot_closest(1, dat_stations, dat_airports, print_plot = TRUE) 
+# For each, set 'pick_ustream' to the airport number (1-3) which is upstream
+
+pick_upstream <- c(2,1,1,2,1,1,2,1,2,2,1)
+
+# Put 'pick_upstream' into data frame for join, see below
+df_upstream <- tibble(
+  STATION_CODE = dat_stations$STATION_CODE,
+  i = pick_upstream,
+  Upstream = TRUE
+)
+
+# Get 3 closest stations
+# Then add 'Upstream' column by joining 'df_upstream'
+# Then filter using 'Upstream' column
+df_distance_2 <- 1:nrow(dat_stations) %>%
+  map_dfr(
+    ~get_closest(
+      ., dat_stations, dat_airports, n_closest = 3)
+    ) %>%
+  left_join(df_upstream) %>%
+  filter(Upstream)
+
+
+# check_distance_along_coast
+```
+
+### e. Combine  
+```{r}
+
+df1 <- df_distance_1 %>% 
+  select(STATION_CODE, Distance, Airport) %>%
+  rename(Distance1 = Distance, Airport1 = Airport)
+df2 <- df_distance_2 %>% 
+  select(STATION_CODE, Distance, Airport) %>%
+  rename(Distance2 = Distance, Airport2 = Airport)
+
+df_distance <- left_join(df1, df2)
+  
+  
+```
+
+### f. Add to data  
+```{r}
+
+dat3 <- dat2 %>%
+  safe_left_join(df_distance, by = "STATION_CODE",
+                 na_matches = "never", 
+                   check = "bCV")
+
+```
+
+
+## 6. Plot all time series   
+```{r}
+
+params <- c("PFOS", "PFOSA", "PFBS", "PFDcA", "PFHxA", "PFHxS", 
+          "PFHpA", "PFUdA", "PFOA", "PFNA", "PFUdA")
+
+param <- "PFOS"
+
+dat3 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% "Lever") %>%
+  arrange(Distance1) %>%
+  mutate(Distance_f = 
+           as.factor(paste0(STATION_CODE, " - ", round(Distance1, 1), " km")), 
+         STATION_CODE = forcats::fct_inorder(Distance_f)) %>%
+  ggplot(aes(MYEAR, VALUE_WW)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_log10() +
+  facet_wrap(vars(STATION_CODE))
+
+```
+
+
+## 7. Test of analysis   
+
+### Linear regression with station as factor, then new regression 
+```{r}
+
+param <- "PFOS"
+
+df_regr <- dat3 %>%
+  filter(PARAM %in% param & TISSUE_NAME %in% "Lever") 
+
+mod0 <- lm(log(VALUE_WW) ~ MYEAR, data = df_regr)
+mod1 <- lm(log(VALUE_WW) ~ MYEAR + STATION_CODE, data = df_regr)
+anova(mod0, mod1)
+
+# summary(mod)
+
+df_estimates <- tibble(
+  MYEAR = 2019,
+  STATION_CODE = unique(df_regr$STATION_CODE)
+)
+
+pred <- predict(mod1, df_estimates, se.fit = TRUE)
+
+df_estimates <- df_estimates %>%
+  mutate(
+    log_VALUE_WW = pred$fit,
+    se = pred$se.fit
+  ) %>%
+  safe_left_join(df_distance, by = "STATION_CODE", 
+                 na_matches = "never", 
+                 check = "bCV")
+
+
+ggplot(df_estimates, aes(Distance1, log_VALUE_WW)) +
+  geom_point() +
+  geom_text(aes(x = Distance1 + 1, label = STATION_CODE), hjust = 0) +
+  geom_smooth(method = "lm") +
+  labs(title = "Distance to closest airport")
+ggplot(df_estimates, aes(Distance2, log_VALUE_WW)) +
+  geom_point() +
+  geom_text(aes(x = Distance2 + 1, label = STATION_CODE), hjust = 0) +
+  geom_smooth(method = "lm") +
+  labs(title = "Distance to closest 'upstream' airport")
+
+
+```
+
+
+## 8. Save data for analysis script  
+```{r}
+
+saveRDS(dat_stations, "Data/201_dat_stations.rds")
+saveRDS(dat_airports, "Data/201_dat_airports.rds")
+saveRDS(dat3, "Data/201_dat3.rds")
+saveRDS(df_distance, "Data/201_df_distance.rds")
+
+
+
+```
+
