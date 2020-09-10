@@ -1,4 +1,42 @@
 
+#
+# Make new variable 'VALUE_WW_r' with random values between
+# 0.5*LOQ and LOQ for data undcer LOQ
+#
+# Returns data set
+#
+add_random_data <- function(data){
+  
+  # Set todata frame (not tibble)
+  data <- as.data.frame(data)
+  
+  # Under LOQs
+  sel <- !is.na(data$FLAG1)
+  
+  # Test that runif works for vactors of min, max:
+  # runif(2, min = c(1,50), max = c(10,100))
+  data$VALUE_WW_r <- data$VALUE_WW
+  data$VALUE_WW_r[sel] <- runif(
+    n = sum(sel), 
+    min = data$LOQ[sel]/2,
+    max = data$VALUE_WW[sel]
+  )
+  
+  data
+  
+}
+
+
+# Formats p-values
+format_p <- function(p){
+  case_when(
+    p < 0.001 ~ "< 0.001",
+    p < 0.01 ~ round(p, 3) %>% as.character(),
+    p <= 1 ~ round(p, 2) %>% as.character()
+  )
+}
+
+
 
 # Get the n_closest airports to station no. 'i' in data frame 'data'
 # Output: data frame with n_closest
@@ -223,3 +261,14 @@ if (FALSE){
                  analysis = "max",
                  distance_measure = "Dist_along_coast_Dist2")
 }
+
+
+# Like ramge, but expand the tange by a fraction down and up 
+# Used in plots to avoid "clipping" of text
+rangex <- function(x, down = 0, up = 0.1){
+  ran <- range(x, na.rm = TRUE)
+  diff <- diff(ran)
+  ran + c(-down*diff, up*diff)
+}
+if (FALSE)
+  rangex(10:20)
