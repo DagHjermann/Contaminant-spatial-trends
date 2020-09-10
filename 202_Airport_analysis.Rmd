@@ -6,10 +6,12 @@ output:
   html_document:
     toc: true
     toc_float: true
+    code_folding: hide
+    
 ---
 
 ## 1. Packages  
-```{r, echo = FALSE, message=FALSE, results='hide', error=FALSE}
+```{r, message=FALSE, results='hide', error=FALSE}
 
 library(dplyr)
 library(ggplot2)
@@ -21,7 +23,6 @@ library(leaflet)
 library(knitr)    # for function kable()
 
 source("202_Airport_analysis_functions.R")
-
 
 options(width = 110) # 100 character with for tables etc.
 
@@ -37,7 +38,7 @@ PCA for log-transformert + fett + fiskelengde + år + stasjon
 
 ### a1. Read data prepared in script 201   
 
-```{r, echo = FALSE}
+```{r}
 
 dat_stations <- readRDS("Data/201_dat_stations.rds")
 
@@ -45,7 +46,7 @@ dat_stations <- readRDS("Data/201_dat_stations.rds")
 # Coul also use Station_Name
 meta_stations <- readRDS("Data/103_Selected_stations.rds") %>% # View()   
   filter(STATION_CODE %in% unique(dat_stations$STATION_CODE)) %>% 
-  select(STATION_CODE, Dist_along_coast) %>%
+  select(STATION_CODE, Station_Name, Dist_along_coast) %>%
   group_by(STATION_CODE) %>%
   summarise_all(first)
 
@@ -55,27 +56,41 @@ dat_airports <- readRDS("Data/201_dat_airports.rds")
 # dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
 #   filter(MYEAR >= 1994)
 dat <- readRDS("Data/201_dat3.rds") %>%
-  filter(MYEAR >= 1994 & substr(PARAM, 1, 2) == "PF")
+  filter(MYEAR >= 1994 & substr(PARAM, 1, 2) == "PF") %>%
+  # Adding Station_Name:
+  safe_left_join(meta_stations %>% select(-Dist_along_coast),
+                 by = "STATION_CODE", na_matches = "never", check = "bCV")
 
 station_order <- dat %>%
   distinct(STATION_CODE, Dist_along_coast) %>%
   arrange(Dist_along_coast) %>%
   pull(STATION_CODE)
 
+stationname_order <- dat %>%
+  distinct(Station_Name, Dist_along_coast) %>%
+  arrange(Dist_along_coast) %>%
+  pull(Station_Name)
+
+# Set factors for STATION_CODE and Station_Name
 dat <- dat %>%
-  mutate(STATION_CODE = factor(STATION_CODE, levels = station_order))
+  mutate(STATION_CODE = factor(STATION_CODE, levels = station_order)) %>%
+  mutate(Station_Name = factor(Station_Name, levels = stationname_order))
 
          # Add 'Dist_along_coast'
 df_distance <- readRDS("Data/201_df_distance.rds")%>%
   safe_left_join(meta_stations,
                  by = "STATION_CODE", na_matches = "never", check = "bCV")
 
+# Map data
+
+load("../../seksjon 318/Elveovervakning/Data_input/Norway_coastline_longlat2.RData")
+map_norway_h <- norway_coast_longlat2
 
 
 ```
 
 ### a2 Tables
-```{r, echo = FALSE, results='hold'}
+```{r, results='hold'}
 
 tab <- dat %>%
   filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
@@ -108,7 +123,8 @@ Order:
 - Then sulfonates: PFBS (4 carbons() and PFHxS (6 carbons)
 ```{r}
 
-rownames(tab) %>% dput()
+# rownames(tab) %>% dput()
+
 # PFAS parameters
 # rownames(tab) %>% dput()
 # Order:
@@ -118,11 +134,13 @@ params <- c("PFOS", "PFOSA", "PFUdA",
             "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDcA", 
             "PFBS", "PFHxS")
 
+params
+
 ```
 
 ### a4. Detection frequency    
 Since 2005  
-```{r, echo = FALSE, results='hold'}
+```{r, results='hold'}
 
 dat %>%
   filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
@@ -144,7 +162,7 @@ dat %>%
 
 
 ### b. Map data
-```{r 2b, echo = FALSE}
+```{r 2b}
 
 # MAp data (Norway w/o Svalbard + Jan Mayen)
 test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
@@ -175,7 +193,18 @@ cat("'map_df' created")
 **Distance2** = closest 'upstream' airport (assuming Norwegian Coastal current going along the coast)  
 **Dist_along_coast** = Distance along coast  
 ```{r}
-df_distance
+
+df_distance %>% 
+  mutate(Distance1 = round(Distance1, 1),
+         Distance2 = round(Distance2, 1),
+         Dist_along_coast = round(Dist_along_coast, 1)
+         ) %>%
+  select(-STATION_CODE) %>%
+  select(Station_Name, everything()) %>%
+  arrange(Dist_along_coast) %>%
+  kable()
+
+
 
 ```
 
@@ -191,7 +220,7 @@ cowplot::plot_grid(plotlist = plots, nrow = 2)
 ```
 
 ### e. Leaflet map  
-```{r, echo = FALSE}
+```{r}
 
 df <- dat %>%
   filter(PARAM %in% params & TISSUE_NAME %in% c("Lever", "Whole soft body")) %>% 
@@ -229,7 +258,7 @@ leaflet(df) %>%
 ### f1. Plot cod liver PFAS time series    
 Stations are arranged by distance to airport    
 **Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
-```{r, echo = FALSE, fig.width = 9, fig.height=4}
+```{r, fig.width = 9, fig.height=4}
 
 for (param in params){
   
@@ -265,7 +294,7 @@ for (param in params){
 Order = from Oslofjord (30B) to Tromsø (43B2)  
 **Urban stations** are 30B Oslo (inner Oslofjord), 53B Bergen harbour and 43B2 Tromsø harbour  
 
-```{r, message=FALSE, warning=FALSE, echo = FALSE, fig.width=9, fig.height=6}
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=6}
 library(broom)
 get_reg_coef <- function(df) {
   lm <- lm(log_VALUE_WW ~ MYEAR, data = df)
@@ -310,7 +339,7 @@ results %>%
 
 ### g. Plot PFASs against each other      
 Stations are arranged by distance to airport  
-```{r, echo = FALSE, fig.width = 9, fig.height=9}
+```{r, fig.width = 9, fig.height=9}
 
 df_wide <- dat %>%
   filter(PARAM %in% params & TISSUE_NAME %in% "Lever") %>%
@@ -381,7 +410,7 @@ Log w.w. concentration estimated for the year with highest concentration
 
 ### a. Estimates     
 The red dot is Log w.w. concentration estimated for the year with highest concentration  
-```{r 4a, fig.width = 9, fig.height=4, echo = FALSE}
+```{r 4a, fig.width = 9, fig.height=4}
 
 for (param in params){
   
@@ -463,14 +492,14 @@ for (param in params){
                                    
 ```
 
-## 5. Boxplot  
+## 5. Boxplots  
 Note:   
 - 2009 were lacking for 2009 data were lacking for 13B and 15B, where we used 2007 (13B) and 2007-08 (15B)  
 - For PFUdA there is no 2009 data (or perhaps they are in the database, if I dig a little?).  
     - So we use 2012-2014 vs 2018-19 for PFUdA   
 - Stations are ordered following their position along the coast (that can be changed)    
 - EQS added for PFOS. No EQS for PFOSA (PFOA has EQS = 91)
-```{r, echo = FALSE}
+```{r, fig.width=8, fig.height=6}
 
 plot1 <- function(param, data){
   data %>%
@@ -483,8 +512,9 @@ plot1 <- function(param, data){
       TRUE ~ as.character(NA))
     ) %>%
     filter(!is.na(Year)) %>%
-    ggplot(aes(STATION_CODE, VALUE_WW)) +
+    ggplot(aes(Station_Name, VALUE_WW)) +
     geom_boxplot(aes(fill = Year), position = position_dodge2(preserve = "single")) +
+    theme(axis.text.x = element_text(angle = -30, hjust = 0)) +
     labs(title = param,
          caption = "Note: 2009 data were lacking for 13B and 15B, where we used 2007 (13B) and 2007-08 (15B)")
 }
@@ -498,9 +528,10 @@ plot2 <- function(param, data){
       TRUE ~ as.character(NA))
     ) %>%
     filter(!is.na(Year)) %>%
-    ggplot(aes(STATION_CODE, VALUE_WW)) +
+    ggplot(aes(Station_Name, VALUE_WW)) +
     geom_boxplot(aes(fill = Year), position = position_dodge2(preserve = "single")) +
     scale_fill_brewer(palette = "Set3") +
+    theme(axis.text.x = element_text(angle = -30, hjust = 0)) +
     labs(title = param)
 }
 
@@ -521,13 +552,601 @@ gg3 + scale_y_log10()
 ```
 
 ## 6. Map   
-Coming up
-```{r}
+
+```{r, fig.width=6, fig.height=7}
+
+for (param in c("PFOS", "PFOSA", "PFUdA")){
+  
+  df <- dat %>%
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever" & MYEAR == 2019 & !is.na(VALUE_WW)) %>%
+    group_by(STATION_CODE, Lon, Lat) %>%
+    summarise(`Concentration 2019` = median(VALUE_WW), .groups = "drop") %>%
+    mutate(textside = case_when(
+      STATION_CODE %in% c("30B", "36B", "13B", "53B") ~ "right",
+      TRUE ~ "left"
+    ))
+  gg <- ggplot(df) +
+    annotation_map(map_norway_h, aes(long, lat), fill = terrain.colors(10)[7]) +
+    geom_point(aes(Lon, Lat, fill = `Concentration 2019`), pch = 21, size = rel(3)) +
+    geom_text(data = subset(df, textside == "right"),
+              aes(Lon, Lat, label = STATION_CODE), hjust = -0.4, size = rel(3)) +
+    geom_text(data = subset(df, textside == "left"),
+              aes(Lon, Lat, label = STATION_CODE), hjust = 1.4, size = rel(3)) +
+    scale_fill_distiller(palette = "PRGn") +
+    annotate("text", x = -8, y = 71.5, label = param, hjust = 0, size = rel(5)) +
+    coord_map("lambert", parameters = c(64, 12), xlim = c(-1,30), ylim = c(57, 72)) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+        legend.position = c(.68, .15))
+    
+    print(gg)
+
+}
 
 ```
 
+
 ## 7. PCA      
-Coming up
+
+### Make data ready
+```{r, results = 'hold'}
+
+dat_wide <- dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
+  select(STATION_CODE, Dist_along_coast, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW) %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW)) %>%
+  select(-VALUE_WW) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "log_VALUE_WW")# %>%
+  #as.data.frame()  # for setting row names
+
+# rownames(dat_wide) <- with(dat_wide,
+#                            paste(STATION_CODE, MYEAR, SAMPLE_NO2))
+  
+df <- dat_wide %>% 
+  select(-c(STATION_CODE, Dist_along_coast, MYEAR, SAMPLE_NO2))
+n_param <- apply(!is.na(df), 1, sum)
+cat("Number of parameters per sample: \n")
+table(n_param)
+
+cat("\n")
+cat("Number of samples per parameter: \n")
+n_samples <- apply(!is.na(df), 2, sum)
+n_samples
+
+```
+
+## 8. PCA excluding PFDcA, PFHxS, PFUdA - LOQ values kept  {.tabset}  
+
+### Perform PCA
 ```{r}
+
+complete_cases_1 <- dat_wide %>% 
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS) %>%
+  complete.cases()
+
+cat("Original data have", nrow(dat_wide), "rows \n")
+dat_wide_1 <- dat_wide %>% 
+  filter(complete_cases_1)
+cat("Data for analysis (all parameters present) have", nrow(dat_wide_1), "rows \n\n")
+  
+dat_wide_1 %>%
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS) %>%
+  scale() %>%            # scale to 0 mean and unit variance
+  prcomp() ->            # do PCA
+  pca                    # store result as `pca`
+
+# now display the results from the PCA analysis
+pca
+
+# Principal components  
+pca_data <- data.frame(pca$x, 
+                       STATION_CODE = dat_wide_1$STATION_CODE, 
+                       MYEAR = dat_wide_1$MYEAR,
+                       Dist_along_coast = dat_wide_1$Dist_along_coast)
+
+```
+
+
+### Percent variance explained  
+```{r}
+percent <- 100*pca$sdev^2 / sum(pca$sdev^2)
+kable(
+  tibble(
+    PC = paste0("PC", seq_along(percent)), 
+    Percent = round(percent, 1))
+)
+
+```
+
+### Plot PCs by year  
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by year, medians  
+```{r}
+df <- pca_data %>%
+  group_by(MYEAR) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = MYEAR), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+```
+
+
+### Plot PCs by station, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by station, PC2 vs PC3    
+```{r}
+
+ggplot(pca_data, aes(x = PC2, y = PC3, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+
+### Plot PCs by distance along coast, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by station / distance along coast, PC1 + PC2  
+```{r}
+
+df <- pca_data %>%
+  group_by(STATION_CODE, Dist_along_coast) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+
+
+```
+
+
+### Plot PCs by station / distance along coast, PC2 + PC3  
+```{r}
+
+ggplot(df, aes(x = PC2, y = PC3, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC2), ylim = range(df$PC3)) +
+  theme_bw()
+
+
+```
+
+
+
+### Rotation matrix  
+```{r}
+
+# capture the rotation matrix in a data frame
+rotation_data <- data.frame(
+  pca$rotation, 
+  Parameter = row.names(pca$rotation)
+)
+
+# define a pleasing arrow style
+arrow_style <- arrow(
+  length = unit(0.05, "inches"),
+  type = "closed"
+)
+
+# now plot, using geom_segment() for arrows and geom_text() for labels
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC1, yend = PC2), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC1, y = PC2, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
+
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC2, yend = PC3), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC2, y = PC3, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
+
+```
+
+
+## 9. PCA excluding PFDcA, PFHxS, PFUdA - LOQ values replaced {.tabset}       
+Values under LOQ have been replaced by random values bewteen LOQ/2 and LOQ.  
+
+### Perform PCA
+```{r}
+
+dat_wide <- dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>% 
+  add_random_data() %>%
+  select(STATION_CODE, Dist_along_coast, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW_r) %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
+  select(-VALUE_WW_r) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "log_VALUE_WW")# %>%
+
+complete_cases_1 <- dat_wide %>% 
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS) %>%
+  complete.cases()
+
+cat("\n")
+cat("Original data have", nrow(dat_wide), "rows \n")
+dat_wide_1 <- dat_wide %>% 
+  filter(complete_cases_1)
+cat("Data for analysis (all parameters present) have", nrow(dat_wide_1), "rows \n\n")
+
+dat_wide_1 %>%
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS) %>%
+  scale() %>%            # scale to 0 mean and unit variance
+  prcomp() ->            # do PCA
+  pca                    # store result as `pca`
+
+# now display the results from the PCA analysis
+pca
+
+# Principal components
+pca_data <- data.frame(pca$x, 
+                       STATION_CODE = dat_wide_1$STATION_CODE, 
+                       MYEAR = dat_wide_1$MYEAR,
+                       Dist_along_coast = dat_wide_1$Dist_along_coast)
+
+```
+
+
+### Percent variance explained  
+```{r}
+percent <- 100*pca$sdev^2 / sum(pca$sdev^2)
+kable(
+  tibble(
+    PC = paste0("PC", seq_along(percent)), 
+    Percent = round(percent, 1))
+)
+
+```
+
+### Plot PCs by year  
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by year, medians  
+```{r}
+df <- pca_data %>%
+  group_by(MYEAR) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = MYEAR), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+
+```
+
+
+### Plot PCs by station, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by station, PC2 vs PC3    
+```{r}
+
+ggplot(pca_data, aes(x = PC2, y = PC3, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+
+### Plot PCs by distance along coast, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+
+### Plot PCs by station / distance along coast, PC1 + PC2  
+```{r}
+
+df <- pca_data %>%
+  group_by(STATION_CODE, Dist_along_coast) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+
+
+```
+
+
+### Plot PCs by station / distance along coast, PC2 + PC3  
+```{r}
+
+ggplot(df, aes(x = PC2, y = PC3, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC2), ylim = range(df$PC3)) +
+  theme_bw()
+
+
+```
+
+
+### Rotation matrix  
+```{r}
+
+# capture the rotation matrix in a data frame
+rotation_data <- data.frame(
+  pca$rotation, 
+  Parameter = row.names(pca$rotation)
+)
+
+# define a pleasing arrow style
+arrow_style <- arrow(
+  length = unit(0.05, "inches"),
+  type = "closed"
+)
+
+# now plot, using geom_segment() for arrows and geom_text() for labels
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC1, yend = PC2), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC1, y = PC2, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
+
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC2, yend = PC3), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC2, y = PC3, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
+
+```
+
+
+## 10. PCS including PFDcA, PFHxS, PFUdA - LOQ values replaced {.tabset}     
+Values under LOQ have been replaced by random values bewteen LOQ/2 and LOQ.  
+
+### Perform PCA  
+```{r}
+
+dat_wide <- dat %>%
+  filter(substr(PARAM, 1, 2) == "PF" & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>% 
+  add_random_data() %>%
+  select(STATION_CODE, Dist_along_coast, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW_r) %>%
+  mutate(log_VALUE_WW = log10(VALUE_WW_r)) %>%
+  select(-VALUE_WW_r) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "log_VALUE_WW")# %>%
+
+complete_cases_1 <- dat_wide %>% 
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS, PFDcA, PFHxS, PFUdA) %>%
+  complete.cases()
+
+cat("\n")
+cat("Original data have", nrow(dat_wide), "rows \n")
+dat_wide_1 <- dat_wide %>% 
+  filter(complete_cases_1)
+cat("Data for analysis (all parameters present) have", nrow(dat_wide_1), "rows \n\n")
+
+dat_wide_1 %>%
+  select(PFBS, PFHpA, PFHxA, PFNA, PFOA, PFOS, PFDcA, PFHxS, PFUdA) %>%
+  scale() %>%            # scale to 0 mean and unit variance
+  prcomp() ->            # do PCA
+  pca                    # store result as `pca`
+
+# now display the results from the PCA analysis
+pca
+
+
+# Principal components  
+pca_data <- data.frame(pca$x, 
+                       STATION_CODE = dat_wide_1$STATION_CODE, 
+                       MYEAR = dat_wide_1$MYEAR,
+                       Dist_along_coast = dat_wide_1$Dist_along_coast)
+
+```
+
+
+### Percent variance explained  
+```{r}
+percent <- 100*pca$sdev^2 / sum(pca$sdev^2)
+kable(
+  tibble(
+    PC = paste0("PC", seq_along(percent)), 
+    Percent = round(percent, 1))
+)
+
+```
+
+### Plot PCs by year  
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by year, medians  
+```{r}
+df <- pca_data %>%
+  group_by(MYEAR) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = MYEAR)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = MYEAR), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+```
+
+
+### Plot PCs by station, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by station, PC2 vs PC3    
+```{r}
+
+ggplot(pca_data, aes(x = PC2, y = PC3, fill = STATION_CODE)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_brewer(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+
+### Plot PCs by distance along coast, PC1 vs PC2    
+```{r}
+
+ggplot(pca_data, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme_bw()
+
+```
+
+### Plot PCs by station / distance along coast, PC1 + PC2  
+```{r}
+
+df <- pca_data %>%
+  group_by(STATION_CODE, Dist_along_coast) %>%
+  summarise_at(vars(PC1,PC2,PC3), median)
+
+ggplot(df, aes(x = PC1, y = PC2, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC1), ylim = range(df$PC2)) +
+  theme_bw()
+
+
+
+```
+
+
+### Plot PCs by station / distance along coast, PC2 + PC3  
+```{r}
+
+ggplot(df, aes(x = PC2, y = PC3, fill = Dist_along_coast)) + 
+  geom_path() +
+  geom_point(shape = 21, size = rel(2.5), alpha = 0.5) +
+  geom_text(aes(label = STATION_CODE), hjust = -0.3) +
+  scale_fill_distiller(palette = "RdYlBu") +
+  coord_cartesian(xlim = rangex(df$PC2), ylim = range(df$PC3)) +
+  theme_bw()
+
+
+```
+
+
+### Rotation matrix  
+```{r}
+
+# capture the rotation matrix in a data frame
+rotation_data <- data.frame(
+  pca$rotation, 
+  Parameter = row.names(pca$rotation)
+)
+
+# define a pleasing arrow style
+arrow_style <- arrow(
+  length = unit(0.05, "inches"),
+  type = "closed"
+)
+
+# now plot, using geom_segment() for arrows and geom_text() for labels
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC1, yend = PC2), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC1, y = PC2, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
+
+ggplot(rotation_data) + 
+  geom_segment(aes(xend = PC2, yend = PC3), x = 0, y = 0, arrow = arrow_style) + 
+  geom_text(aes(x = PC2, y = PC3, label = Parameter), hjust = 0, size = 3, color = "red4") + 
+  xlim(-1., 1.25) + 
+  ylim(-1., 1.) +
+  coord_fixed() + # fix aspect ratio to 1:1
+  theme_bw()
 
 ```
