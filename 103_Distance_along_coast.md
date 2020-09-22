@@ -37,8 +37,26 @@ source("103_Distance_along_coast_functions.R")
 df_stations <- readRDS("Data/101_Selected_stations.rds")
 ```
 
+### Add stations
 
-### Coordinates along coast  
+
+```r
+df_stations_extra <- read.csv(textConnection("
+STATION_CODE, Station_Name, Lat, Lon, MSTAT,
+24B, 24B Bergen harbour, 60.39664, 5.27069, IH
+36A1, 36A1 Færder, 59.07357, 10.42522, RH
+28A2, 28A2 Vågsvåg, 61.93622,  5.048783333, RH
+97A3, 97A3 Bodø harbour, 67.2963, 14.3956, IH
+I714, I714 Sylterøya (Langesundfjord), 59.0514, 9.7038, IH
+"),
+stringsAsFactors = FALSE
+)
+  
+df_stations <- df_stations %>%
+  bind_rows(df_stations_extra)
+```
+
+### Coordinates along the coastal current  
 Made in script 102  
 
 ```r
@@ -55,7 +73,7 @@ test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - thi
 sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
 # test$names[!sel]
 map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
-map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+mapdata <- data.frame(Longitude = map$x, Latitude = map$y)
 ```
 
 
@@ -63,14 +81,15 @@ map_df <- data.frame(Longitude = map$x, Latitude = map$y)
 Long-lat coordinates  
 
 ```r
-ggplot(map_df, aes(Longitude, Latitude)) + 
+ggplot(mapdata, aes(Longitude, Latitude)) + 
   geom_path() +
   coord_map("lambert", lat0 = 64, lon0 = 11) +
   geom_path(data = coast, color = "blue") +
   geom_point(data = coast, color = "blue") 
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 
 
 ## 4. Add UTM coordinates (x and y) to map
@@ -79,22 +98,22 @@ ggplot(map_df, aes(Longitude, Latitude)) +
 #
 # Add UTM coordinates (x and y) to map
 #
-coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
-SP <- SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+coordinate_exists <- !is.na(mapdata$Longitude)   # sp doesn't like NAs
+SP <- SpatialPoints(mapdata[coordinate_exists, c("Longitude", "Latitude")],
                     proj4string=CRS(crs_longlat)
 )
 SP.UTM <- spTransform(SP, CRS(crs_utm))
 # Add transformed coords to data set
-map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
-map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+mapdata$x[coordinate_exists] <- SP.UTM@coords[,1]
+mapdata$y[coordinate_exists] <- SP.UTM@coords[,2]
 
 # Plot map 
-ggplot(map_df, aes(x, y)) + 
+ggplot(mapdata, aes(x, y)) + 
   geom_path() +
   coord_fixed()
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 
 ## 5. Distance from point along coast  
@@ -123,13 +142,61 @@ coastsegment_distance
 ## [37] 2685.72980
 ```
 
+### Show some "fixed km" along the coast on map    
+Using function get_point_on_coastline()   
+
+```r
+# Get positions for these km's:
+points <- 
+  c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+
+# Direction of text labels:
+points$Text_direction <- "West"
+points$Text_direction[c(1,6,7)] <- "East"
+
+# PLot
+ggplot(mapdata, aes(x, y)) +
+  geom_path() +
+  coord_fixed() +
+  geom_path(data = coast, color = "red") +
+  geom_point(data = points, color = "blue") +
+  geom_text(data = points %>% filter(Text_direction == "West"), 
+            aes(x = x - 20000, label = paste(distance, "km")), color = "blue", hjust = 1) +
+  geom_text(data = points %>% filter(Text_direction == "East"), 
+            aes(x = x + 20000, label = paste(distance, "km")), color = "blue", hjust = 0) +
+  expand_limits(x = c(min(mapdata$x, na.rm = TRUE) - 150000,
+                      max(mapdata$x, na.rm = TRUE) + 200000)) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+### Plot 
+
+```r
+ggplot(mapdata, aes(x, y)) + 
+  geom_path() +
+  coord_fixed() +
+  geom_path(data = coast, color = "red")
+```
+
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
 ### Test 'get_distance_along_coast' and 'check_distance_along_coast'  
 
 ```r
 # Usual case: the point is on the normal to at least one of the edges
 check_distance_along_coast(point = list(x = 600000, y = 6550000), 
                            df_segments = coast, 
-                           df_segments_distances = coastsegment_distance)
+                           df_segments_distances = coastsegment_distance,
+                           df_map = mapdata)
 ```
 
 ```
@@ -150,7 +217,7 @@ check_distance_along_coast(point = list(x = 600000, y = 6550000),
 ## [1] 46.1731
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 # Unusual case: the point is by a "concave" edge on the coast
@@ -177,7 +244,7 @@ check_distance_along_coast(point = list(x = 1285975, y = 7880861),
 ## [1] 2665.375
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 ```r
 if (FALSE){
@@ -213,17 +280,18 @@ df_stations$y[coordinate_exists] <- SP.UTM@coords[,2]
 ### Plot  
 
 ```r
-ggplot(map_df, aes(x, y)) + 
+ggplot(mapdata, aes(x, y)) + 
   geom_path() +
   coord_fixed() +
   geom_path(data = coast, color = "blue") +
   geom_point(data = df_stations, color = "red3") 
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
-### Get Dist_along_coast  
+### Get Dist_along_coast   
+For all stations  
 
 ```r
 get_distance_along_coast_s <- safely(get_distance_along_coast)
@@ -242,11 +310,19 @@ ok <- result_list$error %>% map_lgl(is.null)
 dist <- result_list$result[ok] %>% map_dbl(~.$distance)
 
 # Number that didnæt work
-sum(!ok)
+cat("Dist_along_coast found for", sum(ok), "stations \n")
 ```
 
 ```
-## [1] 0
+## Dist_along_coast found for 90 stations
+```
+
+```r
+cat("Dist_along_coast not found for", sum(!ok), "stations \n")
+```
+
+```
+## Dist_along_coast not found for 0 stations
 ```
 
 ### Check out the ones with error, if necessary

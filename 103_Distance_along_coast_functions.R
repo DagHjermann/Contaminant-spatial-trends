@@ -131,10 +131,13 @@ if (FALSE){
   get_distance_along_coast(point = p, df_segments = coast, df_segments_distances = coastsegment_distance)
 }
 
-check_distance_along_coast <- function(point, df_segments, df_segments_distances, mapdata = map_df){
+check_distance_along_coast <- function(point, 
+                                       df_segments, 
+                                       df_segments_distances, 
+                                       df_map = mapdata){
   get_distance_along_coast_s <- safely(get_distance_along_coast)
   result <- get_distance_along_coast_s(point = point, df_segments = df_segments, df_segments_distances = df_segments_distances)
-  gg <- ggplot(mapdata, aes(x, y)) + 
+  gg <- ggplot(df_map, aes(x, y)) + 
     geom_path() +
     coord_fixed(xlim = point$x + c(-100000, 100000), ylim = point$y + c(-100000, 100000)) +
     geom_path(data = df_segments, color = "blue") +
