@@ -9,6 +9,14 @@ output:
     keep_md: true  
 ---
 
+## Make station data  
+Makes station data with **distance along coast* (Dist_along_coast) as one of the variables.   
+* The station data is based on the ICES station dictionary   
+* Also includes MSTAT, with codes for station type:   
+    + IH: impacted by harmful substances (harbours, industry sites)   
+    + RH: representative stations     
+    + B: background stations   
+    
 
 ## 1. Packages + definitions  
 ```{r, warning=FALSE, message=FALSE, results='hide'}
@@ -17,6 +25,8 @@ library(ggplot2)
 library(dplyr)
 library(purrr)
 library(sp)
+library(readxl)
+library(safejoin)   # github hrbrmstr
 
 crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
 crs_utm <- "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m"
@@ -33,11 +43,54 @@ source("103_Distance_along_coast_functions.R")
 ## 2. Data
 
 ### Station data  
+From Kartbase.xlsx   
+```{r}
+# For check
+df_stations <- read_excel(
+  "Input_data/Kartbase.xlsx",
+  range = "$AM$1:$AP$72") %>%
+  rename()
+colnames(df_stations) <- c("STATION_CODE", "Lat", "Lon", "Station_Name")
+```
+
+### ICES stations   
+For MSTAT  
 ```{r}
 
-df_stations <- readRDS("Data/101_Selected_stations.rds")
+df_stations_ices <- readRDS("Data/101_Selected_stations.rds") %>%
+  group_by(STATION_CODE) %>%
+  mutate(StartYear_last = max(StartYear)) %>%
+  filter(StartYear_last == StartYear)
+
+# Check that we have all stations
+n1 <- unique(readRDS("Data/101_Selected_stations.rds")$STATION_CODE)
+n2 <- unique(df_stations_ices$STATION_CODE)
+cat("Number of stations lost in filtering:", sum(!n1 %in% n2), "\n")
 
 ```
+### Add MSTAT  
+```{r}
+
+df_stations <- df_stations %>%
+  filter(!grepl("G", STATION_CODE)) %>%
+  safe_left_join(
+    df_stations_ices %>% select(STATION_CODE, MSTAT),
+    by = "STATION_CODE",
+    na_matches = "never",
+    check = "bCV"
+  ) %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE == "19B" ~ "B",
+    STATION_CODE == "19N" ~ "B",
+    STATION_CODE == "97A3" ~ "IH",
+    STATION_CODE == "28A2" ~ "RH",
+    TRUE ~ MSTAT)
+  )
+
+cat("Stations lacking MSTAT:", sum(is.na(df_stations$MSTAT)), "\n")  
+
+```
+
 
 ### Add stations
 
@@ -53,9 +106,10 @@ I714, I714 Sylterøya (Langesundfjord), 59.0514, 9.7038, IH
 "),
 stringsAsFactors = FALSE
 )
-  
-df_stations <- df_stations %>%
-  bind_rows(df_stations_extra)
+
+# OLD  
+# df_stations <- df_stations %>%
+#   bind_rows(df_stations_extra)
 
 ```
 
@@ -75,7 +129,7 @@ test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - thi
 sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
 # test$names[!sel]
 map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
-map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+mapdata <- data.frame(Longitude = map$x, Latitude = map$y)
 
 ```
 
@@ -84,7 +138,7 @@ map_df <- data.frame(Longitude = map$x, Latitude = map$y)
 Long-lat coordinates  
 ```{r}
 
-ggplot(map_df, aes(Longitude, Latitude)) + 
+ggplot(mapdata, aes(Longitude, Latitude)) + 
   geom_path() +
   coord_map("lambert", lat0 = 64, lon0 = 11) +
   geom_path(data = coast, color = "blue") +
@@ -99,17 +153,17 @@ ggplot(map_df, aes(Longitude, Latitude)) +
 #
 # Add UTM coordinates (x and y) to map
 #
-coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
-SP <- SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+coordinate_exists <- !is.na(mapdata$Longitude)   # sp doesn't like NAs
+SP <- SpatialPoints(mapdata[coordinate_exists, c("Longitude", "Latitude")],
                     proj4string=CRS(crs_longlat)
 )
 SP.UTM <- spTransform(SP, CRS(crs_utm))
 # Add transformed coords to data set
-map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
-map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+mapdata$x[coordinate_exists] <- SP.UTM@coords[,1]
+mapdata$y[coordinate_exists] <- SP.UTM@coords[,2]
 
 # Plot map 
-ggplot(map_df, aes(x, y)) + 
+ggplot(mapdata, aes(x, y)) + 
   geom_path() +
   coord_fixed()
 
@@ -138,14 +192,15 @@ Using function get_point_on_coastline()
 ```{r}
 
 # Get positions for these km's:
-points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+points <- 
+  c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
 
 # Direction of text labels:
 points$Text_direction <- "West"
 points$Text_direction[c(1,6,7)] <- "East"
 
 # PLot
-ggplot(map_df, aes(x, y)) +
+ggplot(mapdata, aes(x, y)) +
   geom_path() +
   coord_fixed() +
   geom_path(data = coast, color = "red") +
@@ -154,8 +209,8 @@ ggplot(map_df, aes(x, y)) +
             aes(x = x - 20000, label = paste(distance, "km")), color = "blue", hjust = 1) +
   geom_text(data = points %>% filter(Text_direction == "East"), 
             aes(x = x + 20000, label = paste(distance, "km")), color = "blue", hjust = 0) +
-  expand_limits(x = c(min(map_df$x, na.rm = TRUE) - 150000,
-                      max(map_df$x, na.rm = TRUE) + 200000)) +
+  expand_limits(x = c(min(mapdata$x, na.rm = TRUE) - 150000,
+                      max(mapdata$x, na.rm = TRUE) + 200000)) +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
@@ -169,10 +224,10 @@ ggplot(map_df, aes(x, y)) +
 ### Plot 
 ```{r}
 
-ggplot(map_df, aes(x, y)) + 
+ggplot(mapdata, aes(x, y)) + 
   geom_path() +
   coord_fixed() +
-  geom_path(data = coast, color = "red") +
+  geom_path(data = coast, color = "red")
   
 
 ```
@@ -184,7 +239,8 @@ ggplot(map_df, aes(x, y)) +
 # Usual case: the point is on the normal to at least one of the edges
 check_distance_along_coast(point = list(x = 600000, y = 6550000), 
                            df_segments = coast, 
-                           df_segments_distances = coastsegment_distance)
+                           df_segments_distances = coastsegment_distance,
+                           df_map = mapdata)
 
 # Unusual case: the point is by a "concave" edge on the coast
 check_distance_along_coast(point = list(x = 1285975, y = 7880861), 
@@ -230,7 +286,7 @@ df_stations$y[coordinate_exists] <- SP.UTM@coords[,2]
 ### Plot  
 ```{r}
 
-ggplot(map_df, aes(x, y)) + 
+ggplot(mapdata, aes(x, y)) + 
   geom_path() +
   coord_fixed() +
   geom_path(data = coast, color = "blue") +
@@ -239,8 +295,9 @@ ggplot(map_df, aes(x, y)) +
 ```
 
 
-### Get Dist_along_coast  
-```{r}
+### Get Dist_along_coast   
+For all stations  
+```{r, results='hold'}
 
 get_distance_along_coast_s <- safely(get_distance_along_coast)
 
@@ -258,7 +315,8 @@ ok <- result_list$error %>% map_lgl(is.null)
 dist <- result_list$result[ok] %>% map_dbl(~.$distance)
 
 # Number that didnæt work
-sum(!ok)
+cat("Dist_along_coast found for", sum(ok), "stations \n")
+cat("Dist_along_coast not found for", sum(!ok), "stations \n")
 
 ```
 

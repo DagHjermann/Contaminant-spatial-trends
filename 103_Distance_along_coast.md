@@ -9,6 +9,14 @@ output:
     keep_md: true  
 ---
 
+## Make station data  
+Makes station data with **distance along coast* (Dist_along_coast) as one of the variables.   
+* The station data is based on the ICES station dictionary   
+* Also includes MSTAT, with codes for station type:   
+    + IH: impacted by harmful substances (harbours, industry sites)   
+    + RH: representative stations     
+    + B: background stations   
+    
 
 ## 1. Packages + definitions  
 
@@ -17,6 +25,8 @@ library(ggplot2)
 library(dplyr)
 library(purrr)
 library(sp)
+library(readxl)
+library(safejoin)   # github hrbrmstr
 
 crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
 crs_utm <- "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m"
@@ -32,10 +42,61 @@ source("103_Distance_along_coast_functions.R")
 ## 2. Data
 
 ### Station data  
+From Kartbase.xlsx   
 
 ```r
-df_stations <- readRDS("Data/101_Selected_stations.rds")
+# For check
+df_stations <- read_excel(
+  "Input_data/Kartbase.xlsx",
+  range = "$AM$1:$AP$72") %>%
+  rename()
+colnames(df_stations) <- c("STATION_CODE", "Lat", "Lon", "Station_Name")
 ```
+
+### ICES stations   
+For MSTAT  
+
+```r
+df_stations_ices <- readRDS("Data/101_Selected_stations.rds") %>%
+  group_by(STATION_CODE) %>%
+  mutate(StartYear_last = max(StartYear)) %>%
+  filter(StartYear_last == StartYear)
+
+# Check that we have all stations
+n1 <- unique(readRDS("Data/101_Selected_stations.rds")$STATION_CODE)
+n2 <- unique(df_stations_ices$STATION_CODE)
+cat("Number of stations lost in filtering:", sum(!n1 %in% n2), "\n")
+```
+
+```
+## Number of stations lost in filtering: 0
+```
+### Add MSTAT  
+
+```r
+df_stations <- df_stations %>%
+  filter(!grepl("G", STATION_CODE)) %>%
+  safe_left_join(
+    df_stations_ices %>% select(STATION_CODE, MSTAT),
+    by = "STATION_CODE",
+    na_matches = "never",
+    check = "bCV"
+  ) %>%
+  mutate(MSTAT = case_when(
+    STATION_CODE == "19B" ~ "B",
+    STATION_CODE == "19N" ~ "B",
+    STATION_CODE == "97A3" ~ "IH",
+    STATION_CODE == "28A2" ~ "RH",
+    TRUE ~ MSTAT)
+  )
+
+cat("Stations lacking MSTAT:", sum(is.na(df_stations$MSTAT)), "\n")  
+```
+
+```
+## Stations lacking MSTAT: 0
+```
+
 
 ### Add stations
 
@@ -51,9 +112,10 @@ I714, I714 Sylterøya (Langesundfjord), 59.0514, 9.7038, IH
 "),
 stringsAsFactors = FALSE
 )
-  
-df_stations <- df_stations %>%
-  bind_rows(df_stations_extra)
+
+# OLD  
+# df_stations <- df_stations %>%
+#   bind_rows(df_stations_extra)
 ```
 
 ### Coordinates along the coastal current  
@@ -88,7 +150,7 @@ ggplot(mapdata, aes(Longitude, Latitude)) +
   geom_point(data = coast, color = "blue") 
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 
 
@@ -113,7 +175,7 @@ ggplot(mapdata, aes(x, y)) +
   coord_fixed()
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 
 ## 5. Distance from point along coast  
@@ -175,7 +237,7 @@ ggplot(mapdata, aes(x, y)) +
   )
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ### Plot 
 
@@ -186,7 +248,7 @@ ggplot(mapdata, aes(x, y)) +
   geom_path(data = coast, color = "red")
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 ### Test 'get_distance_along_coast' and 'check_distance_along_coast'  
@@ -217,7 +279,7 @@ check_distance_along_coast(point = list(x = 600000, y = 6550000),
 ## [1] 46.1731
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ```r
 # Unusual case: the point is by a "concave" edge on the coast
@@ -244,7 +306,7 @@ check_distance_along_coast(point = list(x = 1285975, y = 7880861),
 ## [1] 2665.375
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
 
 ```r
 if (FALSE){
@@ -287,7 +349,7 @@ ggplot(mapdata, aes(x, y)) +
   geom_point(data = df_stations, color = "red3") 
 ```
 
-![](103_Distance_along_coast_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](103_Distance_along_coast_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 ### Get Dist_along_coast   
@@ -311,17 +373,11 @@ dist <- result_list$result[ok] %>% map_dbl(~.$distance)
 
 # Number that didnæt work
 cat("Dist_along_coast found for", sum(ok), "stations \n")
-```
-
-```
-## Dist_along_coast found for 90 stations
-```
-
-```r
 cat("Dist_along_coast not found for", sum(!ok), "stations \n")
 ```
 
 ```
+## Dist_along_coast found for 62 stations 
 ## Dist_along_coast not found for 0 stations
 ```
 
