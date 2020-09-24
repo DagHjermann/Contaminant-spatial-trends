@@ -30,6 +30,7 @@ library(forcats)   # fct_reorder()
 library(ggplot2)
 library(leaflet)
 library(knitr)
+library(purrr)
 
 library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
 
@@ -129,19 +130,19 @@ test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - thi
 sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
 # test$names[!sel]
 map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
-map_df <- data.frame(Longitude = map$x, Latitude = map$y)
+mapdata <- data.frame(Longitude = map$x, Latitude = map$y)
 
 #
 # Add UTM coordinates (x and y) to map
 #
-coordinate_exists <- !is.na(map_df$Longitude)   # sp doesn't like NAs
-SP <- sp::SpatialPoints(map_df[coordinate_exists, c("Longitude", "Latitude")],
+coordinate_exists <- !is.na(mapdata$Longitude)   # sp doesn't like NAs
+SP <- sp::SpatialPoints(mapdata[coordinate_exists, c("Longitude", "Latitude")],
                     proj4string=CRS(crs_longlat)
 )
 SP.UTM <- sp::spTransform(SP, CRS(crs_utm))
 # Add transformed coords to data set
-map_df$x[coordinate_exists] <- SP.UTM@coords[,1]
-map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
+mapdata$x[coordinate_exists] <- SP.UTM@coords[,1]
+mapdata$y[coordinate_exists] <- SP.UTM@coords[,2]
 
 
 #
@@ -173,7 +174,12 @@ plot_coast_distance <- function(map, coast){
   
     # Get positions for km's to show:
   points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
-
+  
+  
+  # Direction of text labels:
+  points$Text_direction <- "West"
+  points$Text_direction[c(1,6,7)] <- "East"
+  
   # PLot
   gg2 <- ggplot(map, aes(x, y)) +
     geom_path() +
@@ -186,38 +192,8 @@ plot_coast_distance <- function(map, coast){
     geom_text(data = points %>% filter(Text_direction == "East"), 
               aes(x = x + 20000, label = paste(distance, "km")), 
               color = "blue", hjust = 0, size = rel(3)) +
-    expand_limits(x = c(min(map_df$x, na.rm = TRUE) - 150000,
-                        max(map_df$x, na.rm = TRUE) + 200000)) +
-    theme_minimal() +
-    theme(
-      axis.text = element_blank(),
-      axis.title = element_blank(),
-      axis.ticks = element_blank(),
-      panel.grid = element_blank()
-    )
-  
-gg2
-}
-
-plot_coast_distance <- function(){
-  
-    # Get positions for km's to show:
-  points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
-
-  # PLot
-  gg2 <- ggplot(map_df, aes(x, y)) +
-    geom_path() +
-    coord_fixed() +
-    geom_path(data = coast, color = "red") +
-    geom_point(data = points, color = "blue") +
-    geom_text(data = points %>% filter(Text_direction == "West"), 
-              aes(x = x - 20000, label = paste(distance, "km")), 
-              color = "blue", hjust = 1, size = rel(3)) +
-    geom_text(data = points %>% filter(Text_direction == "East"), 
-              aes(x = x + 20000, label = paste(distance, "km")), 
-              color = "blue", hjust = 0, size = rel(3)) +
-    expand_limits(x = c(min(map_df$x, na.rm = TRUE) - 150000,
-                        max(map_df$x, na.rm = TRUE) + 200000)) +
+    expand_limits(x = c(min(mapdata$x, na.rm = TRUE) - 150000,
+                        max(mapdata$x, na.rm = TRUE) + 200000)) +
     theme_minimal() +
     theme(
       axis.text = element_blank(),
@@ -230,7 +206,8 @@ gg2
 }
 
 
-plot_coast_distance()
+# debugonce(plot_coast_distance)
+plot_coast_distance(mapdata, coast)
 
 
 ```
@@ -262,6 +239,7 @@ dat_isotopes_means1 %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
   viridis::scale_fill_viridis() +
+  scale_y_reverse() +
   labs(title = "Muskel")
 
 ```
@@ -274,6 +252,7 @@ dat_isotopes_means1 %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
   viridis::scale_fill_viridis() +
+  scale_y_reverse() +
   theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
   labs(title = "Blue mussel")
 
@@ -356,6 +335,7 @@ Cod_station, Mussel_station
 15B,15A
 23B,22A
 24B,I241
+53B,56A
 80B,91A2
 96B,I969
 98B1,98A2
@@ -375,12 +355,15 @@ stringsAsFactors = FALSE
 
 #### Cod
 ```{r}
+
 dat_isotopes %>%
-  filter(TISSUE_NAME %in% "Muskel" &
+  filter(TISSUE_NAME %in% "Muskel" & 
+           grepl("B", STATION_CODE) & 
            STATION_CODE %in% data_closest_mussel_station$Cod_station) %>%
   ggplot(aes(MYEAR, Delta15N)) +
   geom_jitter(width = 0.1) +
   facet_wrap(vars(STATION_CODE))
+
 ```
 
 #### Blue mussel
@@ -416,7 +399,8 @@ data_closest_mussel_station <- data_closest_mussel_station %>%
 
 
 ## 7. Add mussel data columns to main data   
-And calculate trophic level (TL)
+### a. Add mussel and calculate trophic level (TL)   
+All data, i.e. one line per parameter and sample  
 ```{r}
 
 dat2 <- dat %>%
@@ -425,25 +409,78 @@ dat2 <- dat %>%
     dat_isotopes %>% 
       select(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2, Delta13C, Delta15N), 
     by = c("MYEAR", "STATION_CODE", "TISSUE_NAME", "SAMPLE_NO2")
-  ) %>%
+  ) %>% # View()
   # Add Delta13C, Delta15N for closest mussel station
   left_join(
     data_closest_mussel_station, 
     by = c("STATION_CODE" = "Cod_station")) %>%
+  ungroup() %>% 
   # Calculate trophic level (TL)
-  mutate(TL = case_when(
-    TISSUE_NAME %in% c("Lever", "Muskel") ~ 2 + (Delta15N - Delta15N_mussel)/3.8,
-    TISSUE_NAME %in% "Whole soft body" ~ 2)
-  )
+  mutate(
+    TL = case_when(
+      TISSUE_NAME %in% c("Lever", "Muskel") ~ 2 + (Delta15N - Delta15N_mussel)/3.8,
+      TISSUE_NAME %in% "Whole soft body" ~ 2)
+    )  %>%
+  # Add Lat, Lon, Dist_along_coast, MSTAT
+  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
+                 na_matches = "never",
+                 check = "CV",
+                 by = "STATION_CODE") %>%
+  # Make STATION_CODE factor levels to follow 'Dist_along_coast'
+  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
 
+
+# dat2$STATION_CODE %>% levels()
 
 ```
 
 
-## 8. Plots  
-
-### Cod trophic level by year  
+### b. Keep only isotopes and TL data    
+Plus LNMEA etc
 ```{r}
+dat3 <- dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" & !is.na(TL)) %>%
+  group_by(TISSUE_NAME, MYEAR, STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT, SAMPLE_NO2) %>%
+  summarise(across(c(Delta15N, Delta15N_mussel, TL, LNMEA, FAT_PERC), first)) %>%
+  mutate(MYEAR_f = factor(MYEAR),
+         STATION_CODE = fct_drop(STATION_CODE)
+         ) 
+
+```
+
+### c. Save  
+```{r}
+
+saveRDS(dat2, "Data/104_dat2.rds")
+saveRDS(dat3, "Data/104_dat3.rds")
+saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
+
+```
+
+
+## 8. Plots {.tabset} 
+
+### Median cod TL    
+```{r}
+
+dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" &
+           PARAM %in% "HG" &
+           STATION_CODE %in% data_closest_mussel_station$Cod_station &
+           !is.na(TL)) %>%
+  group_by(MYEAR, STATION_CODE) %>%
+  summarise(TL = median(TL), .groups = "drop") %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = TL)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  scale_y_reverse() +
+  labs(title = "Cod trophic level") 
+
+
+```
+
+### Cod TL, raw data 
+```{r, fig.width=8, fig.height=8}
 
 dat2 %>%
   filter(TISSUE_NAME %in% "Muskel" &
@@ -459,17 +496,55 @@ dat2 %>%
 
 
 ### Plot cod trophic level by mean length  
-```{r}
+```{r, fig.width=8, fig.height=8}
+
 dat2 %>%
   filter(TISSUE_NAME %in% "Muskel" &
            PARAM %in% "HG" &
            STATION_CODE %in% data_closest_mussel_station$Cod_station &
            !is.na(TL)) %>%
-  ggplot(aes(LNMEA, TL, color = MYEAR)) +
-  geom_point() +
+  ggplot(aes(LNMEA, TL, fill = MYEAR)) +
+  geom_point(shape = 21, size = rel(2)) +
+  viridis::scale_fill_viridis() +
   facet_wrap(vars(STATION_CODE))
 
 ```
+
+## LMER test  
+```{r}
+
+if (FALSE){
+
+
+
+```
+
+```{r}
+
+str(fm2, 2)
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+newdat <- expand.grid(
+    STATION_CODE = 
+    , Sex=c("Female","Male")
+    , distance = 0
+)
+newdat$distance <- predict(fm1, newdat, re.form = NA)
+mm <- model.matrix(terms(fm1), newdat)
+
+newdat
+mm
+
+```
+
+
 
 ## 9. Statistical analysis: station + year    
 ```{r, results = 'hold'}
