@@ -25,7 +25,6 @@ Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå
 ## 1. Libraries  
 ```{r, warning=FALSE, message=FALSE, results='hide'}
 
-library(dplyr)
 library(forcats)   # fct_reorder()
 library(ggplot2)
 library(leaflet)
@@ -35,10 +34,15 @@ library(purrr)
 library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
 
 library(sp)
+
+library(dplyr)            #   load last to avoid name conflicts such as MASS::select
+
 crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
 crs_utm <- "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m"
 
+source("103_Distance_along_coast_functions.R")
 
+# environment(select)
 
 ```
 
@@ -76,14 +80,21 @@ df_stations <- readRDS("Data/103_Selected_stations.rds")
 
 # Station metadata needs to be summarised  
 df_stations <- df_stations %>%
+  filter(Station_Name != "Risøy, Østerfjord") %>%
   mutate(MSTAT = case_when(
     STATION_CODE %in% "I969" ~ "RH",
     TRUE ~ MSTAT)) %>%
-  group_by(STATION_CODE, MSTAT) %>%
+  group_by(STATION_CODE, Station_Name, MSTAT) %>%
   summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE)
 
+check <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  mutate(n = n()) %>%
+  filter(n > 1)
 
-
+if (nrow(check) > 0){
+  stop("Some STATION_CODE occurs more than one time")
+}
 
 ```
 
@@ -122,6 +133,8 @@ if (sum(is.na(check$Lat)) > 0)
 ```
 ### Data for plotting maps   
 From script 122 (without adaption)      
+  
+Mapdata  
 ```{r}
 #
 # Get Norway map data
@@ -145,6 +158,13 @@ mapdata$x[coordinate_exists] <- SP.UTM@coords[,1]
 mapdata$y[coordinate_exists] <- SP.UTM@coords[,2]
 
 
+
+
+```
+
+'Coast' - line going along coast  
+* See plot at end of script   
+```{r}
 #
 # "Coast" data (coordinates for segments along the coast)
 #
@@ -159,6 +179,24 @@ segment_dy <- diff(coast$y)/1000
 coastsegment_distance <- sqrt(segment_dx^2 + segment_dy^2) %>% cumsum()
 coastsegment_distance <- c(0, coastsegment_distance)
 
+```
+
+'coast_points' - points/text to plot along 'coast'   
+```{r}
+# Get positions for these km's:
+coast_points <- 
+  c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+
+# Direction of text labels:
+coast_points$Text_direction <- "West"
+coast_points$Text_direction[c(1,6,7)] <- "East"
+
+SP.utm <- SpatialPoints(coast_points[,c("x", "y")], 
+                        proj4string=CRS(crs_utm)
+                        )
+SP.longlat <- spTransform(SP.utm, CRS(crs_longlat))
+coast_points$Longitude <- SP.longlat@coords[,1]
+coast_points$Latitude <- SP.longlat@coords[,2]
 
 ```
 
@@ -400,7 +438,9 @@ data_closest_mussel_station <- data_closest_mussel_station %>%
 
 ## 7. Add mussel data columns to main data   
 ### a. Add mussel and calculate trophic level (TL)   
-All data, i.e. one line per parameter and sample  
+All data, i.e. one line per parameter and sample, for all parameters  
+* Note: suitable for correlating contaminants with TL  
+* Not the data to use for looking at TL itself, use dat3 for that    
 ```{r}
 
 dat2 <- dat %>%
@@ -429,6 +469,7 @@ dat2 <- dat %>%
   # Make STATION_CODE factor levels to follow 'Dist_along_coast'
   mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
 
+cat("dat2:", nrow(dat2), "lines \n")
 
 # dat2$STATION_CODE %>% levels()
 
@@ -436,15 +477,18 @@ dat2 <- dat %>%
 
 
 ### b. Keep only isotopes and TL data    
-Plus LNMEA etc
+Plus LNMEA and FAT_PERC
 ```{r}
 dat3 <- dat2 %>%
   filter(TISSUE_NAME %in% "Muskel" & !is.na(TL)) %>%
   group_by(TISSUE_NAME, MYEAR, STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT, SAMPLE_NO2) %>%
-  summarise(across(c(Delta15N, Delta15N_mussel, TL, LNMEA, FAT_PERC), first)) %>%
+  summarise(across(c(Delta15N, Delta15N_mussel, TL, LNMEA, FAT_PERC), first),
+            .groups = "drop") %>%
   mutate(MYEAR_f = factor(MYEAR),
          STATION_CODE = fct_drop(STATION_CODE)
          ) 
+
+cat("dat3:", nrow(dat3), "lines \n")
 
 ```
 
@@ -457,17 +501,54 @@ saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
 
 ```
 
+## 8. Remove excessively low/high trophic level  
 
-## 8. Plots {.tabset} 
-
-### Median cod TL    
+### Remove 5 outliers   
 ```{r}
 
-dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" &
-           PARAM %in% "HG" &
-           STATION_CODE %in% data_closest_mussel_station$Cod_station &
-           !is.na(TL)) %>%
+dat3 <- dat3 %>%
+  mutate(
+    Outlier = case_when(
+      TL > 5.6 ~ TRUE,
+      TL < 2.8 ~ TRUE,
+      TRUE ~ FALSE)
+    )
+
+xtabs(~Outlier, dat3)
+
+ggplot(dat3, aes(LNMEA, TL, color = Outlier)) + 
+  geom_point() +
+  scale_color_manual(values = c("grey70", "black")) +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") +
+  theme_bw()
+
+dat3 <- dat3 %>% 
+  filter(!Outlier) %>%
+  select(-Outlier)
+
+```
+
+## 9. Plots {.tabset}  
+Repating the Delta15N plot shown above  
+
+### Cod Delta15N    
+```{r, fig.height=4, fig.width=9}
+
+dat_isotopes_means1 %>%
+  filter(TISSUE_NAME %in% "Muskel" & grepl("B", STATION_CODE)) %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  scale_y_reverse() +
+  labs(title = "Muskel")
+
+```
+
+### Median cod TL    
+```{r, fig.height=4, fig.width=9}
+
+dat3 %>%
   group_by(MYEAR, STATION_CODE) %>%
   summarise(TL = median(TL), .groups = "drop") %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = TL)) +
@@ -479,380 +560,291 @@ dat2 %>%
 
 ```
 
-### Cod TL, raw data 
-```{r, fig.width=8, fig.height=8}
+### TL boxplots  
+```{r, fig.height=6, fig.width=9}
 
-dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" &
-           PARAM %in% "HG" &
-           STATION_CODE %in% data_closest_mussel_station$Cod_station &
-           !is.na(TL)) %>%
-  ggplot(aes(MYEAR, TL)) +
-  geom_jitter(width = 0.25, alpha = 0.4) +
-  facet_wrap(vars(STATION_CODE))
+ggplot(dat3, aes(factor(MYEAR), TL)) + 
+  geom_boxplot() +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") 
 
+```
+### TL vs length    
+```{r, fig.height=6, fig.width=9}
+
+ggplot(dat3, aes(LNMEA, TL)) + 
+  geom_point(aes(fill = MYEAR_f), pch = 21, size = rel(2)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  geom_smooth(method = "lm", formula = 'y ~ x') +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(y = "Trophic level", x = "Cod length (mm)") 
 
 ```
 
 
-### Plot cod trophic level by mean length  
-```{r, fig.width=8, fig.height=8}
-
-dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" &
-           PARAM %in% "HG" &
-           STATION_CODE %in% data_closest_mussel_station$Cod_station &
-           !is.na(TL)) %>%
-  ggplot(aes(LNMEA, TL, fill = MYEAR)) +
-  geom_point(shape = 21, size = rel(2)) +
-  viridis::scale_fill_viridis() +
-  facet_wrap(vars(STATION_CODE))
-
-```
-
-## LMER test  
+## 10. Mixed-model analyses  
+### Load mixed-model analyses   
+* Models were estimated using script 105, we just load the saved results here (to save time)       
+* Models estimated using both REML (gives the best estimates) and ML (can be used for hypothesis testing using ANOVA)   
+    + REML = restricted maximum likelihood  
+    + ML = maximum likelihood    
 ```{r}
 
-if (FALSE){
+#
+# Models 
+#
 
+model_list <- readRDS("Data/105_model_list.rds")
+
+# The formula for each REML model  
+model_list[1:3] %>% map(formula)
+
+# name of models in script 105:
+# list(fm2b, fm3a, fm3b, fm2b_null_ml, fm2b_ml, fm3a_ml, fm3b_ml)
+# Model 1-3 are estimated using REML 
+# Model 4: null model estimated using ML 
+# Model 5-7 = model 1-3 estimated using ML 
+
+mod_station <- model_list[[1]]       
+mod_station_length <- model_list[[2]]
+mod_station_length_x <- model_list[[3]]
+mod_ml_null <- model_list[[4]]
+mod_ml_station <- model_list[[5]]       
+mod_ml_station_length <- model_list[[6]]
+mod_ml_station_length_x <- model_list[[7]]
+
+
+#
+# Predictions  
+# Made using model_list 1-3 above (i.e. the REML models)  
+#
+
+# name of predic in script 105:
+# list(newdat, pred_3a, pred_3b)
+model_predictions <- readRDS("Data/105_model_predictions.rds")
+
+# Set names so they 
+pred_station <- model_predictions[[1]]
+pred_station_length <- model_predictions[[2]]
+pred_station_length_x <- model_predictions[[3]]
 
 
 ```
 
+### ANOVA of models  
+* Using the ML (max. likelihood models)  
+* Clearly indicates that station, length and the station*length interaction all are significant  
+* I.e., there are significant differences in the length_TL relationship among stations  
 ```{r}
 
-str(fm2, 2)
+anova(mod_ml_null, mod_ml_station, mod_ml_station_length, mod_ml_station_length_x)
 
 ```
 
+### Distance data - to add to predicted data  
 ```{r}
+df_stations_plot <- df_stations %>%
+  filter(STATION_CODE %in% pred_station$STATION_CODE) %>%
+  select(STATION_CODE, Station_Name, Lon, Lat, Dist_along_coast) %>%
+  mutate(
+    Station_y = case_when(
+      STATION_CODE %in% c("30B","53B") ~ 0,
+      TRUE ~ -0.04)
+  ) %>%
+  mutate(
+    Place = case_when(
+      STATION_CODE %in% "30B" ~ "Oslo",
+      STATION_CODE %in% "13B" ~ "Kristiansand",
+      STATION_CODE %in% "24B" ~ "Bergen",
+      STATION_CODE %in% "80B" ~ "Trondheim",
+      STATION_CODE %in% "43B2" ~ "Tromsø",
+      STATION_CODE %in% "10B" ~ "Kirkenes")
+  )
 
 ```
 
-```{r}
-
-newdat <- expand.grid(
-    STATION_CODE = 
-    , Sex=c("Female","Male")
-    , distance = 0
-)
-newdat$distance <- predict(fm1, newdat, re.form = NA)
-mm <- model.matrix(terms(fm1), newdat)
-
-newdat
-mm
-
-```
-
-
-
-## 9. Statistical analysis: station + year    
-```{r, results = 'hold'}
-
-dat2b <- dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" & TL < 6) %>% # cod - and remive one outlier 
-  mutate(MYEAR = factor(MYEAR))
-
-m0 <- lm(TL ~ 1, dat2b)
-m1 <- lm(TL ~ MYEAR, dat2b)
-m2 <- lm(TL ~ STATION_CODE, dat2b)
-m3 <- lm(TL ~ MYEAR + STATION_CODE, dat2b)
-m4 <- lm(TL ~ MYEAR*STATION_CODE, dat2b)    # Very slow!
-
-cat("===========================================\n")
-cat("\nEffect of MYEAR: \n\n")
-anova(m0, m1)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE: \n\n")
-anova(m0, m2)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE in addition to MYEAR: \n\n")
-anova(m1, m3)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE*MYEAR interaction: \n\n")
-anova(m3, m4)
-
-```
-
-### Station effect 1 (after removing year effect)     
-Model: MYEAR + STATION_CODE  
-```{r, fig.width=8.5, fig.height=5}  
-
-# visreg::visreg(fit = m3, xvar = "STATION_CODE")
-
-df_stationeffect1 <- visreg::visreg(fit = m3, xvar = "STATION_CODE", plot = FALSE)  
-str(df_stationeffect1, 2)
-levels(df_stationeffect1$fit$STATION_CODE)
-
-# Add position plus Dist_along_coast
-df_stationeffect1$fit <- df_stationeffect1$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect1$fit$STATION_CODE)
-
-df_stationeffect1$res <- df_stationeffect1$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-
-
-```
-
-
-
-### Plot year effect  
-```{r}
-
-visreg::visreg(fit = m3, xvar = "MYEAR")  
-
-```
-
-
-
-
-## 10. Statistical analysis: station + year + length   
-```{r, results = 'hold'}
-
-# library(MuMIn)
-
-m0 <- lm(TL ~ 1, dat2b)
-m1 <- lm(TL ~ LNMEA, dat2b)
-m2 <- lm(TL ~ STATION_CODE, dat2b)
-m3 <- lm(TL ~ LNMEA + STATION_CODE, dat2b)
-m3b <- lm(TL ~ LNMEA + STATION_CODE + MYEAR, dat2b)
-m4 <- lm(TL ~ LNMEA*STATION_CODE, dat2b)
-m4b <- lm(TL ~ LNMEA*STATION_CODE + MYEAR, dat2b)
-
-cat("===========================================\n")
-cat("\nEffect of length: \n\n")
-anova(m0, m1)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE: \n\n")
-anova(m0, m2)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE in addition to length: \n\n")
-anova(m1, m3)
-cat("===========================================\n")
-cat("\nEffect of Year in addition to STATION_CODE + length: \n\n")
-anova(m3, m3b)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE*length interaction: \n\n")
-anova(m3, m4)
-cat("===========================================\n")
-cat("\nAdding STATION_CODE*length interaction to STATION_CODE + length + year model: \n\n")
-anova(m3b, m4b)
-
-```
-
-
-
-### Get length effect depending on station  {.tabset} 
-Model: Length * STATION_CODE + Year  
-```{r, fig.width=8.5, fig.height=5}  
-
-# visreg::visreg(fit = m4b, xvar = "LNMEA", by = "STATION_CODE", gg = TRUE)
-
-df_effects <- visreg::visreg(fit = m4b, xvar = "LNMEA", by = "STATION_CODE", plot = FALSE)  
-
-# str(df_effects, 2)
-# levels(df_effects$fit$STATION_CODE)
-
-# Add position plus Dist_along_coast
-df_effects$fit <- df_effects$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_effects$res <- df_effects$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-
-
-```
-
-#### Length effect    
-```{r}
-
-ggplot(df_effects$fit, aes(x = LNMEA)) +
-  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "lightblue") +
-  geom_line(aes(y = visregFit)) +
-  facet_wrap(vars(STATION_CODE))
-
-```
-
-#### Length effect with residuals      
-```{r}
-
-ggplot(df_effects$fit, aes(x = LNMEA)) +
-  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "lightblue") +
-  geom_point(data = df_effects$res, aes(y = visregRes), size = rel(0.5)) +
-  geom_line(aes(y = visregFit)) +
-  facet_wrap(vars(STATION_CODE))
-
-```
-
-
-
-### Station effect 2, 40 cm cod (after removing year and length effect)     
-Model: MYEAR + STATION_CODE * Length 
-```{r}
-
-# visreg::visreg(fit = m4b, xvar = "STATION_CODE", cond = list(LNMEA = 600, MYEAR = 2019), gg = TRUE)
-
-df_stationeffect2 <- visreg::visreg(
-  fit = m4b, 
-  xvar = "STATION_CODE", 
-  cond = list(LNMEA = 400, MYEAR = 2019), 
-  plot = FALSE)  
-
-
-# Add position plus Dist_along_coast
-df_stationeffect2$fit <- df_stationeffect2$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_stationeffect2$res <- df_stationeffect2$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-
-
-```
-
-### Station effect3, 70 cm cod (after removing year and length effect)     
-Model: MYEAR + STATION_CODE * Length 
-```{r}
-
-# visreg::visreg(fit = m4b, xvar = "STATION_CODE", cond = list(LNMEA = 600, MYEAR = 2019), gg = TRUE)
-
-df_stationeffect3 <- visreg::visreg(
-  fit = m4b, 
-  xvar = "STATION_CODE", 
-  cond = list(LNMEA = 700, MYEAR = 2019), 
-  plot = FALSE)  
-
-
-# Add position plus Dist_along_coast
-df_stationeffect3$fit <- df_stationeffect3$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_stationeffect3$res <- df_stationeffect3$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-
-
-```
-
-## 11. Plot station effects {.tabset}
-
-### Mean TL  
-```{r}
-ggplot(df_stationeffect1$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-### Mean TL (w/ residuals)  
-```{r}
-ggplot(df_stationeffect1$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect1$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-### TL 40 cm cod 
-```{r}
-ggplot(df_stationeffect2$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-### TL 40 cm cod (w/ residuals)  
-```{r}
-ggplot(df_stationeffect2$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect2$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-
-### TL 70 cm cod 
-```{r}
-ggplot(df_stationeffect3$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-### TL 70 cm cod (w/ residuals)  
-```{r}
-ggplot(df_stationeffect3$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect3$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
-```
-
-### Mean TL vs distance      
-```{r}
-ggplot(df_stationeffect1$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
-```
-
-
-### TL 40 cm vs distance      
-```{r}
-ggplot(df_stationeffect2$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
-```
-
-
-### TL 70 cm vs distance      
-```{r}
-ggplot(df_stationeffect3$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
-```
-
-
-
-
-
-
-
-
-
-
-
-## 12. Save data  
-```{r}
-
-if (FALSE){
-  saveRDS(dat2, "Data/104_Selected_data.rds")
+### Plot function  
+```{r}  
+
+# df_stations_plot is given globally  
+plot_pred_distance <- function(model_predictions, ylabel, length = NULL, 
+                               station_data = df_stations_plot){
+  if (is.null(length)){
+    df <- model_predictions
+  } else {
+    df <- model_predictions %>%
+      filter(LNMEA == length)
+  }
+  df <- df %>%
+    safe_left_join(station_data,
+                   by = "STATION_CODE", na_matches = "never",
+                   check = "CV")
+  ggplot(df, aes(Dist_along_coast, TL)) +
+    geom_pointrange(aes(ymin = plo, ymax = phi)) +
+    geom_text(aes(y = min(plo) + Station_y, label = STATION_CODE), 
+              angle = 30, size = rel(3), color = "blue3") +
+    geom_text(aes(y = max(phi) + 0.02, label = Place), 
+              angle = 0, size = rel(3), color = "blue3") +
+    labs(x = "Station code", y = ylabel) +
+    theme_bw()
 }
 
 ```
+
+
+## 11. Plots of station estimates {.tabset}   
+* All models use "year" as a random factor, station effect is estimated on the year level   
+* CIs estimated using Ben Bolker's method, and are based on fixed-effects uncertainty only, i.e. the confidence interval for the station effect  
+
+### Model: station only
+```{r}
+gg <- plot_pred_distance(pred_station, "Estimated trophic level")
+gg
+
+```
+
+### Model: station + length (40 cm)  
+Model including station and length (additive effect). Predictions for 50 cm cod. For other lengths, only the the y axis would change, not the relative heights of each station  
+```{r}
+
+length <- 400
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length, ylabel, length = length)
+gg
+
+```
+
+
+### Model: station x length  (40 cm)   
+Model including station, length and the station x length interaction. Predictions for 40 cm cod. 
+```{r}
+
+length <- 400
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length_x, ylabel, length = length)
+gg
+
+```
+
+
+### Model: station x length  (70 cm)   
+Model including station, length and the station x length interaction. Predictions for 40 cm cod. 
+```{r}
+
+length <- 700
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length_x, ylabel, length = length)
+gg
+
+```
+
+
+## 12. Mixed model analysis of distance along coast {.tabset}   
+  
+### a. Distance along coast  
+NOTE: Scale is 1000 kms, which is why estimate and CI is 1000x higher than in c 
+```{r}
+
+# Read results from script 105  
+model_list_brm <- readRDS("Data/105_model_list_brm.rds")
+
+model_list_brm[[1]]
+
+fixed <- summary(model_list_brm[[1]])$fixed
+fixed <- as.data.frame(fixed)
+
+fixed %>%
+  kable()
+
+```
+  
+### Distance along coast, length-corrected        
+```{r}
+
+model_list_brm[[3]]
+
+fixed <- summary(model_list_brm[[3]])$fixed
+fixed <- as.data.frame(fixed)
+
+fixed %>%
+  kable()
+
+```
+
+### Distance along coast, length-corrected, plot  
+LNMEA = fish length, Dista_along_coast = distance along coast   
+```{r}
+
+fixed$Effect <- rownames(fixed)
+
+ggplot(fixed %>% filter(Effect != "Intercept"), 
+       aes(Effect, Estimate)) +
+  geom_pointrange(aes(ymin = `l-95% CI`, ymax = `u-95% CI`)) +
+  geom_hline(yintercept = 0)
+
+
+```
+
+
+
+## 13. Maps and station table {.tabset}  
+
+### Map  
+```{r, fig.width=6, fig.height=7}
+
+stations_right <- c("02B", "30B", "13B", "53B", "10B")
+
+gg_map <- ggplot(mapdata, aes(Longitude, Latitude)) + 
+  geom_path(color = "grey50") +
+  coord_map("lambert", parameters = c(10.4, 59.3), 
+            xlim = c(5, 28), ylim = c(57.9, 72)) +
+  geom_point(data = df_stations_plot, aes(Lon, Lat), color = "red3") +
+  geom_text(data = df_stations_plot %>% filter(STATION_CODE %in% stations_right), 
+            aes(Lon, Lat, label = STATION_CODE),
+            hjust = -0.2, color = "red3") +
+  geom_text(data = df_stations_plot %>% filter(!STATION_CODE %in% stations_right), 
+            aes(Lon, Lat, label = STATION_CODE),
+            hjust = 1.2, color = "red3") +
+  theme_minimal() +
+  theme(axis.title = element_blank())
+
+gg_map
+
+```
+
+
+### Map with coastal distance    
+```{r, fig.width=6, fig.height=7}
+
+stations_right <- c("02B", "30B", "13B", "53B", "10B")
+
+gg_map +
+  geom_path(data = coast, color = "blue") +
+  geom_point(data = coast_points, color = "blue") +
+  geom_text(data = coast_points %>% filter(Text_direction == "West"), 
+            aes(label = paste(distance, "km")), color = "blue", hjust = 1.2) +
+  geom_text(data = coast_points %>% filter(Text_direction == "East"), 
+            aes(label = paste(distance, "km")), color = "blue", hjust = -0.2) +
+  coord_map("lambert", parameters = c(10.4, 59.3), 
+            xlim = c(2, 30), ylim = c(57.9, 72))
+  
+  
+```
+
+### Station table  
+```{r}
+
+df_stations_plot %>%
+  select(STATION_CODE:Dist_along_coast) %>%
+  arrange(Dist_along_coast) %>%
+  mutate(across(c(Lon,Lat), round, digits = 4)) %>%
+  mutate(Dist_along_coast = round(Dist_along_coast, digits = 0)) %>%
+  rename(`Station code` = STATION_CODE,
+         `Station name` = Station_Name,
+         `Distance along coast`= Dist_along_coast) %>%
+  kable()
+
+```
+
+
 

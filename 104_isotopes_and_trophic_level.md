@@ -25,13 +25,24 @@ Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå
 ## 1. Libraries  
 
 ```r
-library(dplyr)
 library(forcats)   # fct_reorder()
 library(ggplot2)
 library(leaflet)
 library(knitr)
+library(purrr)
 
 library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
+
+library(sp)
+
+library(dplyr)            #   load last to avoid name conflicts such as MASS::select
+
+crs_longlat <- "+proj=longlat +ellps=WGS84 +datum=WGS84"
+crs_utm <- "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m"
+
+source("103_Distance_along_coast_functions.R")
+
+# environment(select)
 ```
 
 
@@ -68,11 +79,21 @@ df_stations <- readRDS("Data/103_Selected_stations.rds")
 
 # Station metadata needs to be summarised  
 df_stations <- df_stations %>%
+  filter(Station_Name != "Risøy, Østerfjord") %>%
   mutate(MSTAT = case_when(
     STATION_CODE %in% "I969" ~ "RH",
     TRUE ~ MSTAT)) %>%
-  group_by(STATION_CODE, MSTAT) %>%
+  group_by(STATION_CODE, Station_Name, MSTAT) %>%
   summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE)
+
+check <- df_stations %>%
+  group_by(STATION_CODE) %>%
+  mutate(n = n()) %>%
+  filter(n > 1)
+
+if (nrow(check) > 0){
+  stop("Some STATION_CODE occurs more than one time")
+}
 ```
 
 ```
@@ -99,6 +120,8 @@ df_stations <- df_stations %>%
 ## I965 I969 
 ##    3    3
 ```
+
+
 #### Stations by year    
 
 ```r
@@ -153,10 +176,124 @@ if (sum(is.na(check$Lat)) > 0)
 ```
 
 ```
-## Positions added for 49 stations 
-## Positions lacking for 1 stations 
-## - positions lacking for stations 19B
+## Positions added for 50 stations 
+## Positions lacking for 0 stations
 ```
+### Data for plotting maps   
+From script 122 (without adaption)      
+  
+Mapdata  
+
+```r
+#
+# Get Norway map data
+#
+test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
+sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
+# test$names[!sel]
+map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
+mapdata <- data.frame(Longitude = map$x, Latitude = map$y)
+
+#
+# Add UTM coordinates (x and y) to map
+#
+coordinate_exists <- !is.na(mapdata$Longitude)   # sp doesn't like NAs
+SP <- sp::SpatialPoints(mapdata[coordinate_exists, c("Longitude", "Latitude")],
+                    proj4string=CRS(crs_longlat)
+)
+SP.UTM <- sp::spTransform(SP, CRS(crs_utm))
+# Add transformed coords to data set
+mapdata$x[coordinate_exists] <- SP.UTM@coords[,1]
+mapdata$y[coordinate_exists] <- SP.UTM@coords[,2]
+```
+
+'Coast' - line going along coast  
+* See plot at end of script   
+
+```r
+#
+# "Coast" data (coordinates for segments along the coast)
+#
+coast <- readRDS("Data/102_coast_coordinates.rmd")
+
+#
+# Make 'coastsegment_distance'   
+#
+# Distances for start points of the coast segments
+segment_dx <- diff(coast$x)/1000
+segment_dy <- diff(coast$y)/1000
+coastsegment_distance <- sqrt(segment_dx^2 + segment_dy^2) %>% cumsum()
+coastsegment_distance <- c(0, coastsegment_distance)
+```
+
+'coast_points' - points/text to plot along 'coast'   
+
+```r
+# Get positions for these km's:
+coast_points <- 
+  c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+
+# Direction of text labels:
+coast_points$Text_direction <- "West"
+coast_points$Text_direction[c(1,6,7)] <- "East"
+
+SP.utm <- SpatialPoints(coast_points[,c("x", "y")], 
+                        proj4string=CRS(crs_utm)
+                        )
+SP.longlat <- spTransform(SP.utm, CRS(crs_longlat))
+coast_points$Longitude <- SP.longlat@coords[,1]
+coast_points$Latitude <- SP.longlat@coords[,2]
+```
+
+
+
+```r
+source("103_Distance_along_coast_functions.R")
+```
+
+
+```r
+plot_coast_distance <- function(map, coast){
+  
+    # Get positions for km's to show:
+  points <- c(0, 500, 1000, 1500, 2000, 2500, 2685) %>% map_df(~get_point_on_coastline(.))
+  
+  
+  # Direction of text labels:
+  points$Text_direction <- "West"
+  points$Text_direction[c(1,6,7)] <- "East"
+  
+  # PLot
+  gg2 <- ggplot(map, aes(x, y)) +
+    geom_path() +
+    coord_fixed() +
+    geom_path(data = coast, color = "red") +
+    geom_point(data = points, color = "blue") +
+    geom_text(data = points %>% filter(Text_direction == "West"), 
+              aes(x = x - 20000, label = paste(distance, "km")), 
+              color = "blue", hjust = 1, size = rel(3)) +
+    geom_text(data = points %>% filter(Text_direction == "East"), 
+              aes(x = x + 20000, label = paste(distance, "km")), 
+              color = "blue", hjust = 0, size = rel(3)) +
+    expand_limits(x = c(min(mapdata$x, na.rm = TRUE) - 150000,
+                        max(mapdata$x, na.rm = TRUE) + 200000)) +
+    theme_minimal() +
+    theme(
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      panel.grid = element_blank()
+    )
+  
+gg2
+}
+
+
+# debugonce(plot_coast_distance)
+plot_coast_distance(mapdata, coast)
+```
+
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ## 3. Calculate means of Delta15N     
 
@@ -184,6 +321,7 @@ dat_isotopes_means1 %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
   viridis::scale_fill_viridis() +
+  scale_y_reverse() +
   labs(title = "Muskel")
 ```
 
@@ -191,7 +329,7 @@ dat_isotopes_means1 %>%
 ## Warning: Removed 17 rows containing missing values (geom_tile).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ### Blue mussel 
 
@@ -201,11 +339,12 @@ dat_isotopes_means1 %>%
   ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
   geom_tile() +
   viridis::scale_fill_viridis() +
+  scale_y_reverse() +
   theme(axis.text.x = element_text(angle = -45, hjust = 0)) +
   labs(title = "Blue mussel")
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 ## 5. Plot Delta15N means by distance along coast, tile plots {.tabset}   
 
 ### Cod (muscle)  
@@ -221,14 +360,14 @@ dat_isotopes_means1 %>%
 ```
 
 ```
-## Warning: Removed 23 rows containing non-finite values (stat_smooth).
+## Warning: Removed 21 rows containing non-finite values (stat_smooth).
 ```
 
 ```
-## Warning: Removed 23 rows containing missing values (geom_point).
+## Warning: Removed 21 rows containing missing values (geom_point).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 ### Blue mussel  
@@ -243,7 +382,7 @@ dat_isotopes_means1 %>%
   labs(title = "Blue mussel")
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
 
@@ -276,8 +415,8 @@ leaflet(df) %>%
                     label =  ~STATION_CODE)
 ```
 
-<!--html_preserve--><div id="htmlwidget-b6d3bf8327b6426396fa" style="width:672px;height:480px;" class="leaflet html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b6d3bf8327b6426396fa">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.81466,59.52833,59.0405,59.0405,59.0465,58.13283,58.05138,59.89562,60.09727,60.09727,60.39664,62.46778,63.44563,66.04437,68.19655,69.653,70.65,69.81623,59.09511,59.07905,59.881445,59.85133,59.71333,59.7445,59.48359,59.07357,59.02333,59.0514,59.04533,58.13167,58.0487225,59.58503,59.9822483333333,60.08406,60.09677,60.2205,60.3871366666667,60.42096,60.40077,61.93622,61.93622,63.65144,66.28017,66.311835,67.41271,67.2963,68.2500566666667,69.8993],[10.97354,10.550915,10.35,10.43583,10.43583,9.70275,7.9885,6.7469,5.10856,6.53972,6.53972,5.27069,6.06862,10.37173,12.50355,14.77182,18.974,23.63333,29.7602,11.13678,10.98734,10.7118325,10.589,10.55517,10.52283,10.49499,10.42522,9.75367,9.7038,9.70683,8.00167,6.8991425,5.145465,5.75288833333333,6.550725,6.53293,6.602,6.68923,6.40502,5.30396,5.04878,5.048783333,9.56386,14.041835,14.12558,14.62193,14.3956,14.66412,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","10B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.0487225,70.65],"lng":[5.04878,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-bc986ea1e9f462fdcfad" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-bc986ea1e9f462fdcfad">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.812653,59.5283333333333,59.0405,59.0405,59.0465,58.1328333333333,58.051384,59.895618,60.09727,60.09727,60.39664,62.4677833333333,63.445624,66.04437,68.18577,69.653,70.65,78.17,69.81623,59.095112,59.079053,59.88362,59.8513333333333,59.7133333333333,59.7445,59.48359,59.07357,59.0233333333333,59.0514,59.0453333333333,58.1316666666667,58.04605,59.58711,59.984,60.084292,60.096771,60.2205,60.387073,60.42096,60.4007721666667,61.9362166666667,62.465851,63.651438,66.28022,66.31162,67.41271,67.296306,68.24917,69.8993],[10.97354,10.551829,10.35,10.4358333333333,10.4358333333333,9.70275,7.9885,6.746898,5.108565,6.539719,6.539719,5.27069,6.06861666666667,10.371726,12.503554,14.708138,18.974,23.6333333333333,13.46,29.7602,11.136779,10.987336,10.711,10.589,10.5551666666667,10.5228333333333,10.49499,10.42522,9.75366666666667,9.70384,9.70683333333333,8.00166666666667,6.9159,5.15203,5.7545,6.550954,6.532933,6.602,6.689524,6.40502,5.303955,5.04878333333333,6.239601,9.56386,14.0349,14.12537,14.621928,14.395639,14.6627,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","19B","10B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.04605,78.17],"lng":[5.04878333333333,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ### Closest/corresponding mussel station   
@@ -295,6 +434,7 @@ Cod_station, Mussel_station
 15B,15A
 23B,22A
 24B,I241
+53B,56A
 80B,91A2
 96B,I969
 98B1,98A2
@@ -315,7 +455,8 @@ stringsAsFactors = FALSE
 
 ```r
 dat_isotopes %>%
-  filter(TISSUE_NAME %in% "Muskel" &
+  filter(TISSUE_NAME %in% "Muskel" & 
+           grepl("B", STATION_CODE) & 
            STATION_CODE %in% data_closest_mussel_station$Cod_station) %>%
   ggplot(aes(MYEAR, Delta15N)) +
   geom_jitter(width = 0.1) +
@@ -323,10 +464,10 @@ dat_isotopes %>%
 ```
 
 ```
-## Warning: Removed 233 rows containing missing values (geom_point).
+## Warning: Removed 253 rows containing missing values (geom_point).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 #### Blue mussel
 
@@ -339,7 +480,7 @@ dat_isotopes %>%
   facet_wrap(vars(STATION_CODE))
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ### Summarise mussel data  
 For each station (not year-specific means)  
@@ -362,7 +503,10 @@ data_closest_mussel_station <- data_closest_mussel_station %>%
 
 
 ## 7. Add mussel data columns to main data   
-And calculate trophic level (TL)
+### a. Add mussel and calculate trophic level (TL)   
+All data, i.e. one line per parameter and sample, for all parameters  
+* Note: suitable for correlating contaminants with TL  
+* Not the data to use for looking at TL itself, use dat3 for that    
 
 ```r
 dat2 <- dat %>%
@@ -371,549 +515,580 @@ dat2 <- dat %>%
     dat_isotopes %>% 
       select(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2, Delta13C, Delta15N), 
     by = c("MYEAR", "STATION_CODE", "TISSUE_NAME", "SAMPLE_NO2")
-  ) %>%
+  ) %>% # View()
   # Add Delta13C, Delta15N for closest mussel station
   left_join(
     data_closest_mussel_station, 
     by = c("STATION_CODE" = "Cod_station")) %>%
+  ungroup() %>% 
   # Calculate trophic level (TL)
-  mutate(TL = case_when(
-    TISSUE_NAME %in% c("Lever", "Muskel") ~ 2 + (Delta15N - Delta15N_mussel)/3.8,
-    TISSUE_NAME %in% "Whole soft body" ~ 2)
-  )
+  mutate(
+    TL = case_when(
+      TISSUE_NAME %in% c("Lever", "Muskel") ~ 2 + (Delta15N - Delta15N_mussel)/3.8,
+      TISSUE_NAME %in% "Whole soft body" ~ 2)
+    )  %>%
+  # Add Lat, Lon, Dist_along_coast, MSTAT
+  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
+                 na_matches = "never",
+                 check = "CV",
+                 by = "STATION_CODE") %>%
+  # Make STATION_CODE factor levels to follow 'Dist_along_coast'
+  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
+
+cat("dat2:", nrow(dat2), "lines \n")
+```
+
+```
+## dat2: 350956 lines
+```
+
+```r
+# dat2$STATION_CODE %>% levels()
 ```
 
 
-## 8. Plots  
-
-### Cod trophic level by year  
+### b. Keep only isotopes and TL data    
+Plus LNMEA and FAT_PERC
 
 ```r
-dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" &
-           PARAM %in% "HG" &
-           STATION_CODE %in% data_closest_mussel_station$Cod_station &
-           !is.na(TL)) %>%
-  ggplot(aes(MYEAR, TL)) +
-  geom_jitter(width = 0.25, alpha = 0.4) +
-  facet_wrap(vars(STATION_CODE))
+dat3 <- dat2 %>%
+  filter(TISSUE_NAME %in% "Muskel" & !is.na(TL)) %>%
+  group_by(TISSUE_NAME, MYEAR, STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT, SAMPLE_NO2) %>%
+  summarise(across(c(Delta15N, Delta15N_mussel, TL, LNMEA, FAT_PERC), first),
+            .groups = "drop") %>%
+  mutate(MYEAR_f = factor(MYEAR),
+         STATION_CODE = fct_drop(STATION_CODE)
+         ) 
+
+cat("dat3:", nrow(dat3), "lines \n")
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+```
+## dat3: 923 lines
+```
 
-
-### Plot cod trophic level by mean length  
+### c. Save  
 
 ```r
-dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" &
-           PARAM %in% "HG" &
-           STATION_CODE %in% data_closest_mussel_station$Cod_station &
-           !is.na(TL)) %>%
-  ggplot(aes(LNMEA, TL, color = MYEAR)) +
+saveRDS(dat2, "Data/104_dat2.rds")
+saveRDS(dat3, "Data/104_dat3.rds")
+saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
+```
+
+## 8. Remove excessively low/high trophic level  
+
+### Remove 5 outliers   
+
+```r
+dat3 <- dat3 %>%
+  mutate(
+    Outlier = case_when(
+      TL > 5.6 ~ TRUE,
+      TL < 2.8 ~ TRUE,
+      TRUE ~ FALSE)
+    )
+
+xtabs(~Outlier, dat3)
+```
+
+```
+## Outlier
+## FALSE  TRUE 
+##   918     5
+```
+
+```r
+ggplot(dat3, aes(LNMEA, TL, color = Outlier)) + 
   geom_point() +
-  facet_wrap(vars(STATION_CODE))
-```
-
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
-
-## 9. Statistical analysis: station + year    
-
-```r
-dat2b <- dat2 %>%
-  filter(TISSUE_NAME %in% "Muskel" & TL < 6) %>% # cod - and remive one outlier 
-  mutate(MYEAR = factor(MYEAR))
-
-m0 <- lm(TL ~ 1, dat2b)
-m1 <- lm(TL ~ MYEAR, dat2b)
-m2 <- lm(TL ~ STATION_CODE, dat2b)
-m3 <- lm(TL ~ MYEAR + STATION_CODE, dat2b)
-m4 <- lm(TL ~ MYEAR*STATION_CODE, dat2b)    # Very slow!
-
-cat("===========================================\n")
-cat("\nEffect of MYEAR: \n\n")
-anova(m0, m1)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE: \n\n")
-anova(m0, m2)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE in addition to MYEAR: \n\n")
-anova(m1, m3)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE*MYEAR interaction: \n\n")
-anova(m3, m4)
-```
-
-```
-## ===========================================
-## 
-## Effect of MYEAR: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ 1
-## Model 2: TL ~ MYEAR
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6068 503.95                                  
-## 2   6064 479.23  4    24.715 78.182 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ 1
-## Model 2: TL ~ STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6068 503.95                                  
-## 2   6056 410.49 12    93.455 114.89 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE in addition to MYEAR: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ MYEAR
-## Model 2: TL ~ MYEAR + STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6064 479.23                                  
-## 2   6052 381.54 12    97.696 129.14 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE*MYEAR interaction: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ MYEAR + STATION_CODE
-## Model 2: TL ~ MYEAR * STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6052 381.54                                  
-## 2   6007 296.51 45     85.03 38.281 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
-
-### Station effect 1 (after removing year effect)     
-Model: MYEAR + STATION_CODE  
-
-```r
-# visreg::visreg(fit = m3, xvar = "STATION_CODE")
-
-df_stationeffect1 <- visreg::visreg(fit = m3, xvar = "STATION_CODE", plot = FALSE)  
-str(df_stationeffect1, 2)
-```
-
-```
-## List of 3
-##  $ fit :'data.frame':	13 obs. of  6 variables:
-##   ..$ MYEAR       : Factor w/ 5 levels "2015","2016",..: 3 3 3 3 3 3 3 3 3 3 ...
-##   ..$ STATION_CODE: Factor w/ 13 levels "02B","10B","13B",..: 1 2 3 4 5 6 7 8 9 10 ...
-##   ..$ TL          : num [1:13] 4.05 4.05 4.05 4.05 4.05 ...
-##   ..$ visregFit   : num [1:13] 3.89 3.95 4.18 4.05 3.97 ...
-##   ..$ visregLwr   : num [1:13] 3.86 3.92 4.15 4.03 3.95 ...
-##   ..$ visregUpr   : num [1:13] 3.91 3.97 4.21 4.08 4 ...
-##  $ res :'data.frame':	6069 obs. of  5 variables:
-##   ..$ MYEAR       : Factor w/ 5 levels "2015","2016",..: 3 3 3 3 3 3 3 3 3 3 ...
-##   ..$ STATION_CODE: Factor w/ 13 levels "02B","10B","13B",..: 1 1 1 1 1 1 1 1 1 1 ...
-##   ..$ TL          : num [1:6069] 4.05 4.05 4.05 4.05 4.05 ...
-##   ..$ visregRes   : num [1:6069] 3.67 3.67 3.67 3.67 3.67 ...
-##   ..$ visregPos   : logi [1:6069] FALSE FALSE FALSE FALSE FALSE FALSE ...
-##  $ meta:List of 6
-##   ..$ x             : chr "STATION_CODE"
-##   ..$ y             : chr "TL"
-##   ..$ hasInteraction: logi FALSE
-##   ..$ yName         : chr "TL"
-##   ..$ trans         :function (x)  
-##   ..$ class         : chr "lm"
-##  - attr(*, "class")= chr "visreg"
-```
-
-```r
-levels(df_stationeffect1$fit$STATION_CODE)
-```
-
-```
-##  [1] "02B"  "10B"  "13B"  "15B"  "23B"  "24B"  "30B"  "43B2" "45B2" "71B" 
-## [11] "80B"  "96B"  "98B1"
-```
-
-```r
-# Add position plus Dist_along_coast
-df_stationeffect1$fit <- df_stationeffect1$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect1$fit$STATION_CODE)
-
-df_stationeffect1$res <- df_stationeffect1$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-```
-
-
-
-### Plot year effect  
-
-```r
-visreg::visreg(fit = m3, xvar = "MYEAR")  
-```
-
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
-
-
-
-
-## 10. Statistical analysis: station + year + length   
-
-```r
-# library(MuMIn)
-
-m0 <- lm(TL ~ 1, dat2b)
-m1 <- lm(TL ~ LNMEA, dat2b)
-m2 <- lm(TL ~ STATION_CODE, dat2b)
-m3 <- lm(TL ~ LNMEA + STATION_CODE, dat2b)
-m3b <- lm(TL ~ LNMEA + STATION_CODE + MYEAR, dat2b)
-m4 <- lm(TL ~ LNMEA*STATION_CODE, dat2b)
-m4b <- lm(TL ~ LNMEA*STATION_CODE + MYEAR, dat2b)
-
-cat("===========================================\n")
-cat("\nEffect of length: \n\n")
-anova(m0, m1)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE: \n\n")
-anova(m0, m2)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE in addition to length: \n\n")
-anova(m1, m3)
-cat("===========================================\n")
-cat("\nEffect of Year in addition to STATION_CODE + length: \n\n")
-anova(m3, m3b)
-cat("===========================================\n")
-cat("\nEffect of STATION_CODE*length interaction: \n\n")
-anova(m3, m4)
-cat("===========================================\n")
-cat("\nAdding STATION_CODE*length interaction to STATION_CODE + length + year model: \n\n")
-anova(m3b, m4b)
-```
-
-```
-## ===========================================
-## 
-## Effect of length: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ 1
-## Model 2: TL ~ LNMEA
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6068 503.95                                  
-## 2   6067 493.09  1     10.86 133.62 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ 1
-## Model 2: TL ~ STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6068 503.95                                  
-## 2   6056 410.49 12    93.455 114.89 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE in addition to length: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ LNMEA
-## Model 2: TL ~ LNMEA + STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6067 493.09                                  
-## 2   6055 383.67 12    109.42 143.91 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of Year in addition to STATION_CODE + length: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ LNMEA + STATION_CODE
-## Model 2: TL ~ LNMEA + STATION_CODE + MYEAR
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6055 383.67                                  
-## 2   6051 358.98  4    24.688 104.04 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Effect of STATION_CODE*length interaction: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ LNMEA + STATION_CODE
-## Model 2: TL ~ LNMEA * STATION_CODE
-##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-## 1   6055 383.67                                  
-## 2   6043 368.65 12    15.019 20.516 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## ===========================================
-## 
-## Adding STATION_CODE*length interaction to STATION_CODE + length + year model: 
-## 
-## Analysis of Variance Table
-## 
-## Model 1: TL ~ LNMEA + STATION_CODE + MYEAR
-## Model 2: TL ~ LNMEA * STATION_CODE + MYEAR
-##   Res.Df    RSS Df Sum of Sq     F    Pr(>F)    
-## 1   6051 358.98                                 
-## 2   6039 347.72 12    11.256 16.29 < 2.2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
-
-
-
-### Get length effect depending on station  {.tabset} 
-Model: Length * STATION_CODE + Year  
-
-```r
-# visreg::visreg(fit = m4b, xvar = "LNMEA", by = "STATION_CODE", gg = TRUE)
-
-df_effects <- visreg::visreg(fit = m4b, xvar = "LNMEA", by = "STATION_CODE", plot = FALSE)  
-
-# str(df_effects, 2)
-# levels(df_effects$fit$STATION_CODE)
-
-# Add position plus Dist_along_coast
-df_effects$fit <- df_effects$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_effects$res <- df_effects$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
-```
-
-#### Length effect    
-
-```r
-ggplot(df_effects$fit, aes(x = LNMEA)) +
-  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "lightblue") +
-  geom_line(aes(y = visregFit)) +
-  facet_wrap(vars(STATION_CODE))
+  scale_color_manual(values = c("grey70", "black")) +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") +
+  theme_bw()
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
-#### Length effect with residuals      
+```r
+dat3 <- dat3 %>% 
+  filter(!Outlier) %>%
+  select(-Outlier)
+```
+
+## 9. Plots {.tabset}  
+Repating the Delta15N plot shown above  
+
+### Cod Delta15N    
 
 ```r
-ggplot(df_effects$fit, aes(x = LNMEA)) +
-  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "lightblue") +
-  geom_point(data = df_effects$res, aes(y = visregRes), size = rel(0.5)) +
-  geom_line(aes(y = visregFit)) +
-  facet_wrap(vars(STATION_CODE))
+dat_isotopes_means1 %>%
+  filter(TISSUE_NAME %in% "Muskel" & grepl("B", STATION_CODE)) %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = Delta15N)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  scale_y_reverse() +
+  labs(title = "Muskel")
+```
+
+```
+## Warning: Removed 14 rows containing missing values (geom_tile).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
-
-
-### Station effect 2, 40 cm cod (after removing year and length effect)     
-Model: MYEAR + STATION_CODE * Length 
+### Median cod TL    
 
 ```r
-# visreg::visreg(fit = m4b, xvar = "STATION_CODE", cond = list(LNMEA = 600, MYEAR = 2019), gg = TRUE)
-
-df_stationeffect2 <- visreg::visreg(
-  fit = m4b, 
-  xvar = "STATION_CODE", 
-  cond = list(LNMEA = 400, MYEAR = 2019), 
-  plot = FALSE)  
-
-
-# Add position plus Dist_along_coast
-df_stationeffect2$fit <- df_stationeffect2$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_stationeffect2$res <- df_stationeffect2$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
+dat3 %>%
+  group_by(MYEAR, STATION_CODE) %>%
+  summarise(TL = median(TL), .groups = "drop") %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = TL)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  scale_y_reverse() +
+  labs(title = "Cod trophic level") 
 ```
 
-### Station effect3, 70 cm cod (after removing year and length effect)     
-Model: MYEAR + STATION_CODE * Length 
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+
+### TL boxplots  
 
 ```r
-# visreg::visreg(fit = m4b, xvar = "STATION_CODE", cond = list(LNMEA = 600, MYEAR = 2019), gg = TRUE)
-
-df_stationeffect3 <- visreg::visreg(
-  fit = m4b, 
-  xvar = "STATION_CODE", 
-  cond = list(LNMEA = 700, MYEAR = 2019), 
-  plot = FALSE)  
-
-
-# Add position plus Dist_along_coast
-df_stationeffect3$fit <- df_stationeffect3$fit %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  # put STATION_CODE in correct order  
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))
-# levels(df_stationeffect$fit$STATION_CODE)
-
-df_stationeffect3$res <- df_stationeffect3$res %>%
-  safe_left_join(df_stations %>% select(STATION_CODE, Lat, Lon, Dist_along_coast, MSTAT), 
-                 na_matches = "never",
-                 check = "CV",
-                 by = "STATION_CODE") %>%
-  mutate(STATION_CODE = fct_reorder(STATION_CODE, Dist_along_coast))  
+ggplot(dat3, aes(factor(MYEAR), TL)) + 
+  geom_boxplot() +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") 
 ```
 
-## 11. Plot station effects {.tabset}
-
-### Mean TL  
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+### TL vs length    
 
 ```r
-ggplot(df_stationeffect1$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+ggplot(dat3, aes(LNMEA, TL)) + 
+  geom_point(aes(fill = MYEAR_f), pch = 21, size = rel(2)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  geom_smooth(method = "lm", formula = 'y ~ x') +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(y = "Trophic level", x = "Cod length (mm)") 
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
-### Mean TL (w/ residuals)  
+
+## 10. Mixed-model analyses  
+### Load mixed-model analyses   
+* Models were estimated using script 105, we just load the saved results here (to save time)       
+* Models estimated using both REML (gives the best estimates) and ML (can be used for hypothesis testing using ANOVA)   
+    + REML = restricted maximum likelihood  
+    + ML = maximum likelihood    
 
 ```r
-ggplot(df_stationeffect1$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect1$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+#
+# Models 
+#
+
+model_list <- readRDS("Data/105_model_list.rds")
+
+# The formula for each REML model  
+model_list[1:3] %>% map(formula)
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
-
-### TL 40 cm cod 
-
-```r
-ggplot(df_stationeffect2$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+```
+## [[1]]
+## TL ~ STATION_CODE + (1 | MYEAR_f)
+## 
+## [[2]]
+## TL ~ LNMEA + STATION_CODE + (1 | MYEAR_f)
+## 
+## [[3]]
+## TL ~ LNMEA * STATION_CODE + (1 | MYEAR_f)
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
-
-### TL 40 cm cod (w/ residuals)  
-
 ```r
-ggplot(df_stationeffect2$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect2$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+# name of models in script 105:
+# list(fm2b, fm3a, fm3b, fm2b_null_ml, fm2b_ml, fm3a_ml, fm3b_ml)
+# Model 1-3 are estimated using REML 
+# Model 4: null model estimated using ML 
+# Model 5-7 = model 1-3 estimated using ML 
+
+mod_station <- model_list[[1]]       
+mod_station_length <- model_list[[2]]
+mod_station_length_x <- model_list[[3]]
+mod_ml_null <- model_list[[4]]
+mod_ml_station <- model_list[[5]]       
+mod_ml_station_length <- model_list[[6]]
+mod_ml_station_length_x <- model_list[[7]]
+
+
+#
+# Predictions  
+# Made using model_list 1-3 above (i.e. the REML models)  
+#
+
+# name of predic in script 105:
+# list(newdat, pred_3a, pred_3b)
+model_predictions <- readRDS("Data/105_model_predictions.rds")
+
+# Set names so they 
+pred_station <- model_predictions[[1]]
+pred_station_length <- model_predictions[[2]]
+pred_station_length_x <- model_predictions[[3]]
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
-
-
-### TL 70 cm cod 
+### ANOVA of models  
+* Using the ML (max. likelihood models)  
+* Clearly indicates that station, length and the station*length interaction all are significant  
+* I.e., there are significant differences in the length_TL relationship among stations  
 
 ```r
-ggplot(df_stationeffect3$fit, aes(STATION_CODE)) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+anova(mod_ml_null, mod_ml_station, mod_ml_station_length, mod_ml_station_length_x)
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+```
+## Data: dat3
+## Models:
+## mod_ml_null: TL ~ 1 + (1 | MYEAR_f)
+## mod_ml_station: TL ~ STATION_CODE + (1 | MYEAR_f)
+## mod_ml_station_length: TL ~ LNMEA + STATION_CODE + (1 | MYEAR_f)
+## mod_ml_station_length_x: TL ~ LNMEA * STATION_CODE + (1 | MYEAR_f)
+##                         npar     AIC    BIC   logLik deviance   Chisq Df
+## mod_ml_null                3 258.337 272.80 -126.169  252.337           
+## mod_ml_station            16  82.979 160.13  -25.489   50.979 201.358 13
+## mod_ml_station_length     17  24.029 106.01    4.986   -9.971  60.950  1
+## mod_ml_station_length_x   30  19.891 164.56   20.054  -40.109  30.138 13
+##                         Pr(>Chisq)    
+## mod_ml_null                           
+## mod_ml_station           < 2.2e-16 ***
+## mod_ml_station_length    5.855e-15 ***
+## mod_ml_station_length_x   0.004499 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
 
-### TL 70 cm cod (w/ residuals)  
+### Distance data - to add to predicted data  
 
 ```r
-ggplot(df_stationeffect3$fit, aes(STATION_CODE)) +
-  geom_jitter(data = df_stationeffect3$res, aes(y = visregRes), width = 0.1) +
-  geom_crossbar(aes(y = visregFit, ymin = visregLwr, ymax = visregUpr), color = "red3")
+df_stations_plot <- df_stations %>%
+  filter(STATION_CODE %in% pred_station$STATION_CODE) %>%
+  select(STATION_CODE, Station_Name, Lon, Lat, Dist_along_coast) %>%
+  mutate(
+    Station_y = case_when(
+      STATION_CODE %in% c("30B","53B") ~ 0,
+      TRUE ~ -0.04)
+  ) %>%
+  mutate(
+    Place = case_when(
+      STATION_CODE %in% "30B" ~ "Oslo",
+      STATION_CODE %in% "13B" ~ "Kristiansand",
+      STATION_CODE %in% "24B" ~ "Bergen",
+      STATION_CODE %in% "80B" ~ "Trondheim",
+      STATION_CODE %in% "43B2" ~ "Tromsø",
+      STATION_CODE %in% "10B" ~ "Kirkenes")
+  )
+```
+
+### Plot function  
+
+```r
+# df_stations_plot is given globally  
+plot_pred_distance <- function(model_predictions, ylabel, length = NULL, 
+                               station_data = df_stations_plot){
+  if (is.null(length)){
+    df <- model_predictions
+  } else {
+    df <- model_predictions %>%
+      filter(LNMEA == length)
+  }
+  df <- df %>%
+    safe_left_join(station_data,
+                   by = "STATION_CODE", na_matches = "never",
+                   check = "CV")
+  ggplot(df, aes(Dist_along_coast, TL)) +
+    geom_pointrange(aes(ymin = plo, ymax = phi)) +
+    geom_text(aes(y = min(plo) + Station_y, label = STATION_CODE), 
+              angle = 30, size = rel(3), color = "blue3") +
+    geom_text(aes(y = max(phi) + 0.02, label = Place), 
+              angle = 0, size = rel(3), color = "blue3") +
+    labs(x = "Station code", y = ylabel) +
+    theme_bw()
+}
+```
+
+
+## 11. Plots of station estimates {.tabset}   
+* All models use "year" as a random factor, station effect is estimated on the year level   
+* CIs estimated using Ben Bolker's method, and are based on fixed-effects uncertainty only, i.e. the confidence interval for the station effect  
+
+### Model: station only
+
+```r
+gg <- plot_pred_distance(pred_station, "Estimated trophic level")
+gg
+```
+
+```
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
-### Mean TL vs distance      
+### Model: station + length (40 cm)  
+Model including station and length (additive effect). Predictions for 50 cm cod. For other lengths, only the the y axis would change, not the relative heights of each station  
 
 ```r
-ggplot(df_stationeffect1$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
+length <- 400
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length, ylabel, length = length)
+gg
+```
+
+```
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 
-### TL 40 cm vs distance      
+### Model: station x length  (40 cm)   
+Model including station, length and the station x length interaction. Predictions for 40 cm cod. 
 
 ```r
-ggplot(df_stationeffect2$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
+length <- 400
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length_x, ylabel, length = length)
+gg
+```
+
+```
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 
-### TL 70 cm vs distance      
+### Model: station x length  (70 cm)   
+Model including station, length and the station x length interaction. Predictions for 40 cm cod. 
 
 ```r
-ggplot(df_stationeffect3$fit, aes(Dist_along_coast)) +
-  geom_point(aes(y = visregFit), color = "red3", size = rel(2)) +
-  geom_errorbar(aes(ymin = visregLwr, ymax = visregUpr), color = "red3", width = 100)
+length <- 700
+ylabel <- paste0("Estimated trophic level (", length/10, "cm cod)")
+gg <- plot_pred_distance(pred_station_length_x, ylabel, length = length)
+gg
+```
+
+```
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 
-
-
-
-
-
-
-
-
-
-## 12. Save data  
+## 12. Mixed model analysis of distance along coast {.tabset}   
+  
+### a. Distance along coast  
+NOTE: Scale is 1000 kms, which is why estimate and CI is 1000x higher than in c 
 
 ```r
-if (FALSE){
-  saveRDS(dat2, "Data/104_Selected_data.rds")
-}
+# Read results from script 105  
+model_list_brm <- readRDS("Data/105_model_list_brm.rds")
+
+model_list_brm[[1]]
 ```
+
+```
+##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: TL ~ Dist_along_coast_s + (1 | STATION_CODE) 
+##    Data: dat3 (Number of observations: 918) 
+## Samples: 2 chains, each with iter = 6000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~STATION_CODE (Number of levels: 14) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.12      0.03     0.08     0.19 1.00     2143     3249
+## 
+## Population-Level Effects: 
+##                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept              4.05      0.03     3.98     4.12 1.00     2441     3694
+## Dist_along_coast_s    -0.07      0.04    -0.15     0.01 1.00     2588     3749
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.26      0.01     0.25     0.27 1.00     8671     6808
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).
+```
+
+```r
+fixed <- summary(model_list_brm[[1]])$fixed
+fixed <- as.data.frame(fixed)
+
+fixed %>%
+  kable()
+```
+
+
+
+|                   |   Estimate| Est.Error|   l-95% CI|  u-95% CI|     Rhat| Bulk_ESS| Tail_ESS|
+|:------------------|----------:|---------:|----------:|---------:|--------:|--------:|--------:|
+|Intercept          |  4.0489093| 0.0346035|  3.9787855| 4.1182355| 1.000279|     2441|     3694|
+|Dist_along_coast_s | -0.0719306| 0.0410201| -0.1520032| 0.0113239| 1.000314|     2588|     3749|
+  
+### Distance along coast, length-corrected        
+
+```r
+model_list_brm[[3]]
+```
+
+```
+##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: TL ~ LNMEA + Dist_along_coast + (1 + LNMEA | STATION_CODE) 
+##    Data: dat3 (Number of observations: 918) 
+## Samples: 2 chains, each with iter = 6000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~STATION_CODE (Number of levels: 14) 
+##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
+## sd(Intercept)            0.29      0.11     0.11     0.53 1.00     2216
+## sd(LNMEA)                0.00      0.00     0.00     0.00 1.00     1542
+## cor(Intercept,LNMEA)    -0.78      0.26    -0.98    -0.00 1.00     2812
+##                      Tail_ESS
+## sd(Intercept)            2942
+## sd(LNMEA)                1703
+## cor(Intercept,LNMEA)     2671
+## 
+## Population-Level Effects: 
+##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept            3.71      0.12     3.49     3.96 1.00     5265     6910
+## LNMEA                0.00      0.00     0.00     0.00 1.00     6156     7218
+## Dist_along_coast    -0.00      0.00    -0.00     0.00 1.00     4152     6439
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.25      0.01     0.24     0.26 1.00    11366     8172
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).
+```
+
+```r
+fixed <- summary(model_list_brm[[3]])$fixed
+fixed <- as.data.frame(fixed)
+
+fixed %>%
+  kable()
+```
+
+
+
+|                 |   Estimate| Est.Error|   l-95% CI|  u-95% CI|     Rhat| Bulk_ESS| Tail_ESS|
+|:----------------|----------:|---------:|----------:|---------:|--------:|--------:|--------:|
+|Intercept        |  3.7142430| 0.1188444|  3.4867954| 3.9554987| 1.001773|     5265|     6910|
+|LNMEA            |  0.0007852| 0.0001602|  0.0004770| 0.0011128| 1.000627|     6156|     7218|
+|Dist_along_coast | -0.0000913| 0.0000647| -0.0002153| 0.0000365| 1.000138|     4152|     6439|
+
+### Distance along coast, length-corrected, plot  
+LNMEA = fish length, Dista_along_coast = distance along coast   
+
+```r
+fixed$Effect <- rownames(fixed)
+
+ggplot(fixed %>% filter(Effect != "Intercept"), 
+       aes(Effect, Estimate)) +
+  geom_pointrange(aes(ymin = `l-95% CI`, ymax = `u-95% CI`)) +
+  geom_hline(yintercept = 0)
+```
+
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+
+
+
+## 13. Maps and station table {.tabset}  
+
+### Map  
+
+```r
+stations_right <- c("02B", "30B", "13B", "53B", "10B")
+
+gg_map <- ggplot(mapdata, aes(Longitude, Latitude)) + 
+  geom_path(color = "grey50") +
+  coord_map("lambert", parameters = c(10.4, 59.3), 
+            xlim = c(5, 28), ylim = c(57.9, 72)) +
+  geom_point(data = df_stations_plot, aes(Lon, Lat), color = "red3") +
+  geom_text(data = df_stations_plot %>% filter(STATION_CODE %in% stations_right), 
+            aes(Lon, Lat, label = STATION_CODE),
+            hjust = -0.2, color = "red3") +
+  geom_text(data = df_stations_plot %>% filter(!STATION_CODE %in% stations_right), 
+            aes(Lon, Lat, label = STATION_CODE),
+            hjust = 1.2, color = "red3") +
+  theme_minimal() +
+  theme(axis.title = element_blank())
+
+gg_map
+```
+
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+
+
+### Map with coastal distance    
+
+```r
+stations_right <- c("02B", "30B", "13B", "53B", "10B")
+
+gg_map +
+  geom_path(data = coast, color = "blue") +
+  geom_point(data = coast_points, color = "blue") +
+  geom_text(data = coast_points %>% filter(Text_direction == "West"), 
+            aes(label = paste(distance, "km")), color = "blue", hjust = 1.2) +
+  geom_text(data = coast_points %>% filter(Text_direction == "East"), 
+            aes(label = paste(distance, "km")), color = "blue", hjust = -0.2) +
+  coord_map("lambert", parameters = c(10.4, 59.3), 
+            xlim = c(2, 30), ylim = c(57.9, 72))
+```
+
+```
+## Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+```
+
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
+
+### Station table  
+
+```r
+df_stations_plot %>%
+  select(STATION_CODE:Dist_along_coast) %>%
+  arrange(Dist_along_coast) %>%
+  mutate(across(c(Lon,Lat), round, digits = 4)) %>%
+  mutate(Dist_along_coast = round(Dist_along_coast, digits = 0)) %>%
+  rename(`Station code` = STATION_CODE,
+         `Station name` = Station_Name,
+         `Distance along coast`= Dist_along_coast) %>%
+  kable()
+```
+
+
+
+|Station code |Station name                   |     Lon|     Lat| Distance along coast|
+|:------------|:------------------------------|-------:|-------:|--------------------:|
+|02B          |Kirkøy, Hvaler                 | 10.9735| 59.0648|                   36|
+|30B          |Inner Oslofjord                | 10.5518| 59.8127|                   69|
+|71B          |Stathelle area, Langesundfjord |  9.7028| 59.0465|                  138|
+|13B          |Kristiansand harbour area      |  7.9885| 58.1328|                  287|
+|15B          |Skågskjera, Farsund            |  6.7469| 58.0514|                  373|
+|23B          |Bømlo, Outer Selbjørnfjord     |  5.1086| 59.8956|                  634|
+|53B          |Inner Sørfjord                 |  6.5397| 60.0973|                  654|
+|24B          |Bergen harbour area            |  5.2707| 60.3966|                  692|
+|80B          |Trondheim harbour              | 10.3717| 63.4456|                 1206|
+|96B          |Sandnessjøen area              | 12.5036| 66.0444|                 1477|
+|98B1         |Austnesfjord, Lofoten          | 14.7081| 68.1858|                 1724|
+|43B2         |Tromsø harbour area            | 18.9740| 69.6530|                 2004|
+|45B2         |Hammerfest harbour area        | 23.6333| 70.6500|                 2233|
+|10B          |Kjøfjord, Outer Varangerfjord  | 29.7602| 69.8162|                 2665|
+
+
 
