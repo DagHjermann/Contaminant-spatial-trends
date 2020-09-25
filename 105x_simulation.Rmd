@@ -1,0 +1,162 @@
+---
+title: "105x_simulation"
+author: "DHJ"
+date: "24 9 2020"
+output: html_document
+---
+
+```{r}
+
+library(ggplot2)
+library(lme4)
+library(dplyr)       # load dplyr last, otherwise select() will use select() from package MASS 
+
+library(rstanarm)
+library(brms)
+
+```
+
+## Simulating function
+```{r}
+
+make_data <- function(length_effect = 0.55, northing_effect = 0.3, n1 = 50, n2 = 65, sd = 0.7){
+  length <- rnorm(n1*n2, 0, 1)
+  northing <- rep(rnorm(n2, 0, 1), each = n1)
+  station <- rep(1:n2, each = n1)
+  s <- rnorm(n1*n2, sd = sd)
+  y <- length_effect*length + northing*northing_effect + s
+  tibble(y=y, length=length, northing=northing, station = factor(station))  
+}
+
+```
+
+
+
+### Test plot  
+```{r}
+
+df <- make_data()
+
+df %>% 
+  filter(station %in% as.character(1:12)) %>%
+  ggplot(aes(length, y, color = station)) +
+  geom_point() +
+  facet_wrap(vars(northing))
+
+```
+
+### Test analysis 
+```{r}
+
+mod1 <- lmer(y ~ length + (length | station), data = df, REML = TRUE)
+mod2 <- lmer(y ~ length + northing + (1 + length | station), data = df, REML = TRUE)
+
+mod1 <- lmer(y ~ length + (length | station), data = df, REML = FALSE)
+mod2 <- lmer(y ~ length + northing + (1 + length | station), data = df, REML = FALSE)
+
+
+
+anova(mod1, mod2)
+
+
+
+```
+### Test brms
+```{r}
+
+brm_1 <- brm(y ~ length + (length | station),  
+              data = df, 
+              warmup = 1000, iter = 3000, 
+              cores = 2, chains = 2, 
+              seed = 123)
+summary(brm_1)
+
+brm_2 <- brm(y ~ length + northing + (length | station),  
+              data = df, 
+              warmup = 1000, iter = 3000, 
+              cores = 2, chains = 2, 
+              seed = 123)
+summary(brm_2)
+```
+
+
+```{r}
+
+head(df)
+m4 <- stan_lmer(length + (length | station), data = df)
+m4
+
+
+```
+
+## Simulate null model  
+```{r}
+
+sim_anova <- function(...){
+  df <- make_data(...)
+  mod1 <- lmer(y ~ length + (length | station), data = df, REML = FALSE)
+  mod2 <- lmer(y ~ length + northing + (1 + length | station), data = df, REML = FALSE)
+  anova <- anova(mod1, mod2)
+  anova
+}
+
+sim_anova(n1 = 100, sd = 0.5)  
+sim_anova(northing_effect = 0)
+
+```
+
+```{r}
+
+anova_r <- function(n = 50, ...){
+  
+}
+?isSingular
+
+```
+
+
+
+## Function for estimates  
+```{r}
+
+df_northing <- df %>%
+  group_by(station) %>%
+  summarise(northing = first(northing))
+
+get_estimates_model <- function(model){
+
+  # station = factor(levels(df$station), levels = levels(df$station))
+  newdat <- expand.grid(
+    northing = seq(-1, 1, length = 5),
+    length = seq(-1, 1, length = 5)
+  )
+  
+  newdat$y <- predict(model, newdat, re.form = NA)
+  
+  mm <- model.matrix(terms(model),newdat)
+  ## or newdat$distance <- mm %*% fixef(model)
+  
+  pvar1 <- diag(mm %*% tcrossprod(vcov(model), mm))
+  tvar1 <- pvar1 + VarCorr(model)$MYEAR_f[1]  ## random effect here. must be adapted for more complex models
+  cmult <- 2 ## could use 1.96
+  newdat <- data.frame(
+    newdat
+    , plo = newdat$y - cmult*sqrt(pvar1)
+    , phi = newdat$y + cmult*sqrt(pvar1)
+    , tlo = newdat$y - cmult*sqrt(tvar1)
+    , thi = newdat$y + cmult*sqrt(tvar1)
+  )
+  
+  newdat
+  
+}
+
+```
+
+
+```{r}
+
+
+
+```
+
