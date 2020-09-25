@@ -1,0 +1,628 @@
+---
+title: "105_Trophic_level_mixed_models"
+author: "DHJ"
+date: "23 9 2020"
+output: 
+  html_document:
+    keep_md: true  
+    toc: true
+    toc_float: true
+    
+---
+
+## 1. Libraries  
+```{r, message=FALSE, warning=FALSE, results='hide'}
+
+library(ggplot2)
+library(lme4)
+library(arm)
+library(merTools)    # predictInterval()
+library(dplyr)       # load dplyr last, otherwise select() will use select() from package MASS 
+
+library(brms)
+
+
+```
+
+## 2. Data  
+```{r, results='hold'}
+
+dat2 <- readRDS("Data/104_dat2.rds")
+cat("Data/104_dat2.rds: ", nrow(dat2), "lines \n")
+
+dat3_uncleaned <- readRDS("Data/104_dat3.rds")
+cat("Data/104_dat3.rds: ", nrow(dat3_uncleaned), "lines \n\n")
+
+data_closest_mussel_station <- readRDS("Data/104_data_closest_mussel_station.rds")
+
+xtabs(~STATION_CODE +  MYEAR, dat3_uncleaned)
+
+```
+
+## 3. Plots of raw data   
+
+### Raw data  
+```{r}
+
+ggplot(dat3_uncleaned, aes(factor(MYEAR), TL)) + 
+  geom_boxplot() +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") 
+
+```
+### TL vs length    
+```{r}
+
+ggplot(dat3_uncleaned, aes(LNMEA, TL, color = factor(MYEAR))) + 
+  geom_point() +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level") 
+
+```
+
+
+## 4. Make dat3  
+
+### Pick outliers  
+```{r}
+
+dat3_uncleaned <- dat3_uncleaned %>%
+  mutate(
+    Outlier = case_when(
+      TL > 5.6 ~ TRUE,
+      TL < 2.8 ~ TRUE,
+      TRUE ~ FALSE)
+    )
+
+xtabs(~Outlier, dat3_uncleaned)
+
+ggplot(dat3_uncleaned, aes(LNMEA, TL, color = Outlier)) + 
+  geom_point() +
+  scale_color_manual(values = c("grey70", "black")) +
+  facet_wrap(vars(STATION_CODE)) +
+  labs(title = "Cod trophic level - identifying outliers") +
+  theme_bw()
+
+```
+
+
+### Remove outliers  
+```{r}
+
+dat3 <- dat3_uncleaned %>% filter(!Outlier)
+
+```
+
+
+### Means  
+```{r}
+
+dat3 %>%
+  group_by(MYEAR, STATION_CODE) %>%
+  summarise(TL = median(TL), .groups = "drop") %>%
+  ggplot(aes(STATION_CODE, MYEAR, fill = TL)) +
+  geom_tile() +
+  viridis::scale_fill_viridis() +
+  scale_y_reverse() +
+  labs(title = "Cod trophic level") 
+
+```
+
+## 5. STATION_CODE as random factor (i.e., 2 random effects)  
+```{r, cache=TRUE}
+
+fm2 <- lmer(
+  formula = TL ~ 1 + (1|MYEAR_f) + (1|STATION_CODE), 
+  data = dat3
+)
+summary(fm2)
+
+```
+
+### Check random effects  
+This doesn't look right  
+```{r, results='hold'}
+
+eff <- ranef(fm2 , drop = TRUE)
+
+eff$STATION_CODE
+attr(eff$STATION_CODE, "postVar")  
+
+df <- tibble(
+  STATION_CODE = names(eff$STATION_CODE) %>% factor(levels = levels(dat3$STATION_CODE)),
+  Estimate = eff$STATION_CODE,
+  SD = attr(eff$STATION_CODE, "postVar")  
+)
+
+ggplot(df, aes(STATION_CODE, Estimate)) +
+  geom_pointrange(aes(ymin = Estimate - 2*SD, ymax = Estimate + 2*SD))
+
+```
+
+## 6.  STATION_CODE as fixed factor (fm2b)   
+* 'STATION_CODE' is to be evaluated within years   
+    + See http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/
+```{r, cache=TRUE}
+fm2b <- lmer(
+  formula = TL ~ STATION_CODE + (1|MYEAR_f), 
+  data = dat3
+)
+summary(fm2b)
+
+# Get ML model (max. likelihood estimates) for anova
+fm2b_ml  <- update(fm2b , REML = FALSE)
+
+```
+### Hypothesis testing using ANOVA    
+https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#methods-for-testing-single-parameters  
+```{r, cache=TRUE}
+
+# Null model
+fm2b_null_ml <- lmer(
+  formula = TL ~ 1 + (1|MYEAR_f), 
+  data = dat3,
+  REML = FALSE
+)
+
+anova(fm2b_null_ml, fm2b_ml)
+
+
+```
+
+
+### Estimates from station coefficients  
+"Simple-minded" solution  
+- Plot shown in next chunk
+- Note that 02B disappears, it is the Intercept   
+```{r}
+
+
+df <- summary(fm2b)$coe
+df <- df %>%
+  as.data.frame() %>%
+  rename(SD = `Std. Error`) %>%
+  mutate(
+    STATION_CODE = sub("STATION_CODE", "", rownames(df))  %>% factor(levels = levels(dat3$STATION_CODE))
+         )
+
+
+gg2b_1 <- ggplot(df[-1,], aes(STATION_CODE, Estimate)) +
+  geom_pointrange(aes(ymin = Estimate - 2*SD, ymax = Estimate + 2*SD))  +
+  labs(title = "CI from fixed-effect coefficients (lacking 02B)") 
+
+# gg_2b_1
+
+```
+
+### Estimates using Ben Bolker's code  
+https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#lme4  
+```{r}
+
+model <- fm2b
+
+newdat <- data.frame(
+  STATION_CODE = factor(levels(dat3$STATION_CODE), levels = levels(dat3$STATION_CODE))
+  )
+newdat$TL <- predict(model, newdat, re.form = NA)
+
+mm <- model.matrix(terms(model),newdat)
+## or newdat$distance <- mm %*% fixef(model)
+
+pvar1 <- diag(mm %*% tcrossprod(vcov(model), mm))
+tvar1 <- pvar1 + VarCorr(model)$MYEAR_f[1]  ## random effect here. must be adapted for more complex models
+cmult <- 2 ## could use 1.96
+newdat <- data.frame(
+    newdat
+    , plo = newdat$TL - cmult*sqrt(pvar1)
+    , phi = newdat$TL + cmult*sqrt(pvar1)
+    , tlo = newdat$TL - cmult*sqrt(tvar1)
+    , thi = newdat$TL + cmult*sqrt(tvar1)
+)
+
+
+gg2b_2 <- ggplot(newdat, aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = plo, ymax = phi)) +
+  labs(title = "CI based on fixed-effects uncertainty (confidence interval)")
+
+gg2b_3 <- ggplot(newdat, aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = tlo, ymax = thi)) +
+  labs(title = "CI based on fixed uncertainty + random effect variance (prediction interval)")
+
+gg2b_1
+gg2b_2
+gg2b_3
+
+```
+### Estimates using merTools::predictInterval    
+See https://stats.stackexchange.com/a/167059/13380   
+This looks like the prediction interval?  
+```{r}
+
+newdat2 <- expand.grid(
+    STATION_CODE = factor(levels(dat3$STATION_CODE), levels = levels(dat3$STATION_CODE)),
+    MYEAR_f = levels(dat3$MYEAR_f)
+    )
+
+preds <- predictInterval(fm2b, newdata = newdat2, which = "fixed", n.sims = 999)
+# str(preds)
+newdat2 <- bind_cols(newdat2, preds)
+
+# ggplot(newdat2, aes(STATION_CODE, fit, color = MYEAR_f)) +
+#   geom_point()
+
+ggplot(newdat2, aes(STATION_CODE, fit, color = MYEAR_f)) +
+  geom_pointrange(aes(ymin = lwr, ymax = upr), position = position_dodge(width = 0.55))
+
+
+```
+
+
+
+
+## 7. STATION_CODE + length (LNMEA) as fixed effects (fm3)   
+
+
+### Add rescaled variables  
+```{r}
+dat3 <- dat3 %>%
+  mutate(LNMEA_rescale = (LNMEA-500)/100,
+         Dist_along_coast_rescale = (Dist_along_coast-1000)/1000)
+
+```
+
+### Estimate models  
+* fm3a: additive station and length effects   
+   - TL increase with length same on all stations   
+* fm3b: additive station and length effects   
+   - TL increase with length differs between stations   
+* Code based on  
+http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/ 
+```{r, cache=TRUE}
+
+fm3a <- lmer(
+  formula = TL ~ LNMEA + STATION_CODE + (1|MYEAR_f), 
+  data = dat3
+)
+
+fm3b <- lmer(
+  formula = TL ~ LNMEA*STATION_CODE + (1|MYEAR_f),  
+  data = dat3
+)
+
+
+if (FALSE){
+  # OLD VERSIONS
+  fm3a <- lmer(
+    formula = TL ~ LNMEA*STATION_CODE + (1 + STATION_CODE|MYEAR_f), 
+    data = dat3
+  )
+  
+  fm3b <- lmer(
+    formula = TL ~ LNMEA*STATION_CODE + (1 + STATION_CODE|MYEAR_f), 
+    data = dat3
+  )
+  
+}
+
+summary(fm3a)
+summary(fm3b)
+
+fm3a_ml <- update(fm3a, REML = FALSE)
+fm3b_ml <- update(fm3b, REML = FALSE)
+
+```
+
+### ANOVA  
+```{r}
+
+anova(fm2b_ml, fm3a_ml, fm3b_ml)
+
+```
+
+
+
+
+### Estimates using Ben Bolker's code  
+https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#lme4    
+
+### Function for getting estimates from models 
+```{r}
+
+get_estimates_model3 <- function(model){
+
+  newdat3 <- expand.grid(
+    STATION_CODE = factor(levels(dat3$STATION_CODE), levels = levels(dat3$STATION_CODE)),
+    LNMEA = seq(300, 800, 100)
+  )
+  
+  newdat3$TL <- predict(model, newdat3, re.form = NA)
+  
+  mm <- model.matrix(terms(model),newdat3)
+  ## or newdat3$distance <- mm %*% fixef(model)
+  
+  pvar1 <- diag(mm %*% tcrossprod(vcov(model), mm))
+  tvar1 <- pvar1 + VarCorr(model)$MYEAR_f[1]  ## random effect here. must be adapted for more complex models
+  cmult <- 2 ## could use 1.96
+  newdat3 <- data.frame(
+    newdat3
+    , plo = newdat3$TL - cmult*sqrt(pvar1)
+    , phi = newdat3$TL + cmult*sqrt(pvar1)
+    , tlo = newdat3$TL - cmult*sqrt(tvar1)
+    , thi = newdat3$TL + cmult*sqrt(tvar1)
+  )
+  
+  newdat3
+  
+}
+
+# 4debugonce(get_estimates_model3)
+
+```
+
+
+### Model 3a. additive station and length effects  
+I.e., length effect is the same in all stations
+```{r}
+
+pred_3a <- get_estimates_model3(fm3a)
+
+# Mainly for showing that lines are parallell  
+gg3a_lines <- ggplot(pred_3a, aes(LNMEA, TL)) +
+  geom_line() +
+  facet_wrap(vars(STATION_CODE))
+
+# 
+gg3a_40 <- pred_3a %>%
+  filter(LNMEA == 400) %>%
+  ggplot(aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = plo, ymax = phi)) +
+  labs(title = "TL for 40 cm cod (no station*length interaction)")
+
+# Just for testing: this should be identical to the previous, 
+# except the y szcael being a bit different  
+gg3a_80 <- pred_3a %>%
+  filter(LNMEA == 800) %>%
+  ggplot(aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = plo, ymax = phi)) +
+  labs(title = "TL for 80 cm cod (no station*length interaction)")
+
+if (FALSE){
+  gg3a_lines
+  gg3a_40
+  gg3a_70
+}
+
+
+
+```
+
+
+### Model 3b. Interaction between station and length effects   
+I.e., length effect differs among stations
+```{r}
+
+pred_3b <- get_estimates_model3(fm3b)
+
+# Mainly for showing that lines are NOT parallell  
+gg3b_lines <- ggplot(pred_3b, aes(LNMEA, TL)) +
+  geom_ribbon(aes(ymin = plo, ymax = phi), fill = "lightblue") +
+  geom_line() +
+  geom_rug(data = dat3) +
+  facet_wrap(vars(STATION_CODE))
+
+# 
+gg3b_40 <- pred_3b %>%
+  filter(LNMEA == 400) %>%
+  ggplot(aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = plo, ymax = phi)) +
+  labs(title = "TL for 40 cm cod (with station*length interaction)")
+
+# Just for testing: this should be identical to the previous, 
+# except the y szcael being a bit different  
+gg3b_70 <- pred_3b %>%
+  filter(LNMEA == 700) %>%
+  ggplot(aes(STATION_CODE, TL)) +
+  geom_pointrange(aes(ymin = plo, ymax = phi)) +
+  labs(title = "TL for 70 cm cod (with station*length interaction)")
+
+gg3a_40
+gg3b_40
+gg3b_70
+gg3b_lines
+
+
+
+```
+
+#### Using package brms   
+
+Rough normalisation of LNMEA and Dist_along_coast
+```{r}
+
+dat3 <- dat3 %>%
+  mutate(LNMEA_s = (LNMEA-500)/100,
+         Dist_along_coast_s = (Dist_along_coast-1000)/1000)
+  
+```
+
+Only distance effect  
+```{r}
+
+brm_3a <- brm(TL ~ Dist_along_coast_s + (1|STATION_CODE),
+              data = dat3, 
+              warmup = 1000, iter = 6000, 
+              cores = 2, chains = 2, 
+              seed = 123,
+              control = list(max_treedepth = 12))  # 
+summary(brm_3a)
+summary(brm_3a)$fixed
+
+```
+
+Length effect only
+```{r}
+
+
+brm_3b <- brm(TL ~ LNMEA + (1 + LNMEA|STATION_CODE),  
+              data = dat3, 
+              warmup = 1000, iter = 3000, 
+              cores = 2, chains = 2, 
+              seed = 123)
+summary(brm_3b)
+
+summary(brm_3b) %>% str(1)
+summary(brm_3b)$fixed
+
+```
+
+Distance + length  
+Note: this took ca. 35 minutes  
+```{r}
+
+# Note: max_treedepth = 10 (default) resulter in error  
+# Should not be increased by much - try 12, have never needed more than 15
+# Ref: 
+#   https://stats.stackexchange.com/a/296959/13380 
+
+
+brm_3c <- brm(TL ~ LNMEA + Dist_along_coast + (1 + LNMEA|STATION_CODE),
+              data = dat3, 
+              warmup = 1000, iter = 6000, 
+              cores = 2, chains = 2, 
+              seed = 123,
+              control = list(max_treedepth = 12))  # 
+summary(brm_3c)
+summary(brm_3c)$fixed
+
+
+
+```
+
+
+## 9. Distance along coast (on STATION_CODE level) (fm4)     
+http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/    
+
+### Make station_yr and fairly normalized variables  
+* station_yr: combination variable  
+* `LNMEA_n` and `Dist_along_coast_n`   
+```{r}
+
+dat3 <- dat3 %>%
+  mutate(station_yr = factor(STATION_CODE:MYEAR_f),
+         LNMEA_n = (LNMEA/100) - 5,
+         Dist_along_coast_n = (Dist_along_coast/1000) - 1)    # 
+
+```
+
+### Test plots  
+```{r}
+
+if (FALSE){
+  
+ggplot(dat3, aes(Dist_along_coast, TL)) + 
+  geom_point() +
+  facet_wrap(vars(MYEAR))
+
+ggplot(dat3, aes(LNMEA_n, TL)) + 
+  geom_point() +
+  facet_wrap(vars(station_yr))
+
+}
+
+```
+
+
+
+### lmer models  
+Seemingly ok fits  
+```{r}
+
+fm4a <- lmer(
+  formula = TL ~ LNMEA_n + 
+    (1|station_yr), 
+  data = dat3,
+  REML = FALSE
+)
+
+fm4b <- lmer(
+  formula = TL ~ LNMEA_n + 
+    (LNMEA_n|station_yr), 
+  data = dat3,
+  REML = FALSE
+)
+
+fm4c <- lmer(
+  formula = TL ~ LNMEA_n + Dist_along_coast_n +
+    (LNMEA_n|station_yr), 
+  data = dat3,
+  REML = FALSE
+)
+
+summary(fm4a)
+summary(fm4b)
+summary(fm4c)
+
+anova(fm4a, fm4b, fm4c)
+
+```
+
+
+### Try station_yr(station * year combination)  
+Results in boundary (singular) fit
+```{r}
+
+dat3 <- dat3 %>%
+  mutate(station_yr = factor(STATION_CODE:MYEAR_f))
+# xtabs(~station_yr, dat3)
+
+fm4a <- lmer(
+  formula = TL ~ LNMEA + 
+    (1|station_yr), 
+  data = dat3
+)
+summary(fm4a)
+
+fm4b <- lmer(
+  formula = TL ~ LNMEA + 
+    (LNMEA|station_yr), 
+  data = dat3,
+  REML = FALSE
+)
+summary(fm4b)
+
+
+fm4a <- lmer(
+  formula = TL ~ Dist_along_coast + 
+    (Dist_along_coast|STATION_CODE/MYEAR), 
+  data = dat3
+)
+
+fm4a <- lmer(
+  formula = TL ~ Dist_along_coast + 
+    (1 + Dist_along_coast|STATION_CODE/MYEAR), 
+  data = dat3
+)
+
+fm4a <- lmer(
+  formula = TL ~ (1 + Dist_along_coast|STATION_CODE/MYEAR), 
+  data = dat3
+)
+
+```
+
+
+## 8. Save  
+```{r}
+
+model_list <- list(fm2b, fm3a, fm3b, fm2b_null_ml, fm2b_ml, fm3a_ml, fm3b_ml)
+saveRDS(model_list, "Data/105_model_list.rds")
+
+# largish - 7.5 MB  
+model_list_brm <- list(brm_3a, brm_3c, brm_3c)
+saveRDS(model_list_brm, "Data/105_model_list_brm.rds")
+
+model_predictions <- list(newdat, pred_3a, pred_3b)
+saveRDS(model_predictions, "Data/105_model_predictions.rds")
+
+```
+
