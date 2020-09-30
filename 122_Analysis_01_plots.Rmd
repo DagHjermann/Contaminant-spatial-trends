@@ -106,7 +106,7 @@ Adding
 dat_param_loq <- dat %>%
   filter(!is.na(FLAG1)) %>%
   group_by(PARAM, MYEAR, TISSUE_NAME) %>%
-  summarise(LOQ = median(VALUE_WW))
+  summarise(LOQ = median(VALUE_WW), .groups = "drop")
 
 dat2 <- dat %>%
   filter(!is.na(VALUE_WW)) %>%
@@ -132,7 +132,7 @@ dat2 <- dat %>%
 # dat2 <- dat
 
 ```
-Not-impacted stations  
+Make data set with non-impacted stations only    
 ```{r}
 
 dat2_notimpacted <- dat2 %>%
@@ -194,11 +194,14 @@ MSTAT categories:
 * B = background    
 Tables shows number of years of data    
 ```{r}
+
 dat2 %>%
   filter(grepl("B", STATION_CODE)) %>%
   distinct(STATION_CODE, MSTAT, MYEAR) %>%
   xtabs(~ STATION_CODE + MSTAT, .) %>%
-  kable()
+  kbl(escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
+
 ```
 
 ### Parameter groups  
@@ -208,8 +211,8 @@ df_parameter_groups <- get_df_parameter_groups()
 
 df_parameter_groups %>%
   count(Substance.Group) %>%
-  kable(caption = "Number of parameters per group")
-
+  kbl(caption = "Number of parameters per group", escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
 
 ```
 
@@ -321,7 +324,10 @@ plotvalues_gamm %>%
 
 ttable_gamm %>%
   filter(TISSUE_NAME %in% "Lever") %>%
-  xtabs(~ addNA(Substance.Group) + (Position_p < 0.05), .,
+  mutate(
+    `Effect of distance along coast` = ifelse(Position_p < 0.05, "P <= 0.05", "P > 0.05")
+  ) %>%
+  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast`, .,
         drop.unused.levels = TRUE)
 
 

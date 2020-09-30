@@ -110,14 +110,8 @@ Adding
 dat_param_loq <- dat %>%
   filter(!is.na(FLAG1)) %>%
   group_by(PARAM, MYEAR, TISSUE_NAME) %>%
-  summarise(LOQ = median(VALUE_WW))
-```
+  summarise(LOQ = median(VALUE_WW), .groups = "drop")
 
-```
-## `summarise()` regrouping output by 'PARAM', 'MYEAR' (override with `.groups` argument)
-```
-
-```r
 dat2 <- dat %>%
   filter(!is.na(VALUE_WW)) %>%
   ungroup() %>%
@@ -141,7 +135,7 @@ dat2 <- dat %>%
 
 # dat2 <- dat
 ```
-Not-impacted stations  
+Make data set with non-impacted stations only    
 
 ```r
 dat2_notimpacted <- dat2 %>%
@@ -205,10 +199,11 @@ dat2 %>%
   filter(grepl("B", STATION_CODE)) %>%
   distinct(STATION_CODE, MSTAT, MYEAR) %>%
   xtabs(~ STATION_CODE + MSTAT, .) %>%
-  kable()
+  kbl(escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
 ```
 
-<table>
+<table class=" lightable-paper" style='font-family: "Arial Narrow", arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;'>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -324,10 +319,11 @@ df_parameter_groups <- get_df_parameter_groups()
 
 df_parameter_groups %>%
   count(Substance.Group) %>%
-  kable(caption = "Number of parameters per group")
+  kbl(caption = "Number of parameters per group", escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
 ```
 
-<table>
+<table class=" lightable-paper" style='font-family: "Arial Narrow", arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;'>
 <caption>Number of parameters per group</caption>
  <thead>
   <tr>
@@ -556,20 +552,23 @@ plotvalues_gamm %>%
 ```r
 ttable_gamm %>%
   filter(TISSUE_NAME %in% "Lever") %>%
-  xtabs(~ addNA(Substance.Group) + (Position_p < 0.05), .,
+  mutate(
+    `Effect of distance along coast` = ifelse(Position_p < 0.05, "P <= 0.05", "P > 0.05")
+  ) %>%
+  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast`, .,
         drop.unused.levels = TRUE)
 ```
 
 ```
-##                                           Position_p < 0.05
-## addNA(Substance.Group)                     FALSE TRUE
-##   Metals and metalloids                        8   22
-##   Chlorobiphenyls                              0   33
-##   Organobromines                              27   21
-##   Organochlorines (general)                    0    9
-##   Dichloro-diphenyl-trichloroethane (DDTs)     0   12
-##   Hexachlorocyclohexanes                       0    6
-##   Others                                       0    6
+##                                           Effect of distance along coast
+## addNA(Substance.Group)                     P <= 0.05 P > 0.05
+##   Metals and metalloids                           22        8
+##   Chlorobiphenyls                                 33        0
+##   Organobromines                                  21       27
+##   Organochlorines (general)                        9        0
+##   Dichloro-diphenyl-trichloroethane (DDTs)        12        0
+##   Hexachlorocyclohexanes                           6        0
+##   Others                                           6        0
 ```
 
 ```r
@@ -661,8 +660,8 @@ plot_observations("BDE47")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(MYEAR)            1.000000 1.000000 43.31420 7.642142e-11
-## s(Dist_along_coast) 3.934982 3.934982 14.96099 6.797166e-12
+## s(MYEAR)            1.000000 1.000000 43.29744 7.705064e-11
+## s(Dist_along_coast) 3.934916 3.934916 14.94331 7.016166e-12
 ```
   
 ### BDE99  
@@ -679,8 +678,8 @@ plot_observations("BDE99")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(MYEAR)            1.000001 1.000001 32.66633 1.462094e-08
-## s(Dist_along_coast) 3.857443 3.857443 11.32227 1.266521e-08
+## s(MYEAR)            2.580908 2.580908 11.86667 6.328335e-07
+## s(Dist_along_coast) 3.855394 3.855394 11.45831 1.886763e-08
 ```
 ### ZN    
 
@@ -713,9 +712,9 @@ plot_observations("AG")
 ```
 
 ```
-##                          edf   Ref.df         F      p-value
-## s(MYEAR)            2.121975 2.121975  8.816373 1.039640e-04
-## s(Dist_along_coast) 5.525976 5.525976 15.284547 7.931244e-15
+##                          edf   Ref.df        F      p-value
+## s(MYEAR)            2.135535 2.135535  9.00257 8.294595e-05
+## s(Dist_along_coast) 5.515673 5.515673 15.09066 1.296643e-14
 ```
 ### CU    
 
@@ -748,9 +747,9 @@ plot_observations("HG", "Muskel")
 ```
 
 ```
-##                          edf   Ref.df         F       p-value
-## s(MYEAR)            2.842408 2.842408  79.95371  6.014776e-46
-## s(Dist_along_coast) 6.817045 6.817045 210.14589 7.671450e-284
+##                          edf   Ref.df        F       p-value
+## s(MYEAR)            2.842078 2.842078  79.8821  6.704772e-46
+## s(Dist_along_coast) 6.817055 6.817055 210.2537 5.466276e-284
 ```
   
 ### Sum PCB    
@@ -785,8 +784,8 @@ plot_observations("CB118")
 
 ```
 ##                          edf   Ref.df        F       p-value
-## s(MYEAR)            2.824736 2.824736 144.6275  3.659329e-74
-## s(Dist_along_coast) 6.790490 6.790490 128.3868 1.524712e-171
+## s(MYEAR)            2.824784 2.824784 144.9694  2.399462e-74
+## s(Dist_along_coast) 6.791362 6.791362 128.6562 6.146979e-172
 ```
 
 ### Pentaklorbenzen      
@@ -803,8 +802,8 @@ plot_observations("QCB")
 
 ```
 ##                          edf   Ref.df         F      p-value
-## s(MYEAR)            2.921951 2.921951 137.82044 9.337245e-76
-## s(Dist_along_coast) 1.000000 1.000000  30.49735 3.691578e-08
+## s(MYEAR)            2.920255 2.920255 132.40563 1.352472e-72
+## s(Dist_along_coast) 1.000001 1.000001  25.52645 4.682021e-07
 ```
 
 ```r
@@ -847,9 +846,9 @@ plot_observations("DDEPP")
 ```
 
 ```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            1.000001 1.000001 163.8124 1.523971e-36
-## s(Dist_along_coast) 3.618083 3.618083  43.1630 5.080692e-31
+##                          edf   Ref.df         F      p-value
+## s(MYEAR)            1.000001 1.000001 163.85578 1.492606e-36
+## s(Dist_along_coast) 3.618176 3.618176  43.15985 5.100922e-31
 ```
 
 ### MCCP      
@@ -883,8 +882,8 @@ plot_observations("PFOS")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.950480 2.950480 77.99058 9.639258e-38
-## s(Dist_along_coast) 3.517857 3.517857 19.35234 5.788576e-12
+## s(MYEAR)            2.951796 2.951796 78.80519 3.365358e-38
+## s(Dist_along_coast) 3.512482 3.512482 19.14448 7.481495e-12
 ```
 
 ### PFOSA      
@@ -901,8 +900,8 @@ plot_observations("PFOSA")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.828998 2.828998 40.07236 2.632135e-19
-## s(Dist_along_coast) 3.738344 3.738344 54.93621 6.979011e-39
+## s(MYEAR)            2.834983 2.834983 39.42512 5.288381e-19
+## s(Dist_along_coast) 3.728715 3.728715 56.02690 1.644480e-39
 ```
 
 ### PFOSA      
@@ -919,8 +918,8 @@ plot_observations("PFOSA")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.808370 2.808370 42.19391 1.457873e-20
-## s(Dist_along_coast) 3.749475 3.749475 59.85147 2.139639e-42
+## s(MYEAR)            2.841118 2.841118 38.48279 2.029757e-18
+## s(Dist_along_coast) 3.727141 3.727141 54.95186 9.296773e-39
 ```
 
 ### Toksafen Parlar 50       
@@ -937,7 +936,7 @@ plot_observations("Toksafen Parlar 50")
 
 ```
 ##                          edf   Ref.df        F      p-value
-## s(Dist_along_coast) 3.347294 3.347294 44.13112 7.352447e-24
+## s(Dist_along_coast) 3.286858 3.286858 45.17193 2.500276e-24
 ```
 
 ## 6. Linear results   

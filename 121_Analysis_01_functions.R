@@ -757,6 +757,10 @@ run_gamm_extract_plotvalues <- function(model, data, repl = 1){
 
 #
 # Function 3 - main function which calls the two others  
+# - returnes either 
+#   1) the result of run_gamm_extract_results
+#   2) the result of run_gamm_extract_plotvalues
+#   3) entire model and data
 #
 run_gamm <- function(data, response_variable = "log_CONC_adj", repl = 1,
                      return = "ttable_and_fit"){
