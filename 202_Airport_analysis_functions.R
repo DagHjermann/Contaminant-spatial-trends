@@ -3,9 +3,15 @@
 # Make new variable 'VALUE_WW_r' with random values between
 # 0.5*LOQ and LOQ for data undcer LOQ
 #
-# Returns data set
+# NOTE: this is a midfied version using either 
+# - use_sample_LOQ = TRUE for sample-level LOQ
+# - use_sample_LOQ = FALSE for year/tissue-level LOQ (given by LOQ variable, hich is computed in
+#   Jupyterhub )
+# 
 #
-add_random_data <- function(data){
+# Returns a new data set (the difference with input data set is the addition of a 'VALUE_WW_r' variable)
+#
+add_random_data <- function(data, use_sample_LOQ = TRUE){
   
   # Set todata frame (not tibble)
   data <- as.data.frame(data)
@@ -16,11 +22,22 @@ add_random_data <- function(data){
   # Test that runif works for vactors of min, max:
   # runif(2, min = c(1,50), max = c(10,100))
   data$VALUE_WW_r <- data$VALUE_WW
-  data$VALUE_WW_r[sel] <- runif(
-    n = sum(sel), 
-    min = data$LOQ[sel]/2,
-    max = data$VALUE_WW[sel]
-  )
+  
+  if (use_sample_LOQ){
+    data$VALUE_WW_r[sel] <- runif(
+      n = sum(sel), 
+      min = data$VALUE_WW[sel]/2,
+      max = data$VALUE_WW[sel]
+    ) %>% round(4)
+    
+  } else {
+    data$VALUE_WW_r[sel] <- runif(
+      n = sum(sel), 
+      min = data$LOQ[sel]/2,
+      max = data$VALUE_WW[sel]
+    ) %>% round(4)
+    
+  }
   
   data
   
@@ -108,8 +125,8 @@ get_estimates_parallel <- function(param, data,
   df_regr <- data %>%
     filter(PARAM %in% param & TISSUE_NAME %in% tissue) 
   
-  mod0 <- lm(log(VALUE_WW) ~ MYEAR, data = df_regr)
-  mod1 <- lm(log(VALUE_WW) ~ MYEAR + STATION_CODE, data = df_regr)
+  mod0 <- lm(log10(VALUE_WW) ~ MYEAR, data = df_regr)
+  mod1 <- lm(log10(VALUE_WW) ~ MYEAR + STATION_CODE, data = df_regr)
   
   anova = anova(mod0, mod1)
   
@@ -147,9 +164,9 @@ get_estimates_max <- function(param, data,
   df_regr <- data %>%
     filter(PARAM %in% param & TISSUE_NAME %in% tissue) 
   
-  mod0 <- lm(log(VALUE_WW) ~ MYEAR, data = df_regr)
-  mod1 <- lm(log(VALUE_WW) ~ MYEAR + STATION_CODE, data = df_regr)
-  mod2 <- lm(log(VALUE_WW) ~ MYEAR*STATION_CODE, data = df_regr)
+  mod0 <- lm(log10(VALUE_WW) ~ MYEAR, data = df_regr)
+  mod1 <- lm(log10(VALUE_WW) ~ MYEAR + STATION_CODE, data = df_regr)
+  mod2 <- lm(log10(VALUE_WW) ~ MYEAR*STATION_CODE, data = df_regr)
   
   anova = anova(mod0, mod1, mod2)
   

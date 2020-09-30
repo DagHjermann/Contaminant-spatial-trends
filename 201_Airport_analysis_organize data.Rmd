@@ -19,7 +19,6 @@ Based on script 120
 library(rlang)
 
 library(devtools)
-library(lme4)
 library(usethis)
 
 library(dplyr)
@@ -248,16 +247,19 @@ dat2 <- dat2 %>%
 ```
 
 
-### Test add_random_data() function  
+### Test add_random_data() function   
+Adds a new column 'VALUE_WW_r' which has random data 
 ```{r}
 
-# Check parameters with ca 50% under LOQ
-dat2 %>%
-  filter(MYEAR > 2014) %>%
-  group_by(PARAM) %>%
-  summarise(less_thans = mean(!is.na(FLAG1))) %>%
-  filter(less_thans < 0.5) %>%
-  arrange(desc(less_thans))
+if (FALSE){
+  # Check parameters with ca 50% under LOQ
+  dat2 %>%
+    filter(MYEAR > 2014) %>%
+    group_by(PARAM) %>%
+    summarise(less_thans = mean(!is.na(FLAG1))) %>%
+    filter(less_thans < 0.5) %>%
+    arrange(desc(less_thans))
+}
 
 # Just pick 10 randm PFUdA records
 test <- dat2 %>%
@@ -267,7 +269,6 @@ test <- dat2 %>%
 
 test
 # debugonce(add_random_data)
-test %>% add_random_data()
 test %>% add_random_data()
 
 ```

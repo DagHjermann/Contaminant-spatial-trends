@@ -790,6 +790,22 @@ ggplot(rotation_data) +
 ## 9. PCA excluding PFDcA, PFHxS, PFUdA - LOQ values replaced {.tabset}       
 Values under LOQ have been replaced by random values bewteen LOQ/2 and LOQ.  
 
+### Test of replacing <LOQ values 
+* Variable VALUE_WW_r   
+* add_random_data() now by default uses the *per-sample LOQ*, not the given LOQ variable    
+    * The 'LOQ' variable is the *median LOQ per tissue and year*   
+```{r}
+
+dat %>%
+  filter(STATION_CODE %in% "53B" & 
+           PARAM %in% "PFOS" & MYEAR == 2009 & TISSUE_NAME %in% "Lever") %>%
+  select(STATION_CODE, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW, FLAG1, LOQ) %>%
+  add_random_data() %>%
+  kable()
+
+
+```
+
 ### Perform PCA
 ```{r}
 
@@ -1150,3 +1166,49 @@ ggplot(rotation_data) +
   theme_bw()
 
 ```
+
+
+## 11. Export data to Merete  
+```{r, results = 'hold'}
+
+vars_select <- c("PFOS", "PFOSA", "PFUdA")
+
+dat_wide <- dat %>%
+  filter(PARAM %in% vars_select & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>%
+  select(STATION_CODE, Dist_along_coast, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "VALUE_WW")
+
+dat_wide_r <- dat %>%
+  filter(PARAM %in% vars_select & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>% 
+  add_random_data() %>%
+  mutate(PARAM = paste0(PARAM, "_r")) %>%
+  select(STATION_CODE, MYEAR, SAMPLE_NO2, PARAM, VALUE_WW_r) %>%
+  tidyr::pivot_wider(names_from = "PARAM", values_from = "VALUE_WW_r")
+
+dat_wide_extra <- dat %>%
+  filter(PARAM %in% vars_select & MYEAR >= 2005 & TISSUE_NAME %in% "Lever") %>% 
+  group_by(STATION_CODE, MYEAR, SAMPLE_NO2) %>%
+  summarise_at(vars(FAT_PERC, LNMEA), .fun = first) %>%
+  ungroup()
+
+cat("Number of rows in the three data sets: \n")
+nrow(dat_wide)
+nrow(dat_wide_r)
+nrow(dat_wide_extra)
+
+dat_pca <- dat_wide %>%
+  safe_left_join(dat_wide_r, by = c("STATION_CODE", "MYEAR", "SAMPLE_NO2"), 
+                 na_matches = "never", check = "BCVm") %>%
+  safe_left_join(dat_wide_extra, by = c("STATION_CODE", "MYEAR", "SAMPLE_NO2"), 
+                 na_matches = "never", check = "BCVm")
+
+
+writexl::write_xlsx(
+  dat_pca,
+  "Data/PFAS-data for PCA (script 202).xlsx"
+)
+
+```
+
+
+
