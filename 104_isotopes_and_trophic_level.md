@@ -34,6 +34,7 @@ library(purrr)
 library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
 
 library(sp)
+library(kableExtra)
 
 library(dplyr)            #   load last to avoid name conflicts such as MASS::select
 
@@ -131,28 +132,183 @@ dat %>%
   knitr::kable()
 ```
 
-
-
-|     | 2014| 2015| 2016| 2017| 2018| 2019|
-|:----|----:|----:|----:|----:|----:|----:|
-|13B  |  154|  154|  165|  132|   90|  100|
-|22A  |    0|    0|    0|   33|   30|   30|
-|23B  |  154|  165|  165|  143|  140|  150|
-|24B  |    0|  158|  165|  165|  120|  140|
-|30A  |    0|    0|    0|   33|   30|   30|
-|30B  |  165|  132|  165|  132|  100|   50|
-|36A1 |    0|    0|    0|   33|   30|   30|
-|36B  |  165|  165|  165|  110|  150|   60|
-|43B2 |  165|  143|  132|  165|  150|  150|
-|51A  |    0|    0|    0|   33|   30|    0|
-|53B  |   99|  154|  165|  165|  150|  150|
-|80B  |  165|  165|  154|  165|  140|  110|
-|98A2 |    0|    0|    0|   33|   30|   30|
-|98B1 |   88|  165|  165|  121|  120|  150|
-|I241 |    0|    0|    0|   33|   30|   30|
-|I964 |    0|    0|    0|    0|   33|    0|
-|I965 |    0|    0|    0|    0|   33|   33|
-|I969 |    0|    0|    0|    0|   33|   22|
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> 2014 </th>
+   <th style="text-align:right;"> 2015 </th>
+   <th style="text-align:right;"> 2016 </th>
+   <th style="text-align:right;"> 2017 </th>
+   <th style="text-align:right;"> 2018 </th>
+   <th style="text-align:right;"> 2019 </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> 13B </td>
+   <td style="text-align:right;"> 154 </td>
+   <td style="text-align:right;"> 154 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 132 </td>
+   <td style="text-align:right;"> 90 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 22A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 23B </td>
+   <td style="text-align:right;"> 154 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 143 </td>
+   <td style="text-align:right;"> 140 </td>
+   <td style="text-align:right;"> 150 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 24B </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 158 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 120 </td>
+   <td style="text-align:right;"> 140 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 30A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 30B </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 132 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 132 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 50 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 36A1 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 36B </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 110 </td>
+   <td style="text-align:right;"> 150 </td>
+   <td style="text-align:right;"> 60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 43B2 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 143 </td>
+   <td style="text-align:right;"> 132 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 150 </td>
+   <td style="text-align:right;"> 150 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 51A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 53B </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 154 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 150 </td>
+   <td style="text-align:right;"> 150 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 80B </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 154 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 140 </td>
+   <td style="text-align:right;"> 110 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 98A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 98B1 </td>
+   <td style="text-align:right;"> 88 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 165 </td>
+   <td style="text-align:right;"> 121 </td>
+   <td style="text-align:right;"> 120 </td>
+   <td style="text-align:right;"> 150 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I241 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 30 </td>
+   <td style="text-align:right;"> 30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I964 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I965 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 33 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I969 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 33 </td>
+   <td style="text-align:right;"> 22 </td>
+  </tr>
+</tbody>
+</table>
 
 ### Add position       
 Using `df_stations`   
@@ -415,14 +571,18 @@ leaflet(df) %>%
                     label =  ~STATION_CODE)
 ```
 
-<!--html_preserve--><div id="htmlwidget-bc986ea1e9f462fdcfad" style="width:672px;height:480px;" class="leaflet html-widget"></div>
-<script type="application/json" data-for="htmlwidget-bc986ea1e9f462fdcfad">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.812653,59.5283333333333,59.0405,59.0405,59.0465,58.1328333333333,58.051384,59.895618,60.09727,60.09727,60.39664,62.4677833333333,63.445624,66.04437,68.18577,69.653,70.65,78.17,69.81623,59.095112,59.079053,59.88362,59.8513333333333,59.7133333333333,59.7445,59.48359,59.07357,59.0233333333333,59.0514,59.0453333333333,58.1316666666667,58.04605,59.58711,59.984,60.084292,60.096771,60.2205,60.387073,60.42096,60.4007721666667,61.9362166666667,62.465851,63.651438,66.28022,66.31162,67.41271,67.296306,68.24917,69.8993],[10.97354,10.551829,10.35,10.4358333333333,10.4358333333333,9.70275,7.9885,6.746898,5.108565,6.539719,6.539719,5.27069,6.06861666666667,10.371726,12.503554,14.708138,18.974,23.6333333333333,13.46,29.7602,11.136779,10.987336,10.711,10.589,10.5551666666667,10.5228333333333,10.49499,10.42522,9.75366666666667,9.70384,9.70683333333333,8.00166666666667,6.9159,5.15203,5.7545,6.550954,6.532933,6.602,6.689524,6.40502,5.303955,5.04878333333333,6.239601,9.56386,14.0349,14.12537,14.621928,14.395639,14.6627,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","19B","10B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.04605,78.17],"lng":[5.04878333333333,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3142e5e0b1863cc7ace3" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3142e5e0b1863cc7ace3">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.812653,59.5283333333333,59.0405,59.0405,59.0465,58.1328333333333,58.051384,59.895618,60.09727,60.09727,60.39664,62.4677833333333,63.445624,66.04437,68.18577,69.653,70.65,78.17,69.81623,59.095112,59.079053,59.88362,59.8513333333333,59.7133333333333,59.7445,59.48359,59.07357,59.0233333333333,59.0514,59.0453333333333,58.1316666666667,58.04605,59.58711,59.984,60.084292,60.096771,60.2205,60.387073,60.42096,60.4007721666667,61.9362166666667,62.465851,63.651438,66.28022,66.31162,67.41271,67.296306,68.24917,69.8993],[10.97354,10.551829,10.35,10.4358333333333,10.4358333333333,9.70275,7.9885,6.746898,5.108565,6.539719,6.539719,5.27069,6.06861666666667,10.371726,12.503554,14.708138,18.974,23.6333333333333,13.46,29.7602,11.136779,10.987336,10.711,10.589,10.5551666666667,10.5228333333333,10.49499,10.42522,9.75366666666667,9.70384,9.70683333333333,8.00166666666667,6.9159,5.15203,5.7545,6.550954,6.532933,6.602,6.689524,6.40502,5.303955,5.04878333333333,6.239601,9.56386,14.0349,14.12537,14.621928,14.395639,14.6627,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","19B","10B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.04605,78.17],"lng":[5.04878333333333,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ### Closest/corresponding mussel station   
 Set based on map above  
 
 ```r
+#
+# 19B = Svalbard - no bue mussel stations close  
+#
+
 data_closest_mussel_station <- read.csv(textConnection("
 Cod_station, Mussel_station
 30B,I304
@@ -434,6 +594,8 @@ Cod_station, Mussel_station
 15B,15A
 23B,22A
 24B,I241
+28B,28A2
+36B,36A1
 53B,56A
 80B,91A2
 96B,I969
@@ -447,6 +609,162 @@ stringsAsFactors = FALSE
 
 # Pretty far from eacah other: 80B, 91A2
 ```
+
+### Table of corresponding cod/mussel stations  
+
+```r
+table_coupling_stations <- df_stations %>%
+  filter(grepl("B", STATION_CODE)) %>%
+  select(STATION_CODE, Station_Name, Dist_along_coast) %>%
+  mutate(Dist_along_coast = round(Dist_along_coast)) %>%
+  rename(Cod_station = STATION_CODE,
+         Cod_station_name = Station_Name,
+         `Dist along coast (km)` = Dist_along_coast) %>%
+  inner_join(
+    data_closest_mussel_station, 
+    by = "Cod_station") %>%
+  left_join(df_stations %>% 
+              select(STATION_CODE, Station_Name) %>%
+              rename(Mussel_station = STATION_CODE,
+                     Mussel_station_name = Station_Name),
+            by = "Mussel_station") %>%
+  arrange(`Dist along coast (km)`)
+
+# Remove underscores in names
+names(table_coupling_stations) <- gsub("_", " ", names(table_coupling_stations), fixed = TRUE)
+
+table_coupling_stations %>%
+  kbl(escape = FALSE) %>%
+  kable_classic()
+```
+
+<table class=" lightable-classic" style='font-family: "Arial Narrow", "Source Sans Pro", sans-serif; margin-left: auto; margin-right: auto;'>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Cod station </th>
+   <th style="text-align:left;"> Cod station name </th>
+   <th style="text-align:right;"> Dist along coast (km) </th>
+   <th style="text-align:left;"> Mussel station </th>
+   <th style="text-align:left;"> Mussel station name </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> 02B </td>
+   <td style="text-align:left;"> Kirkøy, Hvaler </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:left;"> I024 </td>
+   <td style="text-align:left;"> Kirkøy, Hvaler </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 30B </td>
+   <td style="text-align:left;"> Inner Oslofjord </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> I304 </td>
+   <td style="text-align:left;"> Gåsøya, Inner Oslofjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 36B </td>
+   <td style="text-align:left;"> Tjøme, Outer Oslofjord </td>
+   <td style="text-align:right;"> 105 </td>
+   <td style="text-align:left;"> 36A1 </td>
+   <td style="text-align:left;"> Tjøme, Outer Oslofjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 71B </td>
+   <td style="text-align:left;"> Stathelle area, Langesundfjord </td>
+   <td style="text-align:right;"> 138 </td>
+   <td style="text-align:left;"> I712 </td>
+   <td style="text-align:left;"> Croftholmen, Langesundfjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 13B </td>
+   <td style="text-align:left;"> Kristiansand harbour area </td>
+   <td style="text-align:right;"> 287 </td>
+   <td style="text-align:left;"> I133 </td>
+   <td style="text-align:left;"> Odderøya, Kristiansand harbour </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 15B </td>
+   <td style="text-align:left;"> Skågskjera, Farsund </td>
+   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:left;"> 15A </td>
+   <td style="text-align:left;"> Gåsøya-Ullerøya, Farsund </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 23B </td>
+   <td style="text-align:left;"> Bømlo, Outer Selbjørnfjord </td>
+   <td style="text-align:right;"> 634 </td>
+   <td style="text-align:left;"> 22A </td>
+   <td style="text-align:left;"> Espevær, Outer Bømlafjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 53B </td>
+   <td style="text-align:left;"> Inner Sørfjord </td>
+   <td style="text-align:right;"> 654 </td>
+   <td style="text-align:left;"> 56A </td>
+   <td style="text-align:left;"> Kvalnes, Mid Sørfjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 24B </td>
+   <td style="text-align:left;"> Bergen harbour area </td>
+   <td style="text-align:right;"> 692 </td>
+   <td style="text-align:left;"> I241 </td>
+   <td style="text-align:left;"> Nordnes, Bergen harbour </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 28B </td>
+   <td style="text-align:left;"> Ålesund harbour area </td>
+   <td style="text-align:right;"> 984 </td>
+   <td style="text-align:left;"> 28A2 </td>
+   <td style="text-align:left;"> Ålesund harbour </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 80B </td>
+   <td style="text-align:left;"> Trondheim harbour </td>
+   <td style="text-align:right;"> 1206 </td>
+   <td style="text-align:left;"> 91A2 </td>
+   <td style="text-align:left;"> Ørland area, Outer Trondheimsfjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 96B </td>
+   <td style="text-align:left;"> Sandnessjøen area </td>
+   <td style="text-align:right;"> 1477 </td>
+   <td style="text-align:left;"> I969 </td>
+   <td style="text-align:left;"> Bjørnbærviken, Inner Ranfjord </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 98B1 </td>
+   <td style="text-align:left;"> Austnesfjord, Lofoten </td>
+   <td style="text-align:right;"> 1724 </td>
+   <td style="text-align:left;"> 98A2 </td>
+   <td style="text-align:left;"> Svolvær airport area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 43B2 </td>
+   <td style="text-align:left;"> Tromsø harbour area </td>
+   <td style="text-align:right;"> 2004 </td>
+   <td style="text-align:left;"> 98A2 </td>
+   <td style="text-align:left;"> Svolvær airport area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 45B2 </td>
+   <td style="text-align:left;"> Hammerfest harbour area </td>
+   <td style="text-align:right;"> 2233 </td>
+   <td style="text-align:left;"> 98A2 </td>
+   <td style="text-align:left;"> Svolvær airport area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 10B </td>
+   <td style="text-align:left;"> Kjøfjord, Outer Varangerfjord </td>
+   <td style="text-align:right;"> 2665 </td>
+   <td style="text-align:left;"> 11X </td>
+   <td style="text-align:left;"> Brashavn, Outer Varangerfjord </td>
+  </tr>
+</tbody>
+</table>
+
+
 
 
 ### Plot N15 for these cod and mussel stations  {.tabset}  
@@ -464,10 +782,10 @@ dat_isotopes %>%
 ```
 
 ```
-## Warning: Removed 253 rows containing missing values (geom_point).
+## Warning: Removed 275 rows containing missing values (geom_point).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 #### Blue mussel
 
@@ -480,7 +798,7 @@ dat_isotopes %>%
   facet_wrap(vars(STATION_CODE))
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ### Summarise mussel data  
 For each station (not year-specific means)  
@@ -564,12 +882,16 @@ cat("dat3:", nrow(dat3), "lines \n")
 ```
 
 ```
-## dat3: 923 lines
+## dat3: 1031 lines
 ```
 
-### c. Save  
+### c. Save   
 
 ```r
+#
+# These data are used in script 105
+#
+
 saveRDS(dat2, "Data/104_dat2.rds")
 saveRDS(dat3, "Data/104_dat3.rds")
 saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
@@ -578,6 +900,7 @@ saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
 ## 8. Remove excessively low/high trophic level  
 
 ### Remove 5 outliers   
+See "code" for cut-off values  
 
 ```r
 dat3 <- dat3 %>%
@@ -594,7 +917,7 @@ xtabs(~Outlier, dat3)
 ```
 ## Outlier
 ## FALSE  TRUE 
-##   918     5
+##  1026     5
 ```
 
 ```r
@@ -606,7 +929,7 @@ ggplot(dat3, aes(LNMEA, TL, color = Outlier)) +
   theme_bw()
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ```r
 dat3 <- dat3 %>% 
@@ -633,7 +956,7 @@ dat_isotopes_means1 %>%
 ## Warning: Removed 14 rows containing missing values (geom_tile).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ### Median cod TL    
 
@@ -648,7 +971,7 @@ dat3 %>%
   labs(title = "Cod trophic level") 
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ### TL boxplots  
 
@@ -659,7 +982,9 @@ ggplot(dat3, aes(factor(MYEAR), TL)) +
   labs(title = "Cod trophic level") 
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+
+  
 ### TL vs length    
 
 ```r
@@ -671,8 +996,17 @@ ggplot(dat3, aes(LNMEA, TL)) +
   labs(y = "Trophic level", x = "Cod length (mm)") 
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+  
+### TL vs Delta15N    
 
+```r
+ggplot(dat3, aes(Delta15N, TL)) + 
+  geom_point(aes(fill = STATION_CODE), pch = 21, size = rel(2)) +
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ## 10. Mixed-model analyses  
 ### Load mixed-model analyses   
@@ -829,7 +1163,7 @@ gg
 ## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ### Model: station + length (40 cm)  
 Model including station and length (additive effect). Predictions for 50 cm cod. For other lengths, only the the y axis would change, not the relative heights of each station  
@@ -845,7 +1179,7 @@ gg
 ## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 
 ### Model: station x length  (40 cm)   
@@ -862,7 +1196,7 @@ gg
 ## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
 
 
 ### Model: station x length  (70 cm)   
@@ -879,7 +1213,7 @@ gg
 ## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
 
 ## 12. Mixed model analysis of distance along coast {.tabset}   
@@ -929,12 +1263,42 @@ fixed %>%
   kable()
 ```
 
-
-
-|                   |   Estimate| Est.Error|   l-95% CI|  u-95% CI|     Rhat| Bulk_ESS| Tail_ESS|
-|:------------------|----------:|---------:|----------:|---------:|--------:|--------:|--------:|
-|Intercept          |  4.0489093| 0.0346035|  3.9787855| 4.1182355| 1.000279|     2441|     3694|
-|Dist_along_coast_s | -0.0719306| 0.0410201| -0.1520032| 0.0113239| 1.000314|     2588|     3749|
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Estimate </th>
+   <th style="text-align:right;"> Est.Error </th>
+   <th style="text-align:right;"> l-95% CI </th>
+   <th style="text-align:right;"> u-95% CI </th>
+   <th style="text-align:right;"> Rhat </th>
+   <th style="text-align:right;"> Bulk_ESS </th>
+   <th style="text-align:right;"> Tail_ESS </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Intercept </td>
+   <td style="text-align:right;"> 4.0489093 </td>
+   <td style="text-align:right;"> 0.0346035 </td>
+   <td style="text-align:right;"> 3.9787855 </td>
+   <td style="text-align:right;"> 4.1182355 </td>
+   <td style="text-align:right;"> 1.000279 </td>
+   <td style="text-align:right;"> 2441 </td>
+   <td style="text-align:right;"> 3694 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dist_along_coast_s </td>
+   <td style="text-align:right;"> -0.0719306 </td>
+   <td style="text-align:right;"> 0.0410201 </td>
+   <td style="text-align:right;"> -0.1520032 </td>
+   <td style="text-align:right;"> 0.0113239 </td>
+   <td style="text-align:right;"> 1.000314 </td>
+   <td style="text-align:right;"> 2588 </td>
+   <td style="text-align:right;"> 3749 </td>
+  </tr>
+</tbody>
+</table>
   
 ### Distance along coast, length-corrected        
 
@@ -984,13 +1348,52 @@ fixed %>%
   kable()
 ```
 
-
-
-|                 |   Estimate| Est.Error|   l-95% CI|  u-95% CI|     Rhat| Bulk_ESS| Tail_ESS|
-|:----------------|----------:|---------:|----------:|---------:|--------:|--------:|--------:|
-|Intercept        |  3.7142430| 0.1188444|  3.4867954| 3.9554987| 1.001773|     5265|     6910|
-|LNMEA            |  0.0007852| 0.0001602|  0.0004770| 0.0011128| 1.000627|     6156|     7218|
-|Dist_along_coast | -0.0000913| 0.0000647| -0.0002153| 0.0000365| 1.000138|     4152|     6439|
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Estimate </th>
+   <th style="text-align:right;"> Est.Error </th>
+   <th style="text-align:right;"> l-95% CI </th>
+   <th style="text-align:right;"> u-95% CI </th>
+   <th style="text-align:right;"> Rhat </th>
+   <th style="text-align:right;"> Bulk_ESS </th>
+   <th style="text-align:right;"> Tail_ESS </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Intercept </td>
+   <td style="text-align:right;"> 3.7142430 </td>
+   <td style="text-align:right;"> 0.1188444 </td>
+   <td style="text-align:right;"> 3.4867954 </td>
+   <td style="text-align:right;"> 3.9554987 </td>
+   <td style="text-align:right;"> 1.001773 </td>
+   <td style="text-align:right;"> 5265 </td>
+   <td style="text-align:right;"> 6910 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> LNMEA </td>
+   <td style="text-align:right;"> 0.0007852 </td>
+   <td style="text-align:right;"> 0.0001602 </td>
+   <td style="text-align:right;"> 0.0004770 </td>
+   <td style="text-align:right;"> 0.0011128 </td>
+   <td style="text-align:right;"> 1.000627 </td>
+   <td style="text-align:right;"> 6156 </td>
+   <td style="text-align:right;"> 7218 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dist_along_coast </td>
+   <td style="text-align:right;"> -0.0000913 </td>
+   <td style="text-align:right;"> 0.0000647 </td>
+   <td style="text-align:right;"> -0.0002153 </td>
+   <td style="text-align:right;"> 0.0000365 </td>
+   <td style="text-align:right;"> 1.000138 </td>
+   <td style="text-align:right;"> 4152 </td>
+   <td style="text-align:right;"> 6439 </td>
+  </tr>
+</tbody>
+</table>
 
 ### Distance along coast, length-corrected, plot  
 LNMEA = fish length, Dista_along_coast = distance along coast   
@@ -1004,7 +1407,7 @@ ggplot(fixed %>% filter(Effect != "Intercept"),
   geom_hline(yintercept = 0)
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
 
 
 
@@ -1032,7 +1435,7 @@ gg_map <- ggplot(mapdata, aes(Longitude, Latitude)) +
 gg_map
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-41-1.png)<!-- -->
 
 
 ### Map with coastal distance    
@@ -1055,7 +1458,7 @@ gg_map +
 ## Coordinate system already present. Adding new coordinate system, which will replace the existing one.
 ```
 
-![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
+![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
 
 ### Station table  
 
@@ -1071,24 +1474,117 @@ df_stations_plot %>%
   kable()
 ```
 
-
-
-|Station code |Station name                   |     Lon|     Lat| Distance along coast|
-|:------------|:------------------------------|-------:|-------:|--------------------:|
-|02B          |Kirkøy, Hvaler                 | 10.9735| 59.0648|                   36|
-|30B          |Inner Oslofjord                | 10.5518| 59.8127|                   69|
-|71B          |Stathelle area, Langesundfjord |  9.7028| 59.0465|                  138|
-|13B          |Kristiansand harbour area      |  7.9885| 58.1328|                  287|
-|15B          |Skågskjera, Farsund            |  6.7469| 58.0514|                  373|
-|23B          |Bømlo, Outer Selbjørnfjord     |  5.1086| 59.8956|                  634|
-|53B          |Inner Sørfjord                 |  6.5397| 60.0973|                  654|
-|24B          |Bergen harbour area            |  5.2707| 60.3966|                  692|
-|80B          |Trondheim harbour              | 10.3717| 63.4456|                 1206|
-|96B          |Sandnessjøen area              | 12.5036| 66.0444|                 1477|
-|98B1         |Austnesfjord, Lofoten          | 14.7081| 68.1858|                 1724|
-|43B2         |Tromsø harbour area            | 18.9740| 69.6530|                 2004|
-|45B2         |Hammerfest harbour area        | 23.6333| 70.6500|                 2233|
-|10B          |Kjøfjord, Outer Varangerfjord  | 29.7602| 69.8162|                 2665|
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Station code </th>
+   <th style="text-align:left;"> Station name </th>
+   <th style="text-align:right;"> Lon </th>
+   <th style="text-align:right;"> Lat </th>
+   <th style="text-align:right;"> Distance along coast </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> 02B </td>
+   <td style="text-align:left;"> Kirkøy, Hvaler </td>
+   <td style="text-align:right;"> 10.9735 </td>
+   <td style="text-align:right;"> 59.0648 </td>
+   <td style="text-align:right;"> 36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 30B </td>
+   <td style="text-align:left;"> Inner Oslofjord </td>
+   <td style="text-align:right;"> 10.5518 </td>
+   <td style="text-align:right;"> 59.8127 </td>
+   <td style="text-align:right;"> 69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 71B </td>
+   <td style="text-align:left;"> Stathelle area, Langesundfjord </td>
+   <td style="text-align:right;"> 9.7028 </td>
+   <td style="text-align:right;"> 59.0465 </td>
+   <td style="text-align:right;"> 138 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 13B </td>
+   <td style="text-align:left;"> Kristiansand harbour area </td>
+   <td style="text-align:right;"> 7.9885 </td>
+   <td style="text-align:right;"> 58.1328 </td>
+   <td style="text-align:right;"> 287 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 15B </td>
+   <td style="text-align:left;"> Skågskjera, Farsund </td>
+   <td style="text-align:right;"> 6.7469 </td>
+   <td style="text-align:right;"> 58.0514 </td>
+   <td style="text-align:right;"> 373 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 23B </td>
+   <td style="text-align:left;"> Bømlo, Outer Selbjørnfjord </td>
+   <td style="text-align:right;"> 5.1086 </td>
+   <td style="text-align:right;"> 59.8956 </td>
+   <td style="text-align:right;"> 634 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 53B </td>
+   <td style="text-align:left;"> Inner Sørfjord </td>
+   <td style="text-align:right;"> 6.5397 </td>
+   <td style="text-align:right;"> 60.0973 </td>
+   <td style="text-align:right;"> 654 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 24B </td>
+   <td style="text-align:left;"> Bergen harbour area </td>
+   <td style="text-align:right;"> 5.2707 </td>
+   <td style="text-align:right;"> 60.3966 </td>
+   <td style="text-align:right;"> 692 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 80B </td>
+   <td style="text-align:left;"> Trondheim harbour </td>
+   <td style="text-align:right;"> 10.3717 </td>
+   <td style="text-align:right;"> 63.4456 </td>
+   <td style="text-align:right;"> 1206 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 96B </td>
+   <td style="text-align:left;"> Sandnessjøen area </td>
+   <td style="text-align:right;"> 12.5036 </td>
+   <td style="text-align:right;"> 66.0444 </td>
+   <td style="text-align:right;"> 1477 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 98B1 </td>
+   <td style="text-align:left;"> Austnesfjord, Lofoten </td>
+   <td style="text-align:right;"> 14.7081 </td>
+   <td style="text-align:right;"> 68.1858 </td>
+   <td style="text-align:right;"> 1724 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 43B2 </td>
+   <td style="text-align:left;"> Tromsø harbour area </td>
+   <td style="text-align:right;"> 18.9740 </td>
+   <td style="text-align:right;"> 69.6530 </td>
+   <td style="text-align:right;"> 2004 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 45B2 </td>
+   <td style="text-align:left;"> Hammerfest harbour area </td>
+   <td style="text-align:right;"> 23.6333 </td>
+   <td style="text-align:right;"> 70.6500 </td>
+   <td style="text-align:right;"> 2233 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 10B </td>
+   <td style="text-align:left;"> Kjøfjord, Outer Varangerfjord </td>
+   <td style="text-align:right;"> 29.7602 </td>
+   <td style="text-align:right;"> 69.8162 </td>
+   <td style="text-align:right;"> 2665 </td>
+  </tr>
+</tbody>
+</table>
 
 
 

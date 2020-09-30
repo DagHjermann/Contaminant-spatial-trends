@@ -34,6 +34,7 @@ library(purrr)
 library(safejoin)  # package from https://github.com/moodymudskipper/safejoin 
 
 library(sp)
+library(kableExtra)
 
 library(dplyr)            #   load last to avoid name conflicts such as MASS::select
 
@@ -362,6 +363,10 @@ leaflet(df) %>%
 Set based on map above  
 ```{r}
 
+#
+# 19B = Svalbard - no bue mussel stations close  
+#
+
 data_closest_mussel_station <- read.csv(textConnection("
 Cod_station, Mussel_station
 30B,I304
@@ -373,6 +378,8 @@ Cod_station, Mussel_station
 15B,15A
 23B,22A
 24B,I241
+28B,28A2
+36B,36A1
 53B,56A
 80B,91A2
 96B,I969
@@ -387,6 +394,37 @@ stringsAsFactors = FALSE
 # Pretty far from eacah other: 80B, 91A2
 
 ```
+
+### Table of corresponding cod/mussel stations  
+```{r}
+
+table_coupling_stations <- df_stations %>%
+  filter(grepl("B", STATION_CODE)) %>%
+  select(STATION_CODE, Station_Name, Dist_along_coast) %>%
+  mutate(Dist_along_coast = round(Dist_along_coast)) %>%
+  rename(Cod_station = STATION_CODE,
+         Cod_station_name = Station_Name,
+         `Dist along coast (km)` = Dist_along_coast) %>%
+  inner_join(
+    data_closest_mussel_station, 
+    by = "Cod_station") %>%
+  left_join(df_stations %>% 
+              select(STATION_CODE, Station_Name) %>%
+              rename(Mussel_station = STATION_CODE,
+                     Mussel_station_name = Station_Name),
+            by = "Mussel_station") %>%
+  arrange(`Dist along coast (km)`)
+
+# Remove underscores in names
+names(table_coupling_stations) <- gsub("_", " ", names(table_coupling_stations), fixed = TRUE)
+
+table_coupling_stations %>%
+  kbl(escape = FALSE) %>%
+  kable_classic()
+
+```
+
+
 
 
 ### Plot N15 for these cod and mussel stations  {.tabset}  
@@ -492,8 +530,12 @@ cat("dat3:", nrow(dat3), "lines \n")
 
 ```
 
-### c. Save  
+### c. Save   
 ```{r}
+
+#
+# These data are used in script 105
+#
 
 saveRDS(dat2, "Data/104_dat2.rds")
 saveRDS(dat3, "Data/104_dat3.rds")
@@ -504,6 +546,7 @@ saveRDS(data_closest_mussel_station, "Data/104_data_closest_mussel_station.rds")
 ## 8. Remove excessively low/high trophic level  
 
 ### Remove 5 outliers   
+See "code" for cut-off values  
 ```{r}
 
 dat3 <- dat3 %>%
@@ -569,6 +612,8 @@ ggplot(dat3, aes(factor(MYEAR), TL)) +
   labs(title = "Cod trophic level") 
 
 ```
+
+  
 ### TL vs length    
 ```{r, fig.height=6, fig.width=9}
 
@@ -580,7 +625,15 @@ ggplot(dat3, aes(LNMEA, TL)) +
   labs(y = "Trophic level", x = "Cod length (mm)") 
 
 ```
+  
+### TL vs Delta15N    
+```{r, fig.height=6, fig.width=9}
 
+ggplot(dat3, aes(Delta15N, TL)) + 
+  geom_point(aes(fill = STATION_CODE), pch = 21, size = rel(2)) +
+  viridis::scale_fill_viridis(discrete = TRUE)
+
+```
 
 ## 10. Mixed-model analyses  
 ### Load mixed-model analyses   
@@ -698,6 +751,7 @@ plot_pred_distance <- function(model_predictions, ylabel, length = NULL,
 
 ### Model: station only
 ```{r}
+
 gg <- plot_pred_distance(pred_station, "Estimated trophic level")
 gg
 
