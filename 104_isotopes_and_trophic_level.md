@@ -11,6 +11,10 @@ output:
 ---
 
 
+Analysing trophic level relative to position along coast  
+
+
+```
 Mail fra Anders 13.05.2020:  
   
 Trofisk nivå for de enkelte torskeindivider regnes ut slik:
@@ -20,7 +24,7 @@ Trofisk nivå for de enkelte torskeindivider regnes ut slik:
 Her er `Delta15N_torsk` verdien av d15N for den enkelte torsken, mens `Delta15N_blåskjell` er gjennomsnittlig verdi av d15N i blåskjell fra den nærmeste blåskjellstasjonen.  
 
 Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå ca. 2 (altså at de er primærkonsumenter) og at d15N øker med 3.8 for hvert (hele) trofiske nivå i næringskjeden.  
-
+```
 
 ## 1. Libraries  
 
@@ -81,11 +85,19 @@ df_stations <- readRDS("Data/103_Selected_stations.rds")
 # Station metadata needs to be summarised  
 df_stations <- df_stations %>%
   filter(Station_Name != "Risøy, Østerfjord") %>%
-  mutate(MSTAT = case_when(
-    STATION_CODE %in% "I969" ~ "RH",
-    TRUE ~ MSTAT)) %>%
+  mutate(
+    MSTAT = case_when(
+      STATION_CODE %in% "I969" ~ "RH",
+      TRUE ~ MSTAT)
+  ) %>%
   group_by(STATION_CODE, Station_Name, MSTAT) %>%
-  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE)
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE) %>%
+  mutate(
+    Dist_along_coast = case_when(
+      STATION_CODE %in% c("19N","19B") ~ 3000,    # Svalbard stations  
+      TRUE ~  Dist_along_coast)
+  )
+
 
 check <- df_stations %>%
   group_by(STATION_CODE) %>%
@@ -571,8 +583,8 @@ leaflet(df) %>%
                     label =  ~STATION_CODE)
 ```
 
-<!--html_preserve--><div id="htmlwidget-3142e5e0b1863cc7ace3" style="width:672px;height:480px;" class="leaflet html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3142e5e0b1863cc7ace3">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.812653,59.5283333333333,59.0405,59.0405,59.0465,58.1328333333333,58.051384,59.895618,60.09727,60.09727,60.39664,62.4677833333333,63.445624,66.04437,68.18577,69.653,70.65,78.17,69.81623,59.095112,59.079053,59.88362,59.8513333333333,59.7133333333333,59.7445,59.48359,59.07357,59.0233333333333,59.0514,59.0453333333333,58.1316666666667,58.04605,59.58711,59.984,60.084292,60.096771,60.2205,60.387073,60.42096,60.4007721666667,61.9362166666667,62.465851,63.651438,66.28022,66.31162,67.41271,67.296306,68.24917,69.8993],[10.97354,10.551829,10.35,10.4358333333333,10.4358333333333,9.70275,7.9885,6.746898,5.108565,6.539719,6.539719,5.27069,6.06861666666667,10.371726,12.503554,14.708138,18.974,23.6333333333333,13.46,29.7602,11.136779,10.987336,10.711,10.589,10.5551666666667,10.5228333333333,10.49499,10.42522,9.75366666666667,9.70384,9.70683333333333,8.00166666666667,6.9159,5.15203,5.7545,6.550954,6.532933,6.602,6.689524,6.40502,5.303955,5.04878333333333,6.239601,9.56386,14.0349,14.12537,14.621928,14.395639,14.6627,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","19B","10B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.04605,78.17],"lng":[5.04878333333333,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-bb13a22e80bdbd6f5b26" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-bb13a22e80bdbd6f5b26">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addAwesomeMarkers","args":[[59.06482,59.812653,59.5283333333333,59.0405,59.0405,59.0465,58.1328333333333,58.051384,59.895618,60.09727,60.09727,60.39664,62.4677833333333,63.445624,66.04437,68.18577,69.653,70.65,69.81623,78.17,59.095112,59.079053,59.88362,59.8513333333333,59.7133333333333,59.7445,59.48359,59.07357,59.0233333333333,59.0514,59.0453333333333,58.1316666666667,58.04605,59.58711,59.984,60.084292,60.096771,60.2205,60.387073,60.42096,60.4007721666667,61.9362166666667,62.465851,63.651438,66.28022,66.31162,67.41271,67.296306,68.24917,69.8993],[10.97354,10.551829,10.35,10.4358333333333,10.4358333333333,9.70275,7.9885,6.746898,5.108565,6.539719,6.539719,5.27069,6.06861666666667,10.371726,12.503554,14.708138,18.974,23.6333333333333,29.7602,13.46,11.136779,10.987336,10.711,10.589,10.5551666666667,10.5228333333333,10.49499,10.42522,9.75366666666667,9.70384,9.70683333333333,8.00166666666667,6.9159,5.15203,5.7545,6.550954,6.532933,6.602,6.689524,6.40502,5.303955,5.04878333333333,6.239601,9.56386,14.0349,14.12537,14.621928,14.395639,14.6627,29.741],{"icon":"ios-close","markerColor":["red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue","blue"],"iconColor":"black","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["02B","30B","33F","36B","36F","71B","13B","15B","23B","53B","53F","24B","28B","80B","96B","98B1","43B2","45B2","10B","19B","I023","I024","30A","I304","I306","I307","35A","36A1","71A","I714","I712","I133","15A","22A","69A","51A","52A","56A","57A","63A","I241","26A2","28A2","91A2","I969","I965","97A2","97A3","98A2","11X"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[58.04605,78.17],"lng":[5.04878333333333,29.7602]}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ### Closest/corresponding mussel station   
@@ -1084,16 +1096,16 @@ anova(mod_ml_null, mod_ml_station, mod_ml_station_length, mod_ml_station_length_
 ## mod_ml_station: TL ~ STATION_CODE + (1 | MYEAR_f)
 ## mod_ml_station_length: TL ~ LNMEA + STATION_CODE + (1 | MYEAR_f)
 ## mod_ml_station_length_x: TL ~ LNMEA * STATION_CODE + (1 | MYEAR_f)
-##                         npar     AIC    BIC   logLik deviance   Chisq Df
-## mod_ml_null                3 258.337 272.80 -126.169  252.337           
-## mod_ml_station            16  82.979 160.13  -25.489   50.979 201.358 13
-## mod_ml_station_length     17  24.029 106.01    4.986   -9.971  60.950  1
-## mod_ml_station_length_x   30  19.891 164.56   20.054  -40.109  30.138 13
+##                         npar    AIC    BIC   logLik deviance   Chisq Df
+## mod_ml_null                3 338.54 353.34 -166.270   332.54           
+## mod_ml_station            18 140.04 228.84  -52.019   104.04 228.503 15
+## mod_ml_station_length     19  68.53 162.26  -15.264    30.53  73.510  1
+## mod_ml_station_length_x   34  58.33 226.07    4.834    -9.67  40.195 15
 ##                         Pr(>Chisq)    
 ## mod_ml_null                           
 ## mod_ml_station           < 2.2e-16 ***
-## mod_ml_station_length    5.855e-15 ***
-## mod_ml_station_length_x   0.004499 ** 
+## mod_ml_station_length    < 2.2e-16 ***
+## mod_ml_station_length_x  0.0004237 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1139,7 +1151,7 @@ plot_pred_distance <- function(model_predictions, ylabel, length = NULL,
   ggplot(df, aes(Dist_along_coast, TL)) +
     geom_pointrange(aes(ymin = plo, ymax = phi)) +
     geom_text(aes(y = min(plo) + Station_y, label = STATION_CODE), 
-              angle = 30, size = rel(3), color = "blue3") +
+              angle = 40, size = rel(3), color = "blue3") +
     geom_text(aes(y = max(phi) + 0.02, label = Place), 
               angle = 0, size = rel(3), color = "blue3") +
     labs(x = "Station code", y = ylabel) +
@@ -1160,7 +1172,7 @@ gg
 ```
 
 ```
-## Warning: Removed 8 rows containing missing values (geom_text).
+## Warning: Removed 10 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
@@ -1176,7 +1188,7 @@ gg
 ```
 
 ```
-## Warning: Removed 8 rows containing missing values (geom_text).
+## Warning: Removed 10 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
@@ -1193,7 +1205,7 @@ gg
 ```
 
 ```
-## Warning: Removed 8 rows containing missing values (geom_text).
+## Warning: Removed 10 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
@@ -1210,7 +1222,7 @@ gg
 ```
 
 ```
-## Warning: Removed 8 rows containing missing values (geom_text).
+## Warning: Removed 10 rows containing missing values (geom_text).
 ```
 
 ![](104_isotopes_and_trophic_level_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
@@ -1232,23 +1244,23 @@ model_list_brm[[1]]
 ##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
 ## Formula: TL ~ Dist_along_coast_s + (1 | STATION_CODE) 
-##    Data: dat3 (Number of observations: 918) 
+##    Data: dat3 (Number of observations: 1026) 
 ## Samples: 2 chains, each with iter = 6000; warmup = 1000; thin = 1;
 ##          total post-warmup samples = 10000
 ## 
 ## Group-Level Effects: 
-## ~STATION_CODE (Number of levels: 14) 
+## ~STATION_CODE (Number of levels: 16) 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.12      0.03     0.08     0.19 1.00     2143     3249
+## sd(Intercept)     0.13      0.03     0.08     0.20 1.00     2260     3960
 ## 
 ## Population-Level Effects: 
 ##                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept              4.05      0.03     3.98     4.12 1.00     2441     3694
-## Dist_along_coast_s    -0.07      0.04    -0.15     0.01 1.00     2588     3749
+## Intercept              4.03      0.04     3.96     4.10 1.00     2137     2704
+## Dist_along_coast_s    -0.07      0.04    -0.15     0.01 1.00     2126     3240
 ## 
 ## Family Specific Parameters: 
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma     0.26      0.01     0.25     0.27 1.00     8671     6808
+## sigma     0.27      0.01     0.26     0.28 1.00     8746     7283
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
 ## and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -1279,23 +1291,23 @@ fixed %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Intercept </td>
-   <td style="text-align:right;"> 4.0489093 </td>
-   <td style="text-align:right;"> 0.0346035 </td>
-   <td style="text-align:right;"> 3.9787855 </td>
-   <td style="text-align:right;"> 4.1182355 </td>
-   <td style="text-align:right;"> 1.000279 </td>
-   <td style="text-align:right;"> 2441 </td>
-   <td style="text-align:right;"> 3694 </td>
+   <td style="text-align:right;"> 4.0317524 </td>
+   <td style="text-align:right;"> 0.0350104 </td>
+   <td style="text-align:right;"> 3.9617281 </td>
+   <td style="text-align:right;"> 4.0999949 </td>
+   <td style="text-align:right;"> 1.000350 </td>
+   <td style="text-align:right;"> 2137 </td>
+   <td style="text-align:right;"> 2704 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dist_along_coast_s </td>
-   <td style="text-align:right;"> -0.0719306 </td>
-   <td style="text-align:right;"> 0.0410201 </td>
-   <td style="text-align:right;"> -0.1520032 </td>
-   <td style="text-align:right;"> 0.0113239 </td>
-   <td style="text-align:right;"> 1.000314 </td>
-   <td style="text-align:right;"> 2588 </td>
-   <td style="text-align:right;"> 3749 </td>
+   <td style="text-align:right;"> -0.0702111 </td>
+   <td style="text-align:right;"> 0.0418936 </td>
+   <td style="text-align:right;"> -0.1535838 </td>
+   <td style="text-align:right;"> 0.0118609 </td>
+   <td style="text-align:right;"> 1.000931 </td>
+   <td style="text-align:right;"> 2126 </td>
+   <td style="text-align:right;"> 3240 </td>
   </tr>
 </tbody>
 </table>
@@ -1310,30 +1322,30 @@ model_list_brm[[3]]
 ##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
 ## Formula: TL ~ LNMEA + Dist_along_coast + (1 + LNMEA | STATION_CODE) 
-##    Data: dat3 (Number of observations: 918) 
+##    Data: dat3 (Number of observations: 1026) 
 ## Samples: 2 chains, each with iter = 6000; warmup = 1000; thin = 1;
 ##          total post-warmup samples = 10000
 ## 
 ## Group-Level Effects: 
-## ~STATION_CODE (Number of levels: 14) 
+## ~STATION_CODE (Number of levels: 16) 
 ##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
-## sd(Intercept)            0.29      0.11     0.11     0.53 1.00     2216
-## sd(LNMEA)                0.00      0.00     0.00     0.00 1.00     1542
-## cor(Intercept,LNMEA)    -0.78      0.26    -0.98    -0.00 1.00     2812
+## sd(Intercept)            0.34      0.10     0.17     0.58 1.00     3054
+## sd(LNMEA)                0.00      0.00     0.00     0.00 1.00     2179
+## cor(Intercept,LNMEA)    -0.83      0.15    -0.97    -0.42 1.00     3186
 ##                      Tail_ESS
-## sd(Intercept)            2942
-## sd(LNMEA)                1703
-## cor(Intercept,LNMEA)     2671
+## sd(Intercept)            4523
+## sd(LNMEA)                4231
+## cor(Intercept,LNMEA)     3832
 ## 
 ## Population-Level Effects: 
 ##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept            3.71      0.12     3.49     3.96 1.00     5265     6910
-## LNMEA                0.00      0.00     0.00     0.00 1.00     6156     7218
-## Dist_along_coast    -0.00      0.00    -0.00     0.00 1.00     4152     6439
+## Intercept            3.62      0.12     3.38     3.88 1.00     4387     5797
+## LNMEA                0.00      0.00     0.00     0.00 1.00     5193     6211
+## Dist_along_coast    -0.00      0.00    -0.00     0.00 1.00     4039     6038
 ## 
 ## Family Specific Parameters: 
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma     0.25      0.01     0.24     0.26 1.00    11366     8172
+## sigma     0.25      0.01     0.24     0.26 1.00     9961     6674
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
 ## and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -1364,33 +1376,33 @@ fixed %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Intercept </td>
-   <td style="text-align:right;"> 3.7142430 </td>
-   <td style="text-align:right;"> 0.1188444 </td>
-   <td style="text-align:right;"> 3.4867954 </td>
-   <td style="text-align:right;"> 3.9554987 </td>
-   <td style="text-align:right;"> 1.001773 </td>
-   <td style="text-align:right;"> 5265 </td>
-   <td style="text-align:right;"> 6910 </td>
+   <td style="text-align:right;"> 3.6198738 </td>
+   <td style="text-align:right;"> 0.1245434 </td>
+   <td style="text-align:right;"> 3.3799241 </td>
+   <td style="text-align:right;"> 3.8752335 </td>
+   <td style="text-align:right;"> 1.000828 </td>
+   <td style="text-align:right;"> 4387 </td>
+   <td style="text-align:right;"> 5797 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> LNMEA </td>
-   <td style="text-align:right;"> 0.0007852 </td>
-   <td style="text-align:right;"> 0.0001602 </td>
-   <td style="text-align:right;"> 0.0004770 </td>
-   <td style="text-align:right;"> 0.0011128 </td>
-   <td style="text-align:right;"> 1.000627 </td>
-   <td style="text-align:right;"> 6156 </td>
-   <td style="text-align:right;"> 7218 </td>
+   <td style="text-align:right;"> 0.0009085 </td>
+   <td style="text-align:right;"> 0.0001813 </td>
+   <td style="text-align:right;"> 0.0005628 </td>
+   <td style="text-align:right;"> 0.0012815 </td>
+   <td style="text-align:right;"> 1.000120 </td>
+   <td style="text-align:right;"> 5193 </td>
+   <td style="text-align:right;"> 6211 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dist_along_coast </td>
-   <td style="text-align:right;"> -0.0000913 </td>
-   <td style="text-align:right;"> 0.0000647 </td>
-   <td style="text-align:right;"> -0.0002153 </td>
-   <td style="text-align:right;"> 0.0000365 </td>
-   <td style="text-align:right;"> 1.000138 </td>
-   <td style="text-align:right;"> 4152 </td>
-   <td style="text-align:right;"> 6439 </td>
+   <td style="text-align:right;"> -0.0000756 </td>
+   <td style="text-align:right;"> 0.0000689 </td>
+   <td style="text-align:right;"> -0.0002092 </td>
+   <td style="text-align:right;"> 0.0000622 </td>
+   <td style="text-align:right;"> 1.000492 </td>
+   <td style="text-align:right;"> 4039 </td>
+   <td style="text-align:right;"> 6038 </td>
   </tr>
 </tbody>
 </table>
@@ -1500,6 +1512,13 @@ df_stations_plot %>%
    <td style="text-align:right;"> 69 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> 36B </td>
+   <td style="text-align:left;"> Tjøme, Outer Oslofjord </td>
+   <td style="text-align:right;"> 10.4358 </td>
+   <td style="text-align:right;"> 59.0405 </td>
+   <td style="text-align:right;"> 105 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> 71B </td>
    <td style="text-align:left;"> Stathelle area, Langesundfjord </td>
    <td style="text-align:right;"> 9.7028 </td>
@@ -1540,6 +1559,13 @@ df_stations_plot %>%
    <td style="text-align:right;"> 5.2707 </td>
    <td style="text-align:right;"> 60.3966 </td>
    <td style="text-align:right;"> 692 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 28B </td>
+   <td style="text-align:left;"> Ålesund harbour area </td>
+   <td style="text-align:right;"> 6.0686 </td>
+   <td style="text-align:right;"> 62.4678 </td>
+   <td style="text-align:right;"> 984 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 80B </td>

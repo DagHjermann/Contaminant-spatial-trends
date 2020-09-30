@@ -11,6 +11,10 @@ output:
 ---
 
 
+Analysing trophic level relative to position along coast  
+
+
+```
 Mail fra Anders 13.05.2020:  
   
 Trofisk nivå for de enkelte torskeindivider regnes ut slik:
@@ -20,7 +24,7 @@ Trofisk nivå for de enkelte torskeindivider regnes ut slik:
 Her er `Delta15N_torsk` verdien av d15N for den enkelte torsken, mens `Delta15N_blåskjell` er gjennomsnittlig verdi av d15N i blåskjell fra den nærmeste blåskjellstasjonen.  
 
 Ligningen har som antakelse at alle blåskjell langs kysten er på trofisk nivå ca. 2 (altså at de er primærkonsumenter) og at d15N øker med 3.8 for hvert (hele) trofiske nivå i næringskjeden.  
-
+```
 
 ## 1. Libraries  
 ```{r, warning=FALSE, message=FALSE, results='hide'}
@@ -82,11 +86,19 @@ df_stations <- readRDS("Data/103_Selected_stations.rds")
 # Station metadata needs to be summarised  
 df_stations <- df_stations %>%
   filter(Station_Name != "Risøy, Østerfjord") %>%
-  mutate(MSTAT = case_when(
-    STATION_CODE %in% "I969" ~ "RH",
-    TRUE ~ MSTAT)) %>%
+  mutate(
+    MSTAT = case_when(
+      STATION_CODE %in% "I969" ~ "RH",
+      TRUE ~ MSTAT)
+  ) %>%
   group_by(STATION_CODE, Station_Name, MSTAT) %>%
-  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE)
+  summarise_at(vars("Lat", "Lon", "Dist_along_coast"), mean, na.rm = TRUE) %>%
+  mutate(
+    Dist_along_coast = case_when(
+      STATION_CODE %in% c("19N","19B") ~ 3000,    # Svalbard stations  
+      TRUE ~  Dist_along_coast)
+  )
+
 
 check <- df_stations %>%
   group_by(STATION_CODE) %>%
@@ -735,7 +747,7 @@ plot_pred_distance <- function(model_predictions, ylabel, length = NULL,
   ggplot(df, aes(Dist_along_coast, TL)) +
     geom_pointrange(aes(ymin = plo, ymax = phi)) +
     geom_text(aes(y = min(plo) + Station_y, label = STATION_CODE), 
-              angle = 30, size = rel(3), color = "blue3") +
+              angle = 40, size = rel(3), color = "blue3") +
     geom_text(aes(y = max(phi) + 0.02, label = Place), 
               angle = 0, size = rel(3), color = "blue3") +
     labs(x = "Station code", y = ylabel) +
