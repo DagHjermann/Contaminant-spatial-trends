@@ -29,15 +29,12 @@ simple_map <- map_data("worldHires", "Norway")
 ### Main data
 ```{r}
 
-dat_old <- readRDS("../Milkys/Data/10_data_all.RData") %>%
-  filter(MYEAR >= 1994)
-
-# "Input_data/"
-dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+# "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/"
+fn <- "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/109_adjusted_data_2020-08-05.rds"
+dat <- readRDS(fn) %>%
   filter(MYEAR >= 1994)
 
 names(dat)
-names(dat_old)
 
 xtabs(~MYEAR, dat)
 

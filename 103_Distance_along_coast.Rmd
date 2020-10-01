@@ -46,10 +46,9 @@ source("103_Distance_along_coast_functions.R")
 From Kartbase.xlsx   
 ```{r}
 # For check
-df_stations <- read_excel(
-  "Input_data/Kartbase.xlsx",
-  range = "$AM$1:$AP$72") %>%
-  rename()
+df_stations <- readxl::read_excel(
+  "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/Kartbase.xlsx",
+  range = "$AM$1:$AP$72") # %>% View()
 colnames(df_stations) <- c("STATION_CODE", "Lat", "Lon", "Station_Name")
 ```
 

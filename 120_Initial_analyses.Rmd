@@ -63,13 +63,13 @@ Note that we get stations from script 103
 dat <- readRDS("Data/104_Selected_data.rds")
 
 # Extra isotope data
-dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+dat_isotopes <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/87_df_isotopes.rds")
 
 # Station metadata
 df_stations <- readRDS("Data/103_Selected_stations.rds")
 
 # Parameter metadata (for sorting)
-df_parameter_groups <- read.csv2("Input_data/47_df_par.csv", stringsAsFactors = FALSE)
+df_parameter_groups <- read.csv2("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/47_df_par.csv", stringsAsFactors = FALSE)
 
 
 

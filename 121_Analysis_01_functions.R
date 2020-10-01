@@ -115,7 +115,7 @@ if (FALSE){
 # data_check is your raw data (you want to check if all of them hava a parameter group)
 # 
 
-get_df_parameter_groups <- function(filename = "Input_data/47_df_par.csv", 
+get_df_parameter_groups <- function(filename = "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/47_df_par.csv", 
                                     data_check = dat, check = FALSE){
   
   group_order <- c("Metals and metalloids", "Chlorobiphenyls", 

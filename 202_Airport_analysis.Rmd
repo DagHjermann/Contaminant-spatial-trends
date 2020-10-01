@@ -52,8 +52,8 @@ meta_stations <- readRDS("Data/103_Selected_stations.rds") %>% # View()
 
 dat_airports <- readRDS("Data/201_dat_airports.rds")
 
-# "Input_data/"
-# dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+# "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/"
+# dat <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/109_adjusted_data_2020-08-05.rds") %>%
 #   filter(MYEAR >= 1994)
 dat <- readRDS("Data/201_dat3.rds") %>%
   filter(MYEAR >= 1994 & substr(PARAM, 1, 2) == "PF") %>%

@@ -111,13 +111,13 @@ Note that we get stations from script 103
 # Data including trophic level
 dat <- readRDS("Data/104_Selected_data.rds")
 
-# "Input_data/"
-# dat <- readRDS("Input_data/109_adjusted_data_2020-08-05.rds") %>%
+# "K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/"
+# dat <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/109_adjusted_data_2020-08-05.rds") %>%
 #   filter(MYEAR >= 1994)
 
 
 # Extra isotope data - not needed here
-# dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+# dat_isotopes <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/87_df_isotopes.rds")
 
 # Station metadata
 df_stations <- readRDS("Data/103_Selected_stations.rds")
@@ -156,7 +156,7 @@ dat %>%
 ### Airport data  
 ```{r}
 
-dat_airports <- readxl::read_excel("Input_data/Lufthavner Avinor koordinater utvidet.xlsx",
+dat_airports <- readxl::read_excel("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/Lufthavner Avinor koordinater utvidet.xlsx",
                                   range = cellranger::cell_cols(c("B", "C", "D"))) %>%
   rename(x = UTM_ost, 
          y = UTM_nord)

@@ -70,7 +70,7 @@ xtabs(~MYEAR, dat)
 
 # Extra isotope data  
 # created in the `Milkys` project and copied from there
-dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds") %>%
+dat_isotopes <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/87_df_isotopes.rds") %>%
   mutate(STATION_CODE = case_when(
     STATION_CODE %in% "36A" ~ "36A1",
     TRUE ~ STATION_CODE)
