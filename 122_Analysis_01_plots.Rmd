@@ -586,6 +586,16 @@ plot_observations("NI")
 plot_observations("NI",  tissue = "Whole soft body")  
 ```
 
+### AS, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("AS")  
+```
+
+### AS, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("AS",  tissue = "Whole soft body")  
+```
+
 ### BDE100, cod  
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("BDE100")  
@@ -661,6 +671,11 @@ plot_observations("QCB",  tissue = "Whole soft body")
 # debugonce(plot_observations)
 plot_observations("P_S",  tissue = "Whole soft body")   
 ```
+### PAH16, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("PAH16",  tissue = "Whole soft body")  
+```
+
 
 ### BAP, mussel      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
@@ -784,33 +799,58 @@ linear_results <- result_list[[1]][ok] %>%
 
 ```
 
+```{r}
+
+
+if (FALSE){
+  10^(1000*linear_results$Position_est[1])
+  100*(10^(1000*linear_results$Position_est[1]) - 1) %>% round(digits = 2)
+}
+
+linear_results <- linear_results %>%
+  mutate(
+    Change_1000km = round(100*(10^(1000*Position_est) - 1), 0),
+    Change_10yr = round(100*(10^(10*Year_est) - 1), 0)
+    
+    
+  )
+
+
+```
 
 
 
 ## 7. Geographic effect, table of linear + non-linear results      
-
-Combine tables
+* Including change in percent for every 1000 km along coast (from Swedish border)    
 ```{r, fig.width=9, fig.height=9}
 
 # linear_results
 
+# For `Percent per 1000 km`:
+# * For every 1 km, `log10(conc`) changes by adding `Position_est`
+# * For every 1000 km, `log10(conc`) changes by adding `1000*Position_est`
+# * For every 1000 km, `conc` changes by multiplying with `10^(1000*Position_est)`
+
+
 tab1 <- linear_results %>%
   filter(!is.na(Position_est)) %>%
-  select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p, Position_est) %>%
   group_by(PARAM, TISSUE_NAME) %>%
   summarise_all(list(min = min, mean = mean, median = median)) %>%
   ungroup() %>%
-  mutate(Linear_effect = case_when(
-    is.na(Position_est_mean) ~ "-",
-    Position_est_mean < 0 ~ "Decreasing",
-    Position_est_mean >= 0 ~ "Increasing"),
+  mutate(
+    Linear_effect = case_when(
+      is.na(Position_est_mean) ~ "-",
+      Position_est_mean < 0 ~ "Decreasing",
+      Position_est_mean >= 0 ~ "Increasing"),
+    `Percent per 1000 km` = round(100*(10^(1000*Position_est_mean) - 1), 0),
     Linear_p = case_when(
       is.na(Position_p_median) ~ "-",
       Position_p_median < 0.001 ~ "< 0.001",
       Position_p_median < 0.01 ~ round(Position_p_median, 3) %>% as.character(),
       Position_p_median <= 1 ~ round(Position_p_median, 2) %>% as.character())
-    ) %>% 
-  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)
+  ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, `Percent per 1000 km`, Linear_p)
 
 
 # tab1
@@ -847,7 +887,7 @@ tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
 
 Add HG non-linear muscle results    
 * We reestimate using plot_observations() function  
-```{r}
+```{r, results='hide', warning=FALSE}
 
 # Get result
 X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
@@ -927,7 +967,8 @@ tab_comb <- tab_comb %>%
 ```
 Output  
 ```{r}
-cs_dt <- tab_comb
+cs_dt <- tab_comb %>%
+  select(-Linear_effect)
 
 cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
                            color = ifelse(cs_dt$Linear_p < 0.05, "red", "black"))
@@ -956,8 +997,7 @@ tab_comb_Distance <- tab_comb
 
 
 ## 8. Year effect, table of linear + non-linear results      
-
-Combine tables
+* Including change in percent for every 10 years      
 ```{r, fig.width=9, fig.height=9}
 
 # linear_results
@@ -968,17 +1008,19 @@ tab1 <- linear_results %>%
   group_by(PARAM, TISSUE_NAME) %>%
   summarise_all(list(min = min, mean = mean, median = median)) %>%
   ungroup() %>%
-  mutate(Linear_effect = case_when(
-    is.na(Year_est_mean) ~ "-",
-    Year_est_mean < 0 ~ "Decreasing",
-    Year_est_mean >= 0 ~ "Increasing"),
+  mutate(
+    Linear_effect = case_when(
+      is.na(Year_est_mean) ~ "-",
+      Year_est_mean < 0 ~ "Decreasing",
+      Year_est_mean >= 0 ~ "Increasing"),
+    `Percent per 10 years` = round(100*(10^(10*Year_est_mean) - 1), 0),
     Linear_p = case_when(
       is.na(Year_p_median) ~ "-",
       Year_p_median < 0.001 ~ "< 0.001",
       Year_p_median < 0.01 ~ round(Year_p_median, 3) %>% as.character(),
       Year_p_median <= 1 ~ round(Year_p_median, 2) %>% as.character())
-    ) %>% 
-  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)
+  ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, `Percent per 10 years`, Linear_p)
 
 
 # tab1
@@ -1015,7 +1057,7 @@ tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
 
 Add HG muscle results    
 * We reestimate using plot_observations() function  
-```{r}
+```{r, results='hide', warning=FALSE}
 
 # Get result
 X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
@@ -1052,7 +1094,8 @@ tab_comb <- tab_comb %>%
 
 Output
 ```{r}
-cs_dt <- tab_comb
+cs_dt <- tab_comb %>% 
+  select(-Linear_effect)
 
 cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
                            color = ifelse(cs_dt$Linear_p < 0.05, "red", "black"))
@@ -1130,6 +1173,10 @@ tab1 <- linear_results_old %>%
   rename(Linear_effect_old = Linear_effect, 
          Linear_p_old = Linear_p)
 
+```
+
+Combine and show table  
+```{r}
 tab_comb_Distance %>%
   full_join(tab1) %>%
   select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
@@ -1201,6 +1248,10 @@ tab1 <- linear_results %>%
   rename(Linear_effect_old = Linear_effect, 
          Linear_p_old = Linear_p)
 
+```
+
+Combine and show table  
+```{r}
 tab_comb_Year %>%
   full_join(tab1) %>%
   select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
