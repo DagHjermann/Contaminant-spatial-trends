@@ -118,6 +118,27 @@ if (nrow(check) > 0){
   
 ```
 
+#### Checking
+```{r}
+
+if (FALSE){
+
+  # OCS og «Oktaklorstyren (OCS)
+  dat %>%
+    filter(grepl("OCS", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+  dat %>%
+    filter(grepl("Oktaklor", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+
+  # QCB og «Pentaklorbenzen (QCB)»
+  dat %>%
+    filter(grepl("QCB", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+
+    }
+```
+
 ### Parameter metadata (for sorting)  
 Define `df_parameter_groups` 
 ```{r}
@@ -202,6 +223,26 @@ dat2 <- dat %>%
 
 ```
 
+#### Checking
+```{r}
+
+if (FALSE){
+
+  # OCS og «Oktaklorstyren (OCS)
+  dat2 %>%
+    filter(grepl("OCS", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+  dat2 %>%
+    filter(grepl("Oktaklor", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+
+  # QCB og «Pentaklorbenzen (QCB)»
+  dat2 %>%
+    filter(grepl("QCB", PARAM)) %>%
+    xtabs(~PARAM + MYEAR, .)
+
+    }
+```
 
 ### Test add_random_data() function  
 ```{r}
@@ -644,7 +685,7 @@ df_param <- df_acceptable_stations %>%
   Impacted = (MSTAT == "IH")
   ) %>% 
   arrange(PARAM, TISSUE_NAME, Area) %>%
-  count(PARAM, TISSUE_NAME, Area, Impacted, sample_size, .groups = "drop")
+  count(PARAM, TISSUE_NAME, Area, Impacted, sample_size)
 
 # One line per parameter/tissue - one column per region (all stations)
 df_param_all <- df_param %>%
@@ -689,11 +730,11 @@ Based on 'df_param_notimpacted'
 ```{r}
 
 series_param_tissue <- dat2 %>%
-  distinct(PARAM, TISSUE_NAME) %>%
+  distinct(PARAM, TISSUE_NAME) %>%  # View("1")
   # Only difference from the next: using 'df_param_notimpacted' here:
   left_join(df_param_notimpacted, 
             by = c("PARAM", "TISSUE_NAME"),
-            na_matches = "never") %>%
+            na_matches = "never") %>% # filter(PARAM == "PFAS") %>% View("2")
   filter(North >= 2) %>%    # At least 2 not-impacted time series in Northern Norway
   as.data.frame()
 
@@ -710,7 +751,6 @@ analysis_one_par_s <- safely(analysis_one_par)
 
 ### Pick data from non-impacted stations (dat2_notimpacted)  
 ```{r}
-series_param_tissue[12:13,]
 
 dat2_notimpacted <- dat2 %>%
   # Only difference from the next: using 'df_param_notimpacted' here:
@@ -1141,7 +1181,10 @@ Run for a specific parameter/tissue
 if (FALSE){ 
   
   param <- "HG"
-  i <- with(series_param_tissue, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  tissue <- "Muskel"
+  param <- "PFOS"
+  tissue <- "Lever"
+  i <- with(series_param_tissue, which(PARAM == param & TISSUE_NAME == tissue))
   series_param_tissue[i,]
   i
   

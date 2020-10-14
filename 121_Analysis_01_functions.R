@@ -874,7 +874,7 @@ gamm_one_par_one_repl <- function(param, tissue, data, repl = 1, interaction = F
 }
 
 
-# As gamm_one_par_one_repl(), but returns '
+# As gamm_one_par_one_repl(), but returns 'model_and_data'
 #  - uses run_gamm_model() instaed of run_gamm() in the end
 gamm_one_par_one_repl_model <- function(param, tissue, data, repl = 1, interaction = FALSE){
   
