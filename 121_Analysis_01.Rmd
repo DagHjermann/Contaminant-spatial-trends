@@ -726,7 +726,8 @@ kable(check, caption = "Number of parameters")
 ```
 
 ### Select time series - 'series_param_tissue'    
-Based on 'df_param_notimpacted'  
+Based on 'df_param_notimpacted'
+NOTE: We do NOT filter so we keep only series with => 2 sttions in Norther Norway  
 ```{r}
 
 series_param_tissue <- dat2 %>%
@@ -735,7 +736,7 @@ series_param_tissue <- dat2 %>%
   left_join(df_param_notimpacted, 
             by = c("PARAM", "TISSUE_NAME"),
             na_matches = "never") %>% # filter(PARAM == "PFAS") %>% View("2")
-  filter(North >= 2) %>%    # At least 2 not-impacted time series in Northern Norway
+  # filter(North >= 2) %>%    # At least 2 not-impacted time series in Northern Norway
   as.data.frame()
 
 # head(dat_param_tissue)  
@@ -834,6 +835,12 @@ if (run_analysis){
 length(result_list[["result"]])
 length(result_list[["error"]])
 result_list[["result"]][[1]]
+
+i <- which(
+  with(
+    series_param_tissue,
+    PARAM == "MCCP" & TISSUE_NAME == "Whole soft body"))
+result_list[["result"]][[i]]
 
 ```
 
