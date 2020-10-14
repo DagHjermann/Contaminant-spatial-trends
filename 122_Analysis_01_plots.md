@@ -10,7 +10,7 @@ output:
     code_folding: hide  
 ---
 
-Script 122, based on script 120   
+Script 122, based on script 121   
 
 
 ## 1. Libraries  
@@ -71,7 +71,7 @@ cat("Main data set has", nrow(dat), "number of records \n")
 
 ```r
 # Extra isotope data
-dat_isotopes <- readRDS("Input_data/87_df_isotopes.rds")
+dat_isotopes <- readRDS("K:/Avdeling/214-Oseanografi/DHJ/Data/Contaminants/Marine/Milkys/87_df_isotopes.rds")
 
 # Station metadata
 df_stations <- readRDS("Data/103_Selected_stations.rds")
@@ -136,6 +136,7 @@ dat2 <- dat %>%
 # dat2 <- dat
 ```
 Make data set with non-impacted stations only    
+
 
 ```r
 dat2_notimpacted <- dat2 %>%
@@ -311,7 +312,256 @@ dat2 %>%
   </tr>
 </tbody>
 </table>
+### MSTAT categorisation, blue mussel     
+MSTAT categories:    
+* IH = industry-impacted  
+* RH = representative  
+* B = background    
+Tables shows number of years of data    
 
+```r
+dat2 %>%
+  filter(grepl("A", STATION_CODE) | grepl("I", STATION_CODE)) %>%
+  distinct(STATION_CODE, MSTAT, MYEAR) %>%
+  xtabs(~ STATION_CODE + MSTAT, .) %>%
+  kbl(escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
+```
+
+<table class=" lightable-paper" style='font-family: "Arial Narrow", arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;'>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> IH </th>
+   <th style="text-align:right;"> RH </th>
+   <th style="text-align:right;"> B </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> 10A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 15A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 22A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 26A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 30A </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 31A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 35A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 36A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 19 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 36A1 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 51A </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 52A </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 56A </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 57A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 63A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 23 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 64A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 65A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 69A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 23 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 71A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 76A </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 17 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 76A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 7 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 91A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 97A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 98A2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I023 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I024 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 23 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I131A </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I133 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I241 </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I301 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I304 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I306 </td>
+   <td style="text-align:right;"> 22 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I307 </td>
+   <td style="text-align:right;"> 21 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I712 </td>
+   <td style="text-align:right;"> 21 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I714 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 4 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I964 </td>
+   <td style="text-align:right;"> 14 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I965 </td>
+   <td style="text-align:right;"> 19 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I969 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+</tbody>
+</table>
 ### Parameter groups  
 
 ```r
@@ -441,7 +691,7 @@ df_parameter_groups %>%
 
 ## 3. Non-linear analyses (GAMM)     
 Note:  
-* These analyses were performed for all unimpacted stations    
+* These analyses were performed for all *unimpacted* stations    
 * For concentrations under LOQ, we used random numbers between LOQ/2 and LOQ (3 replicates)  
 
 ```r
@@ -450,7 +700,7 @@ Note:
 #o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
 
 # Use the saved results
-gamm_list <- readRDS("Data/121_gamm_list1.rds")
+gamm_list <- readRDS("Data/121_gamm_list1.rds")  
 cat("Results for", length(gamm_list[[1]]), "parameters/tissues loaded")
 ```
 
@@ -546,57 +796,112 @@ plotvalues_gamm %>%
 }
 ```
 
+```r
+if (FALSE){
+  # Check one particular parameter/tissue
+  # First, combine all the one-line t-tables   
+  df <- gamm_list$result %>% map_dfr(~.$ttable)
+  # Get the index we want
+  i <- with(ttable_gamm, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  i
+  df[i,]
+  # Check if its OK
+  # All 
+  result_ok <- gamm_list0[["error"]] %>% map_lgl(is.null)
+  result_ok[i]
+  
+}
+```
+
+### Summarise p-values  
+
+```r
+ttable_gamm_summ <- ttable_gamm %>%
+  filter(TISSUE_NAME %in% c("Lever", "Whole soft body")) %>%
+  group_by(Substance.Group, PARAM, TISSUE_NAME) %>%
+  summarise(across(c(Position_p, Position_esdf), median))
+```
+
+```
+## `summarise()` regrouping output by 'Substance.Group', 'PARAM' (override with `.groups` argument)
+```
+
 
 ### p-values for the effect of 'distance along coast' on concentration         
 
 ```r
-ttable_gamm %>%
-  filter(TISSUE_NAME %in% "Lever") %>%
+ttable_gamm_summ %>% 
   mutate(
     `Effect of distance along coast` = ifelse(Position_p < 0.05, "P <= 0.05", "P > 0.05")
   ) %>%
-  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast`, .,
+  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast` + TISSUE_NAME, .,
         drop.unused.levels = TRUE)
 ```
 
 ```
+## , , TISSUE_NAME = Lever
+## 
 ##                                           Effect of distance along coast
 ## addNA(Substance.Group)                     P <= 0.05 P > 0.05
-##   Metals and metalloids                           22        8
-##   Chlorobiphenyls                                 33        0
-##   Organobromines                                  21       27
-##   Organochlorines (general)                        9        0
-##   Dichloro-diphenyl-trichloroethane (DDTs)        12        0
-##   Hexachlorocyclohexanes                           6        0
-##   Others                                           6        0
+##   Metals and metalloids                            7        3
+##   Chlorobiphenyls                                 11        0
+##   Polycyclic aromatic hydrocarbons (PAHs)          0        0
+##   Organobromines                                   7        9
+##   Organochlorines (general)                        3        0
+##   Phosphorus flame retardant (PFR)                 0        0
+##   Phenols/chlorophenols                            0        0
+##   Bisphenols                                       0        0
+##   Chlorinated paraffins                            0        0
+##   Dichloro-diphenyl-trichloroethane (DDTs)         4        0
+##   Hexachlorocyclohexanes                           2        0
+##   Isotopes                                         0        0
+##   Others                                           2        0
+## 
+## , , TISSUE_NAME = Whole soft body
+## 
+##                                           Effect of distance along coast
+## addNA(Substance.Group)                     P <= 0.05 P > 0.05
+##   Metals and metalloids                           10        1
+##   Chlorobiphenyls                                  8        3
+##   Polycyclic aromatic hydrocarbons (PAHs)          3       16
+##   Organobromines                                   4       27
+##   Organochlorines (general)                        1        2
+##   Phosphorus flame retardant (PFR)                 0        8
+##   Phenols/chlorophenols                            2        3
+##   Bisphenols                                       0        1
+##   Chlorinated paraffins                            0        4
+##   Dichloro-diphenyl-trichloroethane (DDTs)         4        0
+##   Hexachlorocyclohexanes                           0        2
+##   Isotopes                                         1        1
+##   Others                                           3        3
 ```
 
 ```r
 if (FALSE){
 
 
-  ttable_gamm %>%
+  ttable_gamm_summ %>%
     ggplot(aes(Position_p)) + geom_histogram()
 
   # fit's degrees of freedom > 1 means non-linear fit  
-  ttable_gamm %>%
-    ggplot(aes(Position_p, Position_esdf)) + geom_point()
+  ttable_gamm_summ %>%
+    ggplot(aes(Position_p, Position_esdf, color = factor(Position_p < 0.05))) + geom_point()
   
-  ttable_gamm %>%
+  ttable_gamm_summ %>%
     xtabs(~(Position_p < 0.05) + (Position_esdf > 1), .)
   
-  ttable_gamm %>%
-    xtabs(~ addNA(Substance.Group) + (Position_p < 0.05) + TISSUE_NAME, .)
-  
-}
-
-# for checking
-if (FALSE){
+  # for checking
   ttable_gamm %>%
     filter(is.na(Substance.Group)) %>%
     xtabs(~PARAM, .) %>%
     names() %>%
     paste(collapse = ";")
+
+  ttable_gamm_summ %>%
+    filter(Substance.Group %in% "Organobromines") %>%
+    arrange(TISSUE_NAME, Position_p) %>%
+    View()
+
 }
 ```
 
@@ -606,13 +911,22 @@ if (FALSE){
 ## 4. Parameters with significant geographic effect (per group) {.tabset}   
 Note: For unimpaced stations (RH and B stations)  
   
-### Organobromines  
+### Organobromines in cod liver 
 
 ```r
 plotgamm_group("Organobromines", report = FALSE)
 ```
 
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+### Organobromines in blue mussel   
+
+```r
+# debugonce(plotgamm_group)
+plotgamm_group("Organobromines", tissue = "Whole soft body", report = FALSE)
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 ### Metals  
@@ -621,8 +935,14 @@ plotgamm_group("Organobromines", report = FALSE)
 plotgamm_group("Metals", minvalue = -2, report = FALSE)
 ```
 
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+### Metals in blue mussel   
 
+```r
+plotgamm_group("Metals", tissue = "Whole soft body", minvalue = -2, report = FALSE)
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ### Chlorobiphenyls     
 
@@ -630,168 +950,51 @@ plotgamm_group("Metals", minvalue = -2, report = FALSE)
 plotgamm_group("Chlorobiphenyls", minvalue = -1)
 ```
 
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
-### DDT  
+### Chlorobiphenyls in blue mussel      
+
+```r
+plotgamm_group("Chlorobiphenyls", tissue = "Whole soft body", minvalue = -1)
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+### DDT   
 
 ```r
 plotgamm_group("DDT", minvalue = -1)
 ```
 
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+  
 
+### PAH in blue mussel      
+
+```r
+plotgamm_group("PAH", tissue = "Whole soft body", minvalue = -1)
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+### PAH in blue mussel      
+
+```r
+plotgamm_group("Organochlor", tissue = "Whole soft body", minvalue = -1)
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ## 5. Examples {.tabset}   
-* The "tile" plots show raw data (medians per station/year) for all stations  
+* The "tile" plots show raw data (medians per station/year) for all stations    
+    - The color of the x axis (station code) gives station type: Black = RH (representative), Red = IH (impacted), blue = B (background)  
 * The two "model" plots show estimated effects for length- and fat-adjusted data for unimpacted stations   
 
-### BDE47  
+### BDE47, cod  
 
 ```r
 # debugonce(plot_observations)
 plot_observations("BDE47")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-16-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            1.000000 1.000000 43.29744 7.705064e-11
-## s(Dist_along_coast) 3.934916 3.934916 14.94331 7.016166e-12
-```
-  
-### BDE99  
-
-```r
-plot_observations("BDE99")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-17-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-17-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.580908 2.580908 11.86667 6.328335e-07
-## s(Dist_along_coast) 3.855394 3.855394 11.45831 1.886763e-08
-```
-### ZN    
-
-```r
-plot_observations("ZN")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-18-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.969137 2.969137 39.69276 1.117276e-19
-## s(Dist_along_coast) 6.096724 6.096724 23.24242 1.399531e-26
-```
-  
-### AG    
-
-```r
-plot_observations("AG")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-19-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.135535 2.135535  9.00257 8.294595e-05
-## s(Dist_along_coast) 5.515673 5.515673 15.09066 1.296643e-14
-```
-### CU    
-
-```r
-plot_observations("CU")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-20-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.896769 2.896769 28.28021 8.035314e-13
-## s(Dist_along_coast) 6.528645 6.528645 20.40571 2.315497e-23
-```
-  
-### HG  
-
-```r
-plot_observations("HG", "Muskel")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-21-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F       p-value
-## s(MYEAR)            2.842078 2.842078  79.8821  6.704772e-46
-## s(Dist_along_coast) 6.817055 6.817055 210.2537 5.466276e-284
-```
-  
-### Sum PCB    
-
-```r
-plot_observations("CB_S7")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-22-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-22-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F       p-value
-## s(MYEAR)            2.815251 2.815251 114.7805  2.188066e-58
-## s(Dist_along_coast) 6.833737 6.833737 133.6941 2.375929e-180
-```
-
-### CB118      
-
-```r
-plot_observations("CB118")  
-```
-
-![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
-
-```
-## Significance of year and position effects:
-```
-
-```
-##                          edf   Ref.df        F       p-value
-## s(MYEAR)            2.824784 2.824784 144.9694  2.399462e-74
-## s(Dist_along_coast) 6.791362 6.791362 128.6562 6.146979e-172
-```
-
-### Pentaklorbenzen      
-
-```r
-plot_observations("QCB")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-24-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
@@ -799,44 +1002,11 @@ plot_observations("QCB")
 ```
 ## Significance of year and position effects:
 ```
-
-```
-##                          edf   Ref.df         F      p-value
-## s(MYEAR)            2.920255 2.920255 132.40563 1.352472e-72
-## s(Dist_along_coast) 1.000001 1.000001  25.52645 4.682021e-07
-```
-
-```r
-dat %>% filter(grepl("QCB", PARAM))
-```
-
-```
-## # A tibble: 6,594 x 25
-##    MYEAR STATION_CODE LATIN_NAME TISSUE_NAME SAMPLE_NO2 PARAM FLAG1 DRYWT
-##    <dbl> <chr>        <chr>      <chr>            <dbl> <chr> <chr> <dbl>
-##  1  1996 10A2         Mytilus e~ Whole soft~          1 QCB   <      19  
-##  2  1996 10A2         Mytilus e~ Whole soft~          2 QCB   <      20.4
-##  3  1996 10A2         Mytilus e~ Whole soft~          3 QCB   <      20.5
-##  4  1997 10A2         Mytilus e~ Whole soft~          1 QCB   <      17.4
-##  5  1997 10A2         Mytilus e~ Whole soft~          2 QCB   <      16.2
-##  6  1997 10A2         Mytilus e~ Whole soft~          3 QCB   <      16.1
-##  7  1999 10A2         Mytilus e~ Whole soft~          1 QCB   <      17.2
-##  8  1999 10A2         Mytilus e~ Whole soft~          2 QCB   <      18.6
-##  9  1999 10A2         Mytilus e~ Whole soft~          3 QCB   <      17.6
-## 10  2000 10A2         Mytilus e~ Whole soft~          1 QCB   <      17.9
-## # ... with 6,584 more rows, and 17 more variables: FAT_PERC <dbl>, LNMEA <dbl>,
-## #   UNIT <chr>, VALUE_WW <dbl>, VALUE_DW <dbl>, VALUE_FB <dbl>,
-## #   VALUE_WWa <dbl>, VALUE_DWa <dbl>, VALUE_FBa <dbl>, UNCERTAINTY <dbl>,
-## #   QUANTIFICATION_LIMIT <dbl>, Delta13C <dbl>, Delta15N <dbl>,
-## #   Mussel_station <chr>, Delta13C_mussel <dbl>, Delta15N_mussel <dbl>,
-## #   TL <dbl>
-```
-
-### DDEPP      
+### BDE47, mussel    
 
 ```r
 # debugonce(plot_observations)
-plot_observations("DDEPP")   
+plot_observations("BDE47",  tissue = "Whole soft body")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-25-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
@@ -844,17 +1014,11 @@ plot_observations("DDEPP")
 ```
 ## Significance of year and position effects:
 ```
-
-```
-##                          edf   Ref.df         F      p-value
-## s(MYEAR)            1.000001 1.000001 163.85578 1.492606e-36
-## s(Dist_along_coast) 3.618176 3.618176  43.15985 5.100922e-31
-```
-
-### MCCP      
+  
+### BDE99, cod  
 
 ```r
-plot_observations("MCCP")   
+plot_observations("BDE99")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-26-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-26-2.png)<!-- -->
@@ -863,15 +1027,10 @@ plot_observations("MCCP")
 ## Significance of year and position effects:
 ```
 
-```
-##                          edf   Ref.df         F      p-value
-## s(MYEAR)            1.007037 1.007037 28.456930 1.418277e-07
-## s(Dist_along_coast) 3.004425 3.004425  3.343845 1.747078e-02
-```
-### PFOS      
+### BDE99, mussel  
 
 ```r
-plot_observations("PFOS")   
+plot_observations("BDE99",  tissue = "Whole soft body")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-27-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
@@ -880,16 +1039,10 @@ plot_observations("PFOS")
 ## Significance of year and position effects:
 ```
 
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.951796 2.951796 78.80519 3.365358e-38
-## s(Dist_along_coast) 3.512482 3.512482 19.14448 7.481495e-12
-```
-
-### PFOSA      
+### ZN, cod    
 
 ```r
-plot_observations("PFOSA")   
+plot_observations("ZN")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-28-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-28-2.png)<!-- -->
@@ -897,17 +1050,11 @@ plot_observations("PFOSA")
 ```
 ## Significance of year and position effects:
 ```
-
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.834983 2.834983 39.42512 5.288381e-19
-## s(Dist_along_coast) 3.728715 3.728715 56.02690 1.644480e-39
-```
-
-### PFOSA      
+  
+### ZN, mussel    
 
 ```r
-plot_observations("PFOSA")   
+plot_observations("ZN",  tissue = "Whole soft body")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-29-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
@@ -916,16 +1063,10 @@ plot_observations("PFOSA")
 ## Significance of year and position effects:
 ```
 
-```
-##                          edf   Ref.df        F      p-value
-## s(MYEAR)            2.841118 2.841118 38.48279 2.029757e-18
-## s(Dist_along_coast) 3.727141 3.727141 54.95186 9.296773e-39
-```
-
-### Toksafen Parlar 50       
+### AG, cod    
 
 ```r
-plot_observations("Toksafen Parlar 50")   
+plot_observations("AG")  
 ```
 
 ![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-30-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
@@ -933,11 +1074,581 @@ plot_observations("Toksafen Parlar 50")
 ```
 ## Significance of year and position effects:
 ```
+### AG, mussel    
+
+```r
+plot_observations("AG",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-31-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 ```
-##                          edf   Ref.df        F      p-value
-## s(Dist_along_coast) 3.286858 3.286858 45.17193 2.500276e-24
+## Significance of year and position effects:
 ```
+
+### CU, cod    
+
+```r
+plot_observations("CU")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-32-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CU, mussel    
+
+```r
+plot_observations("CU",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-33-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-33-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+  
+### HG, cod muscle  
+
+```r
+plot_observations("HG", "Muskel")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-34-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-34-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### HG, mussel  
+
+```r
+plot_observations("HG",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-35-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-35-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CD, cod  
+
+```r
+plot_observations("CD")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-36-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-36-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CD, mussel  
+
+```r
+plot_observations("CD",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-37-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-37-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### PB, cod  
+
+```r
+plot_observations("PB")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-38-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-38-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### PB, mussel  
+
+```r
+plot_observations("PB",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-39-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-39-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CR, cod  
+
+```r
+plot_observations("CR")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-40-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-40-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CR, mussel  
+
+```r
+plot_observations("CR",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-41-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-41-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CU, cod  
+
+```r
+plot_observations("CU")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-42-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-42-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CU, mussel  
+
+```r
+plot_observations("CU",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-43-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-43-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CO, cod  
+
+```r
+plot_observations("CO")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-44-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-44-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CO, mussel  
+
+```r
+plot_observations("CO",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-45-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-45-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### NI, cod  
+
+```r
+plot_observations("NI")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-46-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-46-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### NI, mussel  
+
+```r
+plot_observations("NI",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-47-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-47-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### BDE100, cod  
+
+```r
+plot_observations("BDE100")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-48-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-48-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### BDE100, mussel  
+
+```r
+plot_observations("BDE100",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-49-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-49-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### BDE6S, cod  
+
+```r
+plot_observations("BDE6S")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-50-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-50-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### BDE6S, mussel  
+
+```r
+plot_observations("BDE6S",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-51-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-51-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### HBCDA, cod  
+
+```r
+plot_observations("HBCDA")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-52-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-52-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### HBCDA, mussel  
+
+```r
+plot_observations("HBCDA",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-53-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-53-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### HCB, cod  
+
+```r
+plot_observations("HCB")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-54-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-54-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### HCB, mussel  
+
+```r
+plot_observations("HCB",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-55-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-55-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### Sum PCB, cod    
+
+```r
+plot_observations("CB_S7")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-56-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-56-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### Sum PCB    
+
+```r
+plot_observations("CB_S7",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-57-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-57-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### CB118, cod      
+
+```r
+plot_observations("CB118")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-58-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-58-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+### CB118, mussel      
+
+```r
+plot_observations("CB118",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-59-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-59-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### Pentaklorbenzen, cod      
+
+```r
+plot_observations("QCB")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-60-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-60-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+```r
+# dat %>% filter(grepl("QCB", PARAM))
+```
+
+### Pentaklorbenzen, mussel      
+
+```r
+plot_observations("QCB",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-61-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-61-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### P_S, mussel      
+
+```r
+# debugonce(plot_observations)
+plot_observations("P_S",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-62-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### BAP, mussel      
+
+```r
+# debugonce(plot_observations)
+plot_observations("BAP",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-63-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-63-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+
+### DDEPP, cod      
+
+```r
+# debugonce(plot_observations)
+plot_observations("DDEPP")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-64-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### DDEPP, mussel      
+
+```r
+# debugonce(plot_observations)
+plot_observations("DDEPP",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-65-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-65-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+
+### SCCP, cod      
+
+```r
+plot_observations("SCCP")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-66-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-66-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### SCCP, mussel      
+
+```r
+plot_observations("SCCP",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-67-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### MCCP, cod      
+
+```r
+plot_observations("MCCP")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-68-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-68-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### MCCP, mussel      
+
+```r
+plot_observations("MCCP",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-69-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-69-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### PFOS, cod      
+
+```r
+plot_observations("PFOS")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-70-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-70-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### PFOS, mussel      
+
+```r
+plot_observations("PFOS",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-71-1.png)<!-- -->
+
+```
+## Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : 
+##   A term has fewer unique covariate combinations than specified maximum degrees of freedom
+```
+
+### PFOSA, cod      
+
+```r
+plot_observations("PFOSA")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-72-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-72-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### PFOSA, mussel      
+
+```r
+plot_observations("PFOSA",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-73-1.png)<!-- -->
+
+```
+## Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : 
+##   A term has fewer unique covariate combinations than specified maximum degrees of freedom
+```
+
+### Toksafen Parlar 50, cod       
+
+```r
+plot_observations("Toksafen Parlar 50")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-74-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-74-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### Toksafen Parlar 50, mussel       
+
+```r
+plot_observations("Toksafen Parlar 50",  tissue = "Whole soft body")   
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-75-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-75-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### TBT, mussel    
+
+```r
+plot_observations("TBT",  tissue = "Whole soft body")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-76-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-76-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
+### Dieldrin    
+
+```r
+plot_observations("Dieldrin",  tissue = "Lever")  
+```
+
+![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-77-1.png)<!-- -->![](122_Analysis_01_plots_files/figure-html/unnamed-chunk-77-2.png)<!-- -->
+
+```
+## Significance of year and position effects:
+```
+
 
 ## 6. Linear results   
 Different from the non-linear (GAMM) statistics by  
@@ -947,12 +1658,14 @@ Different from the non-linear (GAMM) statistics by
 
 
 ```r
-result_list <- readRDS("Data/120_result_list_notimpacted.rds")
+result_list <- readRDS("Data/121_result_list_notimpacted.rds")
+
+if (FALSE){
+  length(result_list)
+  str(result_list, 1)
+  str(result_list$result[[1]], 1)
+}
 ```
-
-
-### Summary of results  
-
 
 
 
@@ -978,20 +1691,22 @@ linear_results <- result_list[[1]][ok] %>%
 
 ```
 ## Number of regressions that worked (numbers / fraction): 
-## [1] 318
-## [1] 0.9408284
+## [1] 175
+## [1] 0.9668508
 ```
 
 
-## 7. Combine linear + non-linear results in table  
 
-Combine tables  
+
+## 7. Geographic effect, table of linear + non-linear results      
+
+Combine tables
 
 ```r
 # linear_results
 
 tab1 <- linear_results %>%
-  filter(TISSUE_NAME %in% "Lever" & !is.na(Position_est)) %>%
+  filter(!is.na(Position_est)) %>%
   select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
   group_by(PARAM, TISSUE_NAME) %>%
   summarise_all(list(min = min, mean = mean, median = median)) %>%
@@ -1031,41 +1746,88 @@ tab2 <- ttable_gamm %>%
 
 tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
     # Add substance group
-  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+  full_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
             by = c("PARAM" = "Parameter.Code")) %>%
   select(Substance.Group, everything()) %>%
-  arrange(Substance.Group, PARAM)
+  arrange(Substance.Group, PARAM) %>%
+  filter(!is.na(TISSUE_NAME))
 
   
 # cell_spec("makan", "html", color = "red")
 ```
 
-Order variables  
+Add HG non-linear muscle results    
+* We reestimate using plot_observations() function  
 
 ```r
-pars_pcb <- tab_comb %>% 
-  filter(Substance.Group %in% "Chlorobiphenyls") %>%
-  pull(PARAM) %>%
-  sort_by_number() %>%
-  move_to_back("CB")
+# Get result
+X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
+```
 
-pars_bde <- tab_comb$PARAM %>% grep("^BD", ., value = TRUE) %>%
-  sort_by_number()
+```
+## `summarise()` ungrouping output (override with `.groups` argument)
+```
+
+```
+## Warning: Vectorized input to `element_text()` is not officially supported.
+## Results may be unexpected or may change in future versions of ggplot2.
+```
+
+```
+## Warning in predict.lm(mod, pred_data): prediction from a rank-deficient fit may
+## be misleading
+```
+
+```r
+hg_non_linear <- summary(X$mod$gam)$s.table["s(Dist_along_coast)", c("edf", "p-value")]
+
+# Where to insert result
+sel <- with(tab_comb, PARAM == "HG" & TISSUE_NAME == "Muskel")
+
+# Insert df
+tab_comb[sel, "Non_linear_df"] <- hg_non_linear["edf"]
+
+# Insert p
+
+Position_p <- hg_non_linear["p-value"]
+tab_comb[sel, "Non_linear_p"] <- case_when(
+      is.na(Position_p) ~ "-",
+      Position_p < 0.001 ~ "< 0.001",
+      Position_p < 0.01 ~ round(Position_p, 3) %>% as.character(),
+      Position_p <= 1 ~ round(Position_p, 2) %>% as.character()
+    )
+```
+
+
+Make variable order   
+
+```r
+pars_pcb <- c("CB_S7", "CB28", "CB52", "CB77", "CB81",
+  "CB101", "CB105", "CB114", "CB118", "CB123", "CB126", "CB138",
+  "CB153", "CB156", "CB157", "CB167", "CB169", "CB180", "CB189",
+  "CB209", "Pentaklorbenzen (QCB)")
+
+pars_bde <- c("BDESS", "BDE6S", "BDE17", "BDE28", "BDE47", "BDE49", "BDE66",
+  "BDE71", "BDE77", "BDE85", "BDE99", "BDE100", "BDE119", "BDE126",
+  "BDE138", "BDE153", "BDE154", "BDE156", "BDE183", "BDE184", "BDE191",
+  "BDE196", "BDE197", "BDE206", "BDE207", "BDE209")
+
 
 pars_hbcd <- tab_comb$PARAM %>% grep("HBCD", ., value = TRUE) %>%
+  unique() %>%
   sort() %>%
   move_to_front("Sum HBCD")
 
-pars_pfas <- tab_comb %>% 
-  filter(Substance.Group %in% "Organofluorines") %>%
-  pull(PARAM) %>% 
-  move_to_front("PFAS$")  # since this is the sum  
+pars_pfas <- c("PFAS", "PFBS", "PFDcA", "PFHpA", "PFHxA", "PFHxS", "PFNA", "PFOA", 
+"PFOS", "PFOSA", "PFUdA")
 
-# Show all, for check  
-pars_pcb
-pars_bde
-pars_hbcd
-pars_pfas
+if (FALSE){
+  # Show all, for check  
+  pars_pcb
+  pars_bde
+  pars_hbcd
+  pars_pfas
+}
 
 # Other parameters, in alphabetic order 
 par_all <- tab_comb %>% pull(PARAM)
@@ -1073,11 +1835,1775 @@ sel1 <- par_all %in% pars_pcb
 sel2 <- par_all %in% pars_bde
 sel3 <- par_all %in% pars_hbcd
 sel4 <- par_all %in% pars_pfas
-pars_other <- par_all[!(sel1 | sel2 | sel3 | sel4)]
+pars_other <- par_all[!(sel1 | sel2 | sel3 | sel4)] %>% unique()
 
 # Correct order
 par_levels <- c(pars_pcb, pars_bde, pars_hbcd, pars_pfas, pars_other)
+```
 
+Order variables  
+
+```r
+# Check if some parameters occur more than once (they shouldn't!):
+check <- table(par_levels)
+if (sum(check > 1) > 0)
+  check[check > 1]
+
+# Set PARAM factor levels in correct order
+tab_comb <- tab_comb %>%
+  mutate(PARAM = factor(PARAM, levels = par_levels))
+```
+Output  
+
+```r
+cs_dt <- tab_comb
+
+cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
+                           color = ifelse(cs_dt$Linear_p < 0.05, "red", "black"))
+
+cs_dt$Non_linear_p = cell_spec(cs_dt$Non_linear_p, 
+                               color = case_when(
+                                 is.na(cs_dt$Non_linear_p) ~ "black",
+                                 cs_dt$Non_linear_p <= 0.05 ~ "red",
+                                 cs_dt$Non_linear_p > 0.05 ~ "black")
+                               )
+
+
+kbl(cs_dt, escape = F) %>%
+  kable_paper("striped", full_width = F)  
+```
+
+<table class=" lightable-paper lightable-striped" style='font-family: "Arial Narrow", arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;'>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Substance.Group </th>
+   <th style="text-align:left;"> PARAM </th>
+   <th style="text-align:left;"> TISSUE_NAME </th>
+   <th style="text-align:left;"> Linear_effect </th>
+   <th style="text-align:left;"> Linear_p </th>
+   <th style="text-align:right;"> Non_linear_df </th>
+   <th style="text-align:left;"> Non_linear_p </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AG </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 5.510000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 2.220000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AS </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 4.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.99</span> </td>
+   <td style="text-align:right;"> 3.370000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CD </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 4.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CD </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 5.040000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CO </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.510000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CO </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CR </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
+   <td style="text-align:right;"> 1.360000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
+   <td style="text-align:right;"> 5.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CU </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.530000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CU </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+   <td style="text-align:right;"> 5.450000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> HG </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
+   <td style="text-align:right;"> 6.817028 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> HG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+   <td style="text-align:right;"> 2.570000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> NI </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.9</span> </td>
+   <td style="text-align:right;"> 3.190000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> NI </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.67</span> </td>
+   <td style="text-align:right;"> 2.750000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> PB </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> PB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.25</span> </td>
+   <td style="text-align:right;"> 6.380000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> SN </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.74</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.4</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> SN </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> ZN </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.100000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> ZN </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
+   <td style="text-align:right;"> 2.420000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB_S7 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.830000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB_S7 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 3.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB_S7 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 5.630000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB101 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+   <td style="text-align:right;"> 6.790000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB101 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.97</span> </td>
+   <td style="text-align:right;"> 3.740000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB101 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 5.900000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB105 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.490000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB105 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 3.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB105 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 5.720000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB118 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.790000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB118 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 3.930000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB118 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.320000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB138 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB138 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.007</span> </td>
+   <td style="text-align:right;"> 3.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB138 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.090000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB153 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.780000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB153 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 3.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB153 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 5.860000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB156 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.560000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB156 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 3.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB156 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB180 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.860000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB180 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 3.930000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB180 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.05</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB209 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB209 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.36</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.53</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB209 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.68</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB28 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 6.780000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB28 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 3.630000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB28 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 2.700000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB52 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 6.840000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB52 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.47</span> </td>
+   <td style="text-align:right;"> 3.850000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB52 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 3.960000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ACNE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.34</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ACNLE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.26</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ANT </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.84</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BAP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.35</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BBJF </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+   <td style="text-align:right;"> 2.760000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BGHIP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.42</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BKF </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.94</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.93</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BAA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.79</span> </td>
+   <td style="text-align:right;"> 3.790000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> CHR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.62</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.64</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> DBA3A </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.71</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.45</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> FLE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> FLU </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.8</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.57</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ICDP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.69</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.68</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> KPAH </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.93</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> NAP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.67</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> P_S </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.91</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.55</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.18</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PAH16 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PYR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.86</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE100 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 3.900000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE100 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.61</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE119 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE119 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.47</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE126 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.59</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.52</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE138 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.72</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE138 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.59</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.58</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE153 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE153 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.86</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE154 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
+   <td style="text-align:right;"> 3.700000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE154 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.74</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.68</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE156 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.26</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE17 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE183 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE183 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.98</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE184 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.37</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE191 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.31</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.73</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE196 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.98</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.96</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE197 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.53</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.3</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE206 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.47</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE207 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.93</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.82</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE209 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.46</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.56</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE28 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.82</span> </td>
+   <td style="text-align:right;"> 3.730000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE28 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.55</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.42</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE47 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+   <td style="text-align:right;"> 3.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE47 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.4</span> </td>
+   <td style="text-align:right;"> 2.120000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE49 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.85</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE49 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.45</span> </td>
+   <td style="text-align:right;"> 3.170000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE66 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE66 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.18</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE6S </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 3.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE6S </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.88</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.52</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE71 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE71 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE77 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.98</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE77 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE85 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.51</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE85 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE99 </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.26</span> </td>
+   <td style="text-align:right;"> 3.850000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE99 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.58</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDESS </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+   <td style="text-align:right;"> 3.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDESS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.63</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.62</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> HBCDA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+   <td style="text-align:right;"> 1.790000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> HBCDB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.96</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> HBCDD </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.780000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> HBCDG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> TBBPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.99</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.55</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> HCB </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> HCB </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> HCB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> OCS </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
+   <td style="text-align:right;"> 3.510000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> OCS </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.76</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.72</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> OCS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.9</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.89</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> QCB </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> QCB </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.69</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.49</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> QCB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.57</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> EHDPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.9</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TBEP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.79</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.79</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TBP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.37</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TCEP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.88</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.69</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TCPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.44</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TDCP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.95</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.7</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TEHP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.76</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.53</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
+   <td style="text-align:left;"> TIBP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.5</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-N-NP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.81</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-N-OP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-T-NP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-T-OP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.74</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> BPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Bisphenols </td>
+   <td style="text-align:left;"> BPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorinated paraffins </td>
+   <td style="text-align:left;"> MCCP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.95</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.88</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorinated paraffins </td>
+   <td style="text-align:left;"> MCCP eksl. LOQ </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.71</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.71</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorinated paraffins </td>
+   <td style="text-align:left;"> SCCP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.68</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorinated paraffins </td>
+   <td style="text-align:left;"> SCCP eksl. LOQ </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.46</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.49</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDEPP </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+   <td style="text-align:right;"> 3.620000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDEPP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.93</span> </td>
+   <td style="text-align:right;"> 2.960000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDEPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 6.740000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTEP </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 3.560000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTEP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.52</span> </td>
+   <td style="text-align:right;"> 2.780000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTEP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
+   <td style="text-align:right;"> 6.590000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTPP </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.26</span> </td>
+   <td style="text-align:right;"> 2.850000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTPP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.5</span> </td>
+   <td style="text-align:right;"> 1.460000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.44</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.59</span> </td>
+   <td style="text-align:right;"> 6.280000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> TDEPP </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 3.810000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> TDEPP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 1.650000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> TDEPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
+   <td style="text-align:right;"> 6.580000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHA </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHA </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.7</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.33</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHG </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHG </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.05</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Isotopes </td>
+   <td style="text-align:left;"> C/N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.58</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Isotopes </td>
+   <td style="text-align:left;"> Delta15N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.38</span> </td>
+   <td style="text-align:right;"> 3.630000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> % C </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> % N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> C/N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.58</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Delta15N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.38</span> </td>
+   <td style="text-align:right;"> 3.630000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> DRYWT% </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
+   <td style="text-align:right;"> 1.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> DRYWT% </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.62</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.51</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> DRYWT% </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 4.870000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Fett </td>
+   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 3.540000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Fett </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.3</span> </td>
+   <td style="text-align:right;"> 1.920000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.05</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Fett </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.38</span> </td>
+  </tr>
+</tbody>
+</table>
+
+```r
+# For later use:
+tab_comb_Distance <- tab_comb
+```
+
+
+
+
+
+
+
+
+## 8. Year effect, table of linear + non-linear results      
+
+Combine tables
+
+```r
+# linear_results
+
+tab1 <- linear_results %>%
+  filter(!is.na(Year_est)) %>%
+  select(PARAM, TISSUE_NAME, Year_est, Year_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Year_est_mean) ~ "-",
+    Year_est_mean < 0 ~ "Decreasing",
+    Year_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Year_p_median) ~ "-",
+      Year_p_median < 0.001 ~ "< 0.001",
+      Year_p_median < 0.01 ~ round(Year_p_median, 3) %>% as.character(),
+      Year_p_median <= 1 ~ round(Year_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)
+
+
+# tab1
+
+
+tab2 <- ttable_gamm %>%
+  mutate(across(c(Year_edf, Position_esdf, Year_F, Position_F, Year_p, Position_p), as.numeric)) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_at(vars(Year_edf, Year_p), median) %>%
+  mutate(Non_linear_df = round(Year_edf, 2), 
+    Non_linear_p = case_when(
+      is.na(Year_p) ~ "-",
+      Year_p < 0.001 ~ "< 0.001",
+      Year_p < 0.01 ~ round(Year_p, 3) %>% as.character(),
+      Year_p <= 1 ~ round(Year_p, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Non_linear_df, Non_linear_p)
+
+
+# Combine:
+
+
+tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
+    # Add substance group
+  full_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code")) %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group, PARAM) %>%
+  filter(!is.na(TISSUE_NAME))
+
+  
+# cell_spec("makan", "html", color = "red")
+```
+
+Add HG muscle results    
+* We reestimate using plot_observations() function  
+
+```r
+# Get result
+X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
+```
+
+```
+## `summarise()` ungrouping output (override with `.groups` argument)
+```
+
+```
+## Warning: Vectorized input to `element_text()` is not officially supported.
+## Results may be unexpected or may change in future versions of ggplot2.
+```
+
+```
+## Warning in predict.lm(mod, pred_data): prediction from a rank-deficient fit may
+## be misleading
+```
+
+```r
+hg_non_linear <- summary(X$mod$gam)$s.table["s(MYEAR)", c("edf", "p-value")]
+
+# Where to insert result
+sel <- with(tab_comb, PARAM == "HG" & TISSUE_NAME == "Muskel")
+
+# Insert df
+tab_comb[sel, "Non_linear_df"] <- hg_non_linear["edf"]
+
+# Insert p
+Year_p <- hg_non_linear["p-value"]
+tab_comb[sel, "Non_linear_p"] <- case_when(
+      is.na(Year_p) ~ "-",
+      Year_p < 0.001 ~ "< 0.001",
+      Year_p < 0.01 ~ round(Year_p, 3) %>% as.character(),
+      Year_p <= 1 ~ round(Position_p, 2) %>% as.character()
+    )
+```
+Order variables  
+
+```r
 # Check if some parameters occur more than once (they shouldn't!):
 check <- table(par_levels)
 if (sum(check > 1) > 0)
@@ -1088,6 +3614,7 @@ tab_comb <- tab_comb %>%
   mutate(PARAM = factor(PARAM, levels = par_levels))
 ```
 
+Output
 
 ```r
 cs_dt <- tab_comb
@@ -1124,27 +3651,54 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> AG </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.007</span> </td>
-   <td style="text-align:right;"> 5.51 </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
+   <td style="text-align:right;"> 2.140000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 2.940000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> AS </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.19</span> </td>
-   <td style="text-align:right;"> 4.94 </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.63</span> </td>
+   <td style="text-align:right;"> 2.710000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> AS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> CD </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 4.00 </td>
+   <td style="text-align:right;"> 2.830000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CD </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.790000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1152,18 +3706,36 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> CO </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.51 </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 2.840000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CO </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.45</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> CR </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
-   <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.530000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.420000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
@@ -1171,16 +3743,52 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.53 </td>
+   <td style="text-align:right;"> 2.900000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> CU </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.800000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> HG </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+   <td style="text-align:right;"> 2.842472 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> HG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> NI </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.9</span> </td>
-   <td style="text-align:right;"> 3.19 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.28</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> NI </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.570000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1188,26 +3796,53 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> PB </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.86</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.930000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> PB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> SN </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.61</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.4</span> </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.870000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> SN </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.860000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Metals and metalloids </td>
    <td style="text-align:left;"> ZN </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Metals and metalloids </td>
+   <td style="text-align:left;"> ZN </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.560000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1216,7 +3851,25 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.83 </td>
+   <td style="text-align:right;"> 2.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB_S7 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.84</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB_S7 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+   <td style="text-align:right;"> 2.870000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1224,8 +3877,26 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> CB101 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> 6.79 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB101 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.93</span> </td>
+   <td style="text-align:right;"> 2.790000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB101 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
+   <td style="text-align:right;"> 2.800000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1234,17 +3905,26 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.49 </td>
+   <td style="text-align:right;"> 2.770000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB114 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB105 </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.004</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
+   <td style="text-align:right;"> 1.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB105 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
@@ -1252,26 +3932,26 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.79 </td>
+   <td style="text-align:right;"> 2.820000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB123 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB118 </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.28</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB126 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB118 </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.610000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
@@ -1279,7 +3959,25 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.82 </td>
+   <td style="text-align:right;"> 2.800000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB138 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.51</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB138 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.690000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1288,7 +3986,25 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.78 </td>
+   <td style="text-align:right;"> 2.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB153 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB153 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.770000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1297,35 +4013,26 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.56 </td>
+   <td style="text-align:right;"> 2.620000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB157 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB156 </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.76</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB167 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB156 </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.008</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB169 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.840000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
@@ -1333,17 +4040,26 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.86 </td>
+   <td style="text-align:right;"> 2.850000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB189 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB180 </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.84</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.18</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB180 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
@@ -1351,7 +4067,25 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 1.960000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB209 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+   <td style="text-align:right;"> 2.560000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB209 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.009</span> </td>
+   <td style="text-align:right;"> 2.950000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1360,7 +4094,25 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.78 </td>
+   <td style="text-align:right;"> 2.850000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB28 </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.004</span> </td>
+   <td style="text-align:right;"> 2.670000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Chlorobiphenyls </td>
+   <td style="text-align:left;"> CB28 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.950000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1369,196 +4121,430 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 6.84 </td>
+   <td style="text-align:right;"> 1.000000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB77 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB52 </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.67</span> </td>
+   <td style="text-align:right;"> 2.040000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> CB81 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Chlorobiphenyls </td>
-   <td style="text-align:left;"> Pentaklorbenzen (QCB) </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> CB52 </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 2.820000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ACNE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
+   <td style="text-align:right;"> 2.020000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ACNLE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.44</span> </td>
+   <td style="text-align:right;"> 2.010000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ANT </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
+   <td style="text-align:right;"> 2.260000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BAP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.67</span> </td>
+   <td style="text-align:right;"> 1.710000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BBJF </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BGHIP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.94</span> </td>
+   <td style="text-align:right;"> 1.750000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BKF </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> BAA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.72</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> CHR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.48</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.67</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> DBA3A </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
+   <td style="text-align:right;"> 2.430000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> FLE </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.86</span> </td>
+   <td style="text-align:right;"> 2.660000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> FLU </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 1.890000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> ICDP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.99</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> KPAH </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.29</span> </td>
+   <td style="text-align:right;"> 2.140000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> NAP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+   <td style="text-align:right;"> 2.920000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> P_S </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
+   <td style="text-align:right;"> 1.570000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.33</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.94</span> </td>
+   <td style="text-align:right;"> 2.640000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.2</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PAH16 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.35</span> </td>
+   <td style="text-align:right;"> 2.670000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Polycyclic aromatic hydrocarbons (PAHs) </td>
+   <td style="text-align:left;"> PYR </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.26</span> </td>
+   <td style="text-align:right;"> 1.850000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE100 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> 3.90 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE100 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.850000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE119 </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE119 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE126 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.7</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.45</span> </td>
+   <td style="text-align:right;"> 2.920000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE138 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.72</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.960000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE138 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.950000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE153 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE153 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 2.840000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE154 </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
-   <td style="text-align:right;"> 3.70 </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.820000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
-   <td style="text-align:left;"> BDE156 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> BDE154 </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.37</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE156 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 2.930000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE17 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.950000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE183 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.64</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE183 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+   <td style="text-align:right;"> 2.720000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE184 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.33</span> </td>
+   <td style="text-align:right;"> 2.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE191 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.56</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE196 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.89</span> </td>
+   <td style="text-align:right;"> 2.920000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE197 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.25</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE206 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.56</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE207 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.070000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE209 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.37</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.74</span> </td>
+   <td style="text-align:right;"> 2.730000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE28 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.89</span> </td>
-   <td style="text-align:right;"> 3.73 </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.800000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE28 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.190000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE47 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
-   <td style="text-align:right;"> 3.94 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE47 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1566,26 +4552,53 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> BDE49 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.83</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE49 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.950000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE66 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.16</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE66 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.800000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE6S </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
-   <td style="text-align:right;"> 3.94 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE6S </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.660000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1593,35 +4606,71 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> BDE71 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.21</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE71 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE77 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.98</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.930000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE77 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE85 </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.51</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.980000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE85 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.600000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> BDE99 </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.28</span> </td>
-   <td style="text-align:right;"> 3.85 </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.007</span> </td>
+   <td style="text-align:right;"> 2.550000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDE99 </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.860000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -1629,440 +4678,440 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> BDESS </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
-   <td style="text-align:right;"> 3.91 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organobromines </td>
+   <td style="text-align:left;"> BDESS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.32</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.33</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> HBCDA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> HBCDB </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.740000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> HBCDD </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
    <td style="text-align:left;"> HBCDG </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.810000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organobromines </td>
-   <td style="text-align:left;"> Sum HBCD </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> TBBPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.008</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Aldrin </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.76</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> alfa-Klordan (cis) </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Dieldrin </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Endrin </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> gamma-Klordan (trans) </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+   <td style="text-align:right;"> 2.750000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
    <td style="text-align:left;"> HCB </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 2.97 </td>
+   <td style="text-align:right;"> 2.620000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Heptaklor </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> HCB </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.7</span> </td>
+   <td style="text-align:right;"> 2.680000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Heptaklor epoksid </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> HCB </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Mirex </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.3</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:right;"> 2.910000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
    <td style="text-align:left;"> OCS </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
-   <td style="text-align:right;"> 3.51 </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.900000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
-   <td style="text-align:left;"> Oktaklorstyren (OCS) </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> OCS </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.03</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> OCS </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
+   <td style="text-align:right;"> 2.810000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Organochlorines (general) </td>
    <td style="text-align:left;"> QCB </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFAS </td>
-   <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFBS </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.92</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFDcA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.25</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFHpA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.35</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFHxA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFHxS </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFNA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFOA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.84</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFOS </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:right;"> 2.920000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFOSA </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> QCB </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.59</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Organochlorines (general) </td>
+   <td style="text-align:left;"> QCB </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Organofluorines </td>
-   <td style="text-align:left;"> PFUdA </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.23</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:right;"> 2.980000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> EHDPP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.49</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.33</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TBEP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.35</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.950000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TBP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.11</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TCEP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.54</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.520000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TCPP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.39</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
-   <td style="text-align:left;"> TCrP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.53</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.95</span> </td>
+   <td style="text-align:right;"> 1.070000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.87</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TDCP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.56</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.570000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TEHP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.4</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.090000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
    <td style="text-align:left;"> TIBP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.6</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.73</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
-   <td style="text-align:left;"> ToCrP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-N-NP </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.82</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Phosphorus flame retardant (PFR) </td>
-   <td style="text-align:left;"> TPhP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-N-OP </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
+   <td style="text-align:right;"> 2.980000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-T-NP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.001</span> </td>
+   <td style="text-align:right;"> 2.940000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> 4-T-OP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.49</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Phenols/chlorophenols </td>
+   <td style="text-align:left;"> BPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Bisphenols </td>
+   <td style="text-align:left;"> BPA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorinated paraffins </td>
    <td style="text-align:left;"> MCCP </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.8</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
+   <td style="text-align:right;"> 1.610000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.05</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorinated paraffins </td>
    <td style="text-align:left;"> MCCP eksl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.86</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.75</span> </td>
+   <td style="text-align:right;"> 2.440000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.41</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorinated paraffins </td>
    <td style="text-align:left;"> SCCP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
+   <td style="text-align:right;"> 2.310000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Chlorinated paraffins </td>
    <td style="text-align:left;"> SCCP eksl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:right;"> 2.290000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.005</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
    <td style="text-align:left;"> DDEPP </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.43</span> </td>
-   <td style="text-align:right;"> 3.62 </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDEPP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.17</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDEPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.74</span> </td>
+   <td style="text-align:right;"> 2.020000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
    <td style="text-align:left;"> DDTEP </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.25</span> </td>
-   <td style="text-align:right;"> 3.56 </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTEP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.003</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTEP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.14</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
    <td style="text-align:left;"> DDTPP </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.05</span> </td>
-   <td style="text-align:right;"> 2.85 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.640000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTPP </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.800000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> DDTPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.28</span> </td>
+   <td style="text-align:right;"> 2.690000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
    <td style="text-align:left;"> TDEPP </td>
    <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.820000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> TDEPP </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 3.81 </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.006</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dichloro-diphenyl-trichloroethane (DDTs) </td>
+   <td style="text-align:left;"> TDEPP </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.99</span> </td>
+   <td style="text-align:right;"> 1.490000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.12</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hexachlorocyclohexanes </td>
    <td style="text-align:left;"> HCHA </td>
    <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 2.770000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHA </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.004</span> </td>
+   <td style="text-align:right;"> 2.660000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHA </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.51</span> </td>
+   <td style="text-align:right;"> 2.990000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
@@ -2071,198 +5120,293 @@ kbl(cs_dt, escape = F) %>%
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 2.960000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Biological effects: molecular/biochemical/cellular/assays </td>
-   <td style="text-align:left;"> EROD </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.15</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHG </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.320000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Organo-metallic compounds </td>
-   <td style="text-align:left;"> TBT </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Hexachlorocyclohexanes </td>
+   <td style="text-align:left;"> HCHG </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.970000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Isotopes </td>
+   <td style="text-align:left;"> C/N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.610000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Isotopes </td>
+   <td style="text-align:left;"> Delta15N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> % C </td>
+   <td style="text-align:left;"> Whole soft body </td>
    <td style="text-align:left;"> Increasing </td>
    <td style="text-align:left;"> <span style="     color: black !important;">0.63</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:right;"> 2.580000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.004</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> % N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.55</span> </td>
+   <td style="text-align:right;"> 1.710000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> C/N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 2.610000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Delta15N </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Others </td>
    <td style="text-align:left;"> DRYWT% </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.24</span> </td>
-   <td style="text-align:right;"> 1.99 </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.18</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.08</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> DRYWT% </td>
+   <td style="text-align:left;"> Muskel </td>
+   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.91</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: black !important;">0.88</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> DRYWT% </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Others </td>
    <td style="text-align:left;"> Fett </td>
    <td style="text-align:left;"> Lever </td>
    <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
-   <td style="text-align:right;"> 3.54 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> DDDOP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.01</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> DDEOP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.94</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> DDTOP </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.07</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> HCHB </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.13</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> HCHD </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.27</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Nonaklor, trans- </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.002</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Oxyklordan </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.008</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Sum 6 DIN-PCB eksl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.1</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Sum 6 DIN-PCB inkl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.06</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Sum PCB 7 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Toksafen Parlar 26 </td>
-   <td style="text-align:left;"> Lever </td>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Fett </td>
+   <td style="text-align:left;"> Muskel </td>
    <td style="text-align:left;"> Increasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Toksafen Parlar 50 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:right;"> 2.920000 </td>
    <td style="text-align:left;"> <span style="     color: red !important;">&lt; 0.001</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Toksafen Parlar 62 </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
-   <td style="text-align:left;"> <span style="     color: red !important;">0.02</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> trans-Heptaklorepoksid </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Increasing </td>
+   <td style="text-align:left;"> Others </td>
+   <td style="text-align:left;"> Fett </td>
+   <td style="text-align:left;"> Whole soft body </td>
+   <td style="text-align:left;"> Decreasing </td>
    <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> WHO(2005)-PCB TEQ eksl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.18</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> WHO(2005)-PCB TEQ inkl. LOQ </td>
-   <td style="text-align:left;"> Lever </td>
-   <td style="text-align:left;"> Decreasing </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">0.09</span> </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:left;"> <span style="     color: black !important;">NA</span> </td>
+   <td style="text-align:right;"> 1.000000 </td>
+   <td style="text-align:left;"> <span style="     color: red !important;">0.04</span> </td>
   </tr>
 </tbody>
 </table>
 
+```r
+# For later use:
+tab_comb_Year <- tab_comb
+```
 
 
 
+## APPENDIX: Check how these results differs from old version of linear results   
+
+### Distance  
+
+```r
+# ("120" not "121")
+
+#
+# Modified from part 6
+#
+result_list_old <- readRDS("Data/120_result_list_notimpacted.rds")
+
+ok <- result_list_old[[2]] %>% map_lgl(is.null)
+cat("Number of regressions that worked (numbers / fraction): \n")
+sum(ok)
+mean(ok)
+
+# series_param_tissue$Result_nonimpact <- ok
+
+linear_results_old <- result_list_old[[1]][ok] %>% 
+  bind_rows() %>% 
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"),
+            na_matches = "never") %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p)
+
+colnames(linear_results_old)
 
 
+#
+# Modified from part 7
+#
+
+tab1 <- linear_results_old %>%
+  filter(!is.na(Position_est)) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Position_est_mean) ~ "-",
+    Position_est_mean < 0 ~ "Decreasing",
+    Position_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Position_p_median) ~ "-",
+      Position_p_median < 0.001 ~ "< 0.001",
+      Position_p_median < 0.01 ~ round(Position_p_median, 3) %>% as.character(),
+      Position_p_median <= 1 ~ round(Position_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)  %>%
+  rename(Linear_effect_old = Linear_effect, 
+         Linear_p_old = Linear_p)
+
+tab_comb_Distance %>%
+  full_join(tab1) %>%
+  select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
+  mutate(
+    Linear_p = as.numeric(sub("<", "", Linear_p)),
+    Linear_p_old = as.numeric(sub("<", "", Linear_p_old)),
+    Change = case_when(
+      Linear_effect != Linear_effect_old & Linear_p_old <= 0.05 ~ "Trend change (was sign.)",
+      Linear_effect != Linear_effect_old & Linear_p <= 0.05 ~ "Trend change (became sign.)",
+      Linear_p_old <= 0.05 & Linear_p > 0.05 ~ "Was significant",
+      Linear_p_old > 0.05 & Linear_p <= 0.05 ~ "Became significant",
+      TRUE ~ "")
+    ) %>%
+  kbl(escape = F) %>%
+  kable_paper("striped", full_width = F)
+```
+
+```
+## Joining, by = c("PARAM", "TISSUE_NAME")
+```
+
+### Year  
+
+```r
+# ("120" not "121")
+
+#
+# Modified from part 6
+#
+result_list_old <- readRDS("Data/120_result_list_notimpacted.rds")
+
+ok <- result_list_old[[2]] %>% map_lgl(is.null)
+cat("Number of regressions that worked (numbers / fraction): \n")
+sum(ok)
+mean(ok)
+
+# series_param_tissue$Result_nonimpact <- ok
+
+linear_results_old <- result_list_old[[1]][ok] %>% 
+  bind_rows() %>% 
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"),
+            na_matches = "never") %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p)
+
+colnames(linear_results_old)
 
 
+#
+# Modified from part 7
+#
+
+tab1 <- linear_results %>%
+  filter(!is.na(Year_est)) %>%
+  select(PARAM, TISSUE_NAME, Year_est, Year_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Year_est_mean) ~ "-",
+    Year_est_mean < 0 ~ "Decreasing",
+    Year_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Year_p_median) ~ "-",
+      Year_p_median < 0.001 ~ "< 0.001",
+      Year_p_median < 0.01 ~ round(Year_p_median, 3) %>% as.character(),
+      Year_p_median <= 1 ~ round(Year_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p) %>%
+  rename(Linear_effect_old = Linear_effect, 
+         Linear_p_old = Linear_p)
+
+tab_comb_Year %>%
+  full_join(tab1) %>%
+  select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
+  mutate(
+    Linear_p = as.numeric(sub("<", "", Linear_p)),
+    Linear_p_old = as.numeric(sub("<", "", Linear_p_old)),
+    Change = case_when(
+      Linear_effect != Linear_effect_old & Linear_p_old <= 0.05 ~ "Trend change (was sign.)",
+      Linear_effect != Linear_effect_old & Linear_p <= 0.05 ~ "Trend change (became sign.)",
+      Linear_p_old <= 0.05 & Linear_p > 0.05 ~ "Was significant",
+      Linear_p_old > 0.05 & Linear_p <= 0.05 ~ "Became significant",
+      TRUE ~ "")
+    ) %>%
+  kbl(escape = F) %>%
+  kable_paper("striped", full_width = F)
+```
+
+```
+## Joining, by = c("PARAM", "TISSUE_NAME")
+```
 
 

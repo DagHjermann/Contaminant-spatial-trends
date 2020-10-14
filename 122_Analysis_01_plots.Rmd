@@ -10,7 +10,7 @@ output:
     code_folding: hide  
 ---
 
-Script 122, based on script 120   
+Script 122, based on script 121   
 
 
 ## 1. Libraries  
@@ -133,6 +133,7 @@ dat2 <- dat %>%
 
 ```
 Make data set with non-impacted stations only    
+
 ```{r}
 
 dat2_notimpacted <- dat2 %>%
@@ -203,7 +204,22 @@ dat2 %>%
   kable_paper("basic", full_width = FALSE)
 
 ```
+### MSTAT categorisation, blue mussel     
+MSTAT categories:    
+* IH = industry-impacted  
+* RH = representative  
+* B = background    
+Tables shows number of years of data    
+```{r}
 
+dat2 %>%
+  filter(grepl("A", STATION_CODE) | grepl("I", STATION_CODE)) %>%
+  distinct(STATION_CODE, MSTAT, MYEAR) %>%
+  xtabs(~ STATION_CODE + MSTAT, .) %>%
+  kbl(escape = FALSE) %>%
+  kable_paper("basic", full_width = FALSE)
+
+``` 
 ### Parameter groups  
 ```{r}
 
@@ -222,7 +238,7 @@ df_parameter_groups %>%
 
 ## 3. Non-linear analyses (GAMM)     
 Note:  
-* These analyses were performed for all unimpacted stations    
+* These analyses were performed for all *unimpacted* stations    
 * For concentrations under LOQ, we used random numbers between LOQ/2 and LOQ (3 replicates)  
 ```{r}
 
@@ -231,7 +247,7 @@ Note:
 #o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
 
 # Use the saved results
-gamm_list <- readRDS("Data/121_gamm_list1.rds")
+gamm_list <- readRDS("Data/121_gamm_list1.rds")  
 cat("Results for", length(gamm_list[[1]]), "parameters/tissues loaded")
 
 if (FALSE){
@@ -317,45 +333,72 @@ plotvalues_gamm %>%
 }
 
 ```
+```{r}
+
+if (FALSE){
+  # Check one particular parameter/tissue
+  # First, combine all the one-line t-tables   
+  df <- gamm_list$result %>% map_dfr(~.$ttable)
+  # Get the index we want
+  i <- with(ttable_gamm, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  i
+  df[i,]
+  # Check if its OK
+  # All 
+  result_ok <- gamm_list0[["error"]] %>% map_lgl(is.null)
+  result_ok[i]
+  
+}
+
+```
+
+### Summarise p-values  
+```{r}
+
+ttable_gamm_summ <- ttable_gamm %>%
+  filter(TISSUE_NAME %in% c("Lever", "Whole soft body")) %>%
+  group_by(Substance.Group, PARAM, TISSUE_NAME) %>%
+  summarise(across(c(Position_p, Position_esdf), median))
+
+```
 
 
 ### p-values for the effect of 'distance along coast' on concentration         
 ```{r}
 
-ttable_gamm %>%
-  filter(TISSUE_NAME %in% "Lever") %>%
+ttable_gamm_summ %>% 
   mutate(
     `Effect of distance along coast` = ifelse(Position_p < 0.05, "P <= 0.05", "P > 0.05")
   ) %>%
-  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast`, .,
+  xtabs(~ addNA(Substance.Group) + `Effect of distance along coast` + TISSUE_NAME, .,
         drop.unused.levels = TRUE)
 
 
 if (FALSE){
 
 
-  ttable_gamm %>%
+  ttable_gamm_summ %>%
     ggplot(aes(Position_p)) + geom_histogram()
 
   # fit's degrees of freedom > 1 means non-linear fit  
-  ttable_gamm %>%
-    ggplot(aes(Position_p, Position_esdf)) + geom_point()
+  ttable_gamm_summ %>%
+    ggplot(aes(Position_p, Position_esdf, color = factor(Position_p < 0.05))) + geom_point()
   
-  ttable_gamm %>%
+  ttable_gamm_summ %>%
     xtabs(~(Position_p < 0.05) + (Position_esdf > 1), .)
   
-  ttable_gamm %>%
-    xtabs(~ addNA(Substance.Group) + (Position_p < 0.05) + TISSUE_NAME, .)
-  
-}
-
-# for checking
-if (FALSE){
+  # for checking
   ttable_gamm %>%
     filter(is.na(Substance.Group)) %>%
     xtabs(~PARAM, .) %>%
     names() %>%
     paste(collapse = ";")
+
+  ttable_gamm_summ %>%
+    filter(Substance.Group %in% "Organobromines") %>%
+    arrange(TISSUE_NAME, Position_p) %>%
+    View()
+
 }
 
 
@@ -367,9 +410,15 @@ if (FALSE){
 ## 4. Parameters with significant geographic effect (per group) {.tabset}   
 Note: For unimpaced stations (RH and B stations)  
   
-### Organobromines  
+### Organobromines in cod liver 
 ```{r, fig.height=5, fig.width=9}
 plotgamm_group("Organobromines", report = FALSE)
+```
+
+### Organobromines in blue mussel   
+```{r, fig.height=5, fig.width=9}
+# debugonce(plotgamm_group)
+plotgamm_group("Organobromines", tissue = "Whole soft body", report = FALSE)
 ```
 
 
@@ -377,97 +426,322 @@ plotgamm_group("Organobromines", report = FALSE)
 ```{r, fig.height=5, fig.width=9}
 plotgamm_group("Metals", minvalue = -2, report = FALSE)
 ```
-
+### Metals in blue mussel   
+```{r, fig.height=5, fig.width=9}
+plotgamm_group("Metals", tissue = "Whole soft body", minvalue = -2, report = FALSE)
+```
 
 ### Chlorobiphenyls     
 ```{r, fig.height=5, fig.width=9}
 plotgamm_group("Chlorobiphenyls", minvalue = -1)
 ```
 
-### DDT  
+### Chlorobiphenyls in blue mussel      
+```{r, fig.height=5, fig.width=9}
+plotgamm_group("Chlorobiphenyls", tissue = "Whole soft body", minvalue = -1)
+```
+
+### DDT   
 ```{r, fig.height=5, fig.width=9}
 plotgamm_group("DDT", minvalue = -1)
 ```
+  
 
+### PAH in blue mussel      
+```{r, fig.height=5, fig.width=9}
+
+plotgamm_group("PAH", tissue = "Whole soft body", minvalue = -1)
+
+```
+
+### PAH in blue mussel      
+```{r, fig.height=5, fig.width=9}
+
+plotgamm_group("Organochlor", tissue = "Whole soft body", minvalue = -1)
+
+```
 
 ## 5. Examples {.tabset}   
-* The "tile" plots show raw data (medians per station/year) for all stations  
+* The "tile" plots show raw data (medians per station/year) for all stations    
+    - The color of the x axis (station code) gives station type: Black = RH (representative), Red = IH (impacted), blue = B (background)  
 * The two "model" plots show estimated effects for length- and fat-adjusted data for unimpacted stations   
 
-### BDE47  
+### BDE47, cod  
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}  
 # debugonce(plot_observations)
 plot_observations("BDE47")  
 ```
+### BDE47, mussel    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}  
+# debugonce(plot_observations)
+plot_observations("BDE47",  tissue = "Whole soft body")  
+```
   
-### BDE99  
+### BDE99, cod  
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("BDE99")  
 ```
-### ZN    
+
+### BDE99, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("BDE99",  tissue = "Whole soft body")  
+```
+
+### ZN, cod    
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("ZN")  
 ```
   
-### AG    
+### ZN, mussel    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("ZN",  tissue = "Whole soft body")  
+```
+
+### AG, cod    
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("AG")  
 ```
-### CU    
+### AG, mussel    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("AG",  tissue = "Whole soft body")  
+```
+
+### CU, cod    
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("CU")  
 ```
+
+### CU, mussel    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CU",  tissue = "Whole soft body")  
+```
   
-### HG  
+### HG, cod muscle  
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("HG", "Muskel")  
 ```
-  
-### Sum PCB    
+
+### HG, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("HG",  tissue = "Whole soft body")  
+```
+
+### CD, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CD")  
+```
+
+### CD, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CD",  tissue = "Whole soft body")  
+```
+
+### PB, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("PB")  
+```
+
+### PB, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("PB",  tissue = "Whole soft body")  
+```
+
+### CR, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CR")  
+```
+
+### CR, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CR",  tissue = "Whole soft body")  
+```
+
+### CU, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CU")  
+```
+
+### CU, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CU",  tissue = "Whole soft body")  
+```
+
+### CO, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CO")  
+```
+
+### CO, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CO",  tissue = "Whole soft body")  
+```
+
+### NI, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("NI")  
+```
+
+### NI, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("NI",  tissue = "Whole soft body")  
+```
+
+### BDE100, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("BDE100")  
+```
+
+### BDE100, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("BDE100",  tissue = "Whole soft body")  
+```
+
+### BDE6S, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("BDE6S")  
+```
+
+### BDE6S, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("BDE6S",  tissue = "Whole soft body")  
+```
+
+### HBCDA, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("HBCDA")  
+```
+
+### HBCDA, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("HBCDA",  tissue = "Whole soft body")  
+```
+
+### HCB, cod  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("HCB")  
+```
+
+### HCB, mussel  
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("HCB",  tissue = "Whole soft body")  
+```
+
+### Sum PCB, cod    
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("CB_S7")  
 ```
 
-### CB118      
+### Sum PCB    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("CB_S7",  tissue = "Whole soft body")  
+```
+
+### CB118, cod      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("CB118")  
 ```
-
-### Pentaklorbenzen      
+### CB118, mussel      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
-plot_observations("QCB")  
-dat %>% filter(grepl("QCB", PARAM))
+plot_observations("CB118",  tissue = "Whole soft body")  
 ```
 
-### DDEPP      
+### Pentaklorbenzen, cod      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("QCB")  
+# dat %>% filter(grepl("QCB", PARAM))
+```
+
+### Pentaklorbenzen, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("QCB",  tissue = "Whole soft body")  
+```
+
+### P_S, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+# debugonce(plot_observations)
+plot_observations("P_S",  tissue = "Whole soft body")   
+```
+
+### BAP, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+# debugonce(plot_observations)
+plot_observations("BAP",  tissue = "Whole soft body")   
+```
+
+
+### DDEPP, cod      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 # debugonce(plot_observations)
 plot_observations("DDEPP")   
 ```
 
-### MCCP      
+### DDEPP, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+# debugonce(plot_observations)
+plot_observations("DDEPP",  tissue = "Whole soft body")   
+```
+
+
+### SCCP, cod      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("SCCP")   
+```
+
+### SCCP, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("SCCP",  tissue = "Whole soft body")   
+```
+
+### MCCP, cod      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("MCCP")   
 ```
-### PFOS      
+
+### MCCP, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("MCCP",  tissue = "Whole soft body")   
+```
+
+### PFOS, cod      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("PFOS")   
 ```
 
-### PFOSA      
+### PFOS, mussel      
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("PFOS",  tissue = "Whole soft body")   
+```
+
+### PFOSA, cod      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("PFOSA")   
 ```
 
-### PFOSA      
+### PFOSA, mussel      
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
-plot_observations("PFOSA")   
+plot_observations("PFOSA",  tissue = "Whole soft body")   
 ```
 
-### Toksafen Parlar 50       
+### Toksafen Parlar 50, cod       
 ```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
 plot_observations("Toksafen Parlar 50")   
 ```
+
+### Toksafen Parlar 50, mussel       
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("Toksafen Parlar 50",  tissue = "Whole soft body")   
+```
+
+### TBT, mussel    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("TBT",  tissue = "Whole soft body")  
+```
+
+### Dieldrin    
+```{r, fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+plot_observations("Dieldrin",  tissue = "Lever")  
+```
+
 
 ## 6. Linear results   
 Different from the non-linear (GAMM) statistics by  
@@ -477,13 +751,13 @@ Different from the non-linear (GAMM) statistics by
 
 ```{r}
 
-result_list <- readRDS("Data/120_result_list_notimpacted.rds")
+result_list <- readRDS("Data/121_result_list_notimpacted.rds")
 
-```
-
-
-### Summary of results  
-```{r}
+if (FALSE){
+  length(result_list)
+  str(result_list, 1)
+  str(result_list$result[[1]], 1)
+}
 
 ```
 
@@ -511,15 +785,17 @@ linear_results <- result_list[[1]][ok] %>%
 ```
 
 
-## 7. Combine linear + non-linear results in table  
 
-Combine tables  
+
+## 7. Geographic effect, table of linear + non-linear results      
+
+Combine tables
 ```{r, fig.width=9, fig.height=9}
 
 # linear_results
 
 tab1 <- linear_results %>%
-  filter(TISSUE_NAME %in% "Lever" & !is.na(Position_est)) %>%
+  filter(!is.na(Position_est)) %>%
   select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
   group_by(PARAM, TISSUE_NAME) %>%
   summarise_all(list(min = min, mean = mean, median = median)) %>%
@@ -559,40 +835,71 @@ tab2 <- ttable_gamm %>%
 
 tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
     # Add substance group
-  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+  full_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
             by = c("PARAM" = "Parameter.Code")) %>%
   select(Substance.Group, everything()) %>%
-  arrange(Substance.Group, PARAM)
+  arrange(Substance.Group, PARAM) %>%
+  filter(!is.na(TISSUE_NAME))
 
   
 # cell_spec("makan", "html", color = "red")
 ```
 
-Order variables  
-```{r, results='hide'}
-pars_pcb <- tab_comb %>% 
-  filter(Substance.Group %in% "Chlorobiphenyls") %>%
-  pull(PARAM) %>%
-  sort_by_number() %>%
-  move_to_back("CB")
+Add HG non-linear muscle results    
+* We reestimate using plot_observations() function  
+```{r}
 
-pars_bde <- tab_comb$PARAM %>% grep("^BD", ., value = TRUE) %>%
-  sort_by_number()
+# Get result
+X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
+hg_non_linear <- summary(X$mod$gam)$s.table["s(Dist_along_coast)", c("edf", "p-value")]
+
+# Where to insert result
+sel <- with(tab_comb, PARAM == "HG" & TISSUE_NAME == "Muskel")
+
+# Insert df
+tab_comb[sel, "Non_linear_df"] <- hg_non_linear["edf"]
+
+# Insert p
+
+Position_p <- hg_non_linear["p-value"]
+tab_comb[sel, "Non_linear_p"] <- case_when(
+      is.na(Position_p) ~ "-",
+      Position_p < 0.001 ~ "< 0.001",
+      Position_p < 0.01 ~ round(Position_p, 3) %>% as.character(),
+      Position_p <= 1 ~ round(Position_p, 2) %>% as.character()
+    )
+
+```
+
+
+Make variable order   
+```{r, results='hide'}
+pars_pcb <- c("CB_S7", "CB28", "CB52", "CB77", "CB81",
+  "CB101", "CB105", "CB114", "CB118", "CB123", "CB126", "CB138",
+  "CB153", "CB156", "CB157", "CB167", "CB169", "CB180", "CB189",
+  "CB209", "Pentaklorbenzen (QCB)")
+
+pars_bde <- c("BDESS", "BDE6S", "BDE17", "BDE28", "BDE47", "BDE49", "BDE66",
+  "BDE71", "BDE77", "BDE85", "BDE99", "BDE100", "BDE119", "BDE126",
+  "BDE138", "BDE153", "BDE154", "BDE156", "BDE183", "BDE184", "BDE191",
+  "BDE196", "BDE197", "BDE206", "BDE207", "BDE209")
+
 
 pars_hbcd <- tab_comb$PARAM %>% grep("HBCD", ., value = TRUE) %>%
+  unique() %>%
   sort() %>%
   move_to_front("Sum HBCD")
 
-pars_pfas <- tab_comb %>% 
-  filter(Substance.Group %in% "Organofluorines") %>%
-  pull(PARAM) %>% 
-  move_to_front("PFAS$")  # since this is the sum  
+pars_pfas <- c("PFAS", "PFBS", "PFDcA", "PFHpA", "PFHxA", "PFHxS", "PFNA", "PFOA", 
+"PFOS", "PFOSA", "PFUdA")
 
-# Show all, for check  
-pars_pcb
-pars_bde
-pars_hbcd
-pars_pfas
+if (FALSE){
+  # Show all, for check  
+  pars_pcb
+  pars_bde
+  pars_hbcd
+  pars_pfas
+}
 
 # Other parameters, in alphabetic order 
 par_all <- tab_comb %>% pull(PARAM)
@@ -600,11 +907,138 @@ sel1 <- par_all %in% pars_pcb
 sel2 <- par_all %in% pars_bde
 sel3 <- par_all %in% pars_hbcd
 sel4 <- par_all %in% pars_pfas
-pars_other <- par_all[!(sel1 | sel2 | sel3 | sel4)]
+pars_other <- par_all[!(sel1 | sel2 | sel3 | sel4)] %>% unique()
 
 # Correct order
 par_levels <- c(pars_pcb, pars_bde, pars_hbcd, pars_pfas, pars_other)
+```
 
+Order variables  
+```{r, results='hide'}
+# Check if some parameters occur more than once (they shouldn't!):
+check <- table(par_levels)
+if (sum(check > 1) > 0)
+  check[check > 1]
+
+# Set PARAM factor levels in correct order
+tab_comb <- tab_comb %>%
+  mutate(PARAM = factor(PARAM, levels = par_levels))
+
+```
+Output  
+```{r}
+cs_dt <- tab_comb
+
+cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
+                           color = ifelse(cs_dt$Linear_p < 0.05, "red", "black"))
+
+cs_dt$Non_linear_p = cell_spec(cs_dt$Non_linear_p, 
+                               color = case_when(
+                                 is.na(cs_dt$Non_linear_p) ~ "black",
+                                 cs_dt$Non_linear_p <= 0.05 ~ "red",
+                                 cs_dt$Non_linear_p > 0.05 ~ "black")
+                               )
+
+
+kbl(cs_dt, escape = F) %>%
+  kable_paper("striped", full_width = F)  
+
+# For later use:
+tab_comb_Distance <- tab_comb
+
+```
+
+
+
+
+
+
+
+
+## 8. Year effect, table of linear + non-linear results      
+
+Combine tables
+```{r, fig.width=9, fig.height=9}
+
+# linear_results
+
+tab1 <- linear_results %>%
+  filter(!is.na(Year_est)) %>%
+  select(PARAM, TISSUE_NAME, Year_est, Year_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Year_est_mean) ~ "-",
+    Year_est_mean < 0 ~ "Decreasing",
+    Year_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Year_p_median) ~ "-",
+      Year_p_median < 0.001 ~ "< 0.001",
+      Year_p_median < 0.01 ~ round(Year_p_median, 3) %>% as.character(),
+      Year_p_median <= 1 ~ round(Year_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)
+
+
+# tab1
+
+
+tab2 <- ttable_gamm %>%
+  mutate(across(c(Year_edf, Position_esdf, Year_F, Position_F, Year_p, Position_p), as.numeric)) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_at(vars(Year_edf, Year_p), median) %>%
+  mutate(Non_linear_df = round(Year_edf, 2), 
+    Non_linear_p = case_when(
+      is.na(Year_p) ~ "-",
+      Year_p < 0.001 ~ "< 0.001",
+      Year_p < 0.01 ~ round(Year_p, 3) %>% as.character(),
+      Year_p <= 1 ~ round(Year_p, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Non_linear_df, Non_linear_p)
+
+
+# Combine:
+
+
+tab_comb <- left_join(tab1, tab2, by = c("PARAM", "TISSUE_NAME")) %>%
+    # Add substance group
+  full_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code")) %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group, PARAM) %>%
+  filter(!is.na(TISSUE_NAME))
+
+  
+# cell_spec("makan", "html", color = "red")
+```
+
+Add HG muscle results    
+* We reestimate using plot_observations() function  
+```{r}
+
+# Get result
+X <- plot_observations("HG", "Muskel", show_plot = c(FALSE, FALSE))    
+hg_non_linear <- summary(X$mod$gam)$s.table["s(MYEAR)", c("edf", "p-value")]
+
+# Where to insert result
+sel <- with(tab_comb, PARAM == "HG" & TISSUE_NAME == "Muskel")
+
+# Insert df
+tab_comb[sel, "Non_linear_df"] <- hg_non_linear["edf"]
+
+# Insert p
+Year_p <- hg_non_linear["p-value"]
+tab_comb[sel, "Non_linear_p"] <- case_when(
+      is.na(Year_p) ~ "-",
+      Year_p < 0.001 ~ "< 0.001",
+      Year_p < 0.01 ~ round(Year_p, 3) %>% as.character(),
+      Year_p <= 1 ~ round(Position_p, 2) %>% as.character()
+    )
+
+```
+Order variables  
+```{r, results='hide'}
 # Check if some parameters occur more than once (they shouldn't!):
 check <- table(par_levels)
 if (sum(check > 1) > 0)
@@ -616,6 +1050,7 @@ tab_comb <- tab_comb %>%
 
 ```
 
+Output
 ```{r}
 cs_dt <- tab_comb
 
@@ -633,14 +1068,155 @@ cs_dt$Non_linear_p = cell_spec(cs_dt$Non_linear_p,
 kbl(cs_dt, escape = F) %>%
   kable_paper("striped", full_width = F)
 
+# For later use:
+tab_comb_Year <- tab_comb
+
 ```
 
 
 
+## APPENDIX: Check how these results differs from old version of linear results   
+
+### Distance  
+```{r, results='hide'}
+
+# ("120" not "121")
+
+#
+# Modified from part 6
+#
+result_list_old <- readRDS("Data/120_result_list_notimpacted.rds")
+
+ok <- result_list_old[[2]] %>% map_lgl(is.null)
+cat("Number of regressions that worked (numbers / fraction): \n")
+sum(ok)
+mean(ok)
+
+# series_param_tissue$Result_nonimpact <- ok
+
+linear_results_old <- result_list_old[[1]][ok] %>% 
+  bind_rows() %>% 
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"),
+            na_matches = "never") %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p)
+
+colnames(linear_results_old)
 
 
+#
+# Modified from part 7
+#
+
+tab1 <- linear_results_old %>%
+  filter(!is.na(Position_est)) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Position_est_mean) ~ "-",
+    Position_est_mean < 0 ~ "Decreasing",
+    Position_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Position_p_median) ~ "-",
+      Position_p_median < 0.001 ~ "< 0.001",
+      Position_p_median < 0.01 ~ round(Position_p_median, 3) %>% as.character(),
+      Position_p_median <= 1 ~ round(Position_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p)  %>%
+  rename(Linear_effect_old = Linear_effect, 
+         Linear_p_old = Linear_p)
+
+tab_comb_Distance %>%
+  full_join(tab1) %>%
+  select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
+  mutate(
+    Linear_p = as.numeric(sub("<", "", Linear_p)),
+    Linear_p_old = as.numeric(sub("<", "", Linear_p_old)),
+    Change = case_when(
+      Linear_effect != Linear_effect_old & Linear_p_old <= 0.05 ~ "Trend change (was sign.)",
+      Linear_effect != Linear_effect_old & Linear_p <= 0.05 ~ "Trend change (became sign.)",
+      Linear_p_old <= 0.05 & Linear_p > 0.05 ~ "Was significant",
+      Linear_p_old > 0.05 & Linear_p <= 0.05 ~ "Became significant",
+      TRUE ~ "")
+    ) %>%
+  kbl(escape = F) %>%
+  kable_paper("striped", full_width = F)
+
+```
+
+### Year  
+```{r, results='hide'}
+
+# ("120" not "121")
+
+#
+# Modified from part 6
+#
+result_list_old <- readRDS("Data/120_result_list_notimpacted.rds")
+
+ok <- result_list_old[[2]] %>% map_lgl(is.null)
+cat("Number of regressions that worked (numbers / fraction): \n")
+sum(ok)
+mean(ok)
+
+# series_param_tissue$Result_nonimpact <- ok
+
+linear_results_old <- result_list_old[[1]][ok] %>% 
+  bind_rows() %>% 
+  left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
+            by = c("PARAM" = "Parameter.Code"),
+            na_matches = "never") %>%
+  select(Substance.Group, everything()) %>%
+  arrange(Substance.Group) %>%
+  select(PARAM, TISSUE_NAME, Position_est, Position_p)
+
+colnames(linear_results_old)
 
 
+#
+# Modified from part 7
+#
 
+tab1 <- linear_results %>%
+  filter(!is.na(Year_est)) %>%
+  select(PARAM, TISSUE_NAME, Year_est, Year_p) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise_all(list(min = min, mean = mean, median = median)) %>%
+  ungroup() %>%
+  mutate(Linear_effect = case_when(
+    is.na(Year_est_mean) ~ "-",
+    Year_est_mean < 0 ~ "Decreasing",
+    Year_est_mean >= 0 ~ "Increasing"),
+    Linear_p = case_when(
+      is.na(Year_p_median) ~ "-",
+      Year_p_median < 0.001 ~ "< 0.001",
+      Year_p_median < 0.01 ~ round(Year_p_median, 3) %>% as.character(),
+      Year_p_median <= 1 ~ round(Year_p_median, 2) %>% as.character())
+    ) %>% 
+  select(PARAM, TISSUE_NAME, Linear_effect, Linear_p) %>%
+  rename(Linear_effect_old = Linear_effect, 
+         Linear_p_old = Linear_p)
+
+tab_comb_Year %>%
+  full_join(tab1) %>%
+  select(-Substance.Group, -Non_linear_df, -Non_linear_p) %>%
+  mutate(
+    Linear_p = as.numeric(sub("<", "", Linear_p)),
+    Linear_p_old = as.numeric(sub("<", "", Linear_p_old)),
+    Change = case_when(
+      Linear_effect != Linear_effect_old & Linear_p_old <= 0.05 ~ "Trend change (was sign.)",
+      Linear_effect != Linear_effect_old & Linear_p <= 0.05 ~ "Trend change (became sign.)",
+      Linear_p_old <= 0.05 & Linear_p > 0.05 ~ "Was significant",
+      Linear_p_old > 0.05 & Linear_p <= 0.05 ~ "Became significant",
+      TRUE ~ "")
+    ) %>%
+  kbl(escape = F) %>%
+  kable_paper("striped", full_width = F)
+
+```
 
 
