@@ -59,10 +59,17 @@ plotgamm_group <- function(group = "Organobromines", minvalue = -0.8,
     pull(PARAM) %>% 
     unique()
   
-  
+  non_sign_txt <- paste(
+    "Non-significant parameters (not in graph):", 
+    paste(non_significant_params, collapse = ", ")
+  )
+  X <- split_space(non_sign_txt, nchar = 100)
+  non_sign_txt <- paste(X, collapse = "\n")
+
   plottitle <- case_when(
     tissue == "Lever" ~ paste(group, "in cod liver"),
-    tissue == "Muskel" ~ paste(group, "in cod muscle")
+    tissue == "Muskel" ~ paste(group, "in cod muscle"),
+    tissue == "Whole soft body" ~ paste(group, "in blue mussel")
   )
   gg1 <- ggplot(pick_data3, aes(Dist_along_coast, visregFit, color = PARAM)) + 
     geom_line(size = rel(1)) + 
@@ -76,9 +83,7 @@ plotgamm_group <- function(group = "Organobromines", minvalue = -0.8,
   
   if (length(non_significant_params) > 0)
     gg1 <- gg1 +
-    labs(subtitle = paste("Non-significant parameters (not in graph):", 
-                          paste(non_significant_params, collapse = ", ")
-    ))
+    labs(subtitle = non_sign_txt)
   
   
   # Direction of text labels:
@@ -118,11 +123,13 @@ plotgamm_group <- function(group = "Organobromines", minvalue = -0.8,
 plot_observations <- function(param = "BDE47", tissue = "Lever", 
                               data_plot1 = dat2,
                               data_analysis = dat2_notimpacted,
-                              tile = TRUE, nrow = 2){
+                              tile = TRUE, nrow = 2,
+                              show_plot = c(TRUE, TRUE)){
   
   title <- case_when(
     tissue == "Lever" ~ paste0(param, " (liver)"),
-    tissue == "Muskel" ~ paste0(param, " (muscle)")
+    tissue == "Muskel" ~ paste0(param, " (muscle)"),
+    tissue == "Whole soft body" ~ paste(param, " (blue mussel)")
   )
   
   
@@ -139,7 +146,7 @@ plot_observations <- function(param = "BDE47", tissue = "Lever",
   } else {
     df <- data_plot1 %>%
       filter(PARAM %in% param & TISSUE_NAME %in% tissue & !is.na(VALUE_WW)) %>%
-      group_by(PARAM, TISSUE_NAME, STATION_CODE, Dist_along_coast, MYEAR) %>%
+      group_by(PARAM, TISSUE_NAME, STATION_CODE, Dist_along_coast, MSTAT, MYEAR) %>%
       summarise(VALUE_WW = median(VALUE_WW), .groups = "drop") %>%
       mutate(
         STATION_CODE = forcats::fct_reorder(STATION_CODE, Dist_along_coast),
@@ -150,21 +157,33 @@ plot_observations <- function(param = "BDE47", tissue = "Lever",
           include.lowest = TRUE)
       )
     
+    # 
+    df_mstat <- df %>% 
+      group_by(STATION_CODE) %>% 
+      summarise(MSTAT = first(MSTAT)) %>% 
+      arrange(STATION_CODE)
+    labeltext_colors <- c(IH = "red3", RH = "black", B = "blue3")
+
     gg1 <- ggplot(df, aes(STATION_CODE, MYEAR, fill = VALUE_WW_c)) +
       geom_tile() +
       viridis::scale_fill_viridis("WW conc.", discrete = TRUE) +
       scale_y_reverse() +
-      labs(title = title)
+      labs(title = title) +
+      theme(axis.text.x = element_text(
+        angle = -45, hjust = 0,
+        color = labeltext_colors[df_mstat$MSTAT])
+      )
     
   }
   
-  print(gg1)
+  if (show_plot[1])
+    print(gg1)
 
   modeldata <- try(
     gamm_one_par_one_repl(param, tissue, dat2_notimpacted, return = "model_and_data")
   )
 
-  if (class(modeldata) != "try-error"){
+  if (class(modeldata) != "try-error" & show_plot[2]){
     
     par(mfrow = c(1,2), mar = c(4,5,1,1), oma = c(0,0,2,0))
     visreg(modeldata$mod$gam)
@@ -175,6 +194,7 @@ plot_observations <- function(param = "BDE47", tissue = "Lever",
     
   }
   
+  invisible(modeldata)
   # gg2 <- ggplot(plotdata$fit, aes(Dist_along_coast, visregFit)) +
   #   geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), fill = "grey70") +
   #   geom_line() +
@@ -188,4 +208,32 @@ plot_observations <- function(param = "BDE47", tissue = "Lever",
 
 
 
+cut_one <- function(x, nchar = 110){
+  spaces <- gregexpr("[[:space:]]", x)[[1]]
+  i <- spaces[spaces < nchar] %>% tail(1)
+  c(
+    substr(x, 1, i-1),
+    substr(x, i+1, nchar(x))
+  )
+}
+split_space <- function(x, nchar = 110){
+  result <- x
+  longest <- nchar(result)
+  while (longest > nchar){
+    result <- c(
+      head(result, -1),
+      tail(result, 1) %>% cut_one(nchar = nchar)
+    )
+    longest <- nchar(tail(result,1))
+  }
+  result
+}
 
+# test
+if (FALSE){
+  x <- "Non-significant parameters (not in graph): BDE100, BDE119, BDE126, BDE138, BDE153, BDE154, BDE156, BDE17, BDE183, BDE184, BDE191, BDE196, BDE197, BDE206, BDE207, BDE209, BDE28, BDE47, BDE66, BDE6S, BDE71, BDE77, BDE85, BDE99, BDESS, HBCDB, HBCDG, TBBPA"
+  # cut_one(x)
+  # debugonce(split_space)
+  split_space(x)
+  split_space(x, 100)
+}

@@ -10,7 +10,30 @@ output:
     code_folding: hide
 ---
 
-Based on script 120   
+Based on script 120 (but extended a lot)   
+
+**Highlights:**    
+* *5. linear models* (function 'analysis_one_par')  
+* 5a. Linear model - non-impacted stations   
+    - using data set 'dat2_notimpacted' as input  
+* 5b. Linear model - 'less-impacted' stations 
+    -  difference in the code is only that we use data set 'dat2_lessimpacted' as input to 'analysis_one_par'  
+    - this means all stations except Oslo + Sørfjorden  
+* *7. Non-linear models (GAMM)* (function 'gamm_one_par_one_repl')  
+* 7a. Additive GAMM - all stations       
+* 7b. Additive GAMM - non-impacted stations  
+* 7c. Additive GAMM - 'less-impacted' stations  
+* 9.  Combine linear + non-linear results in table    
+* *10. Non-linear models with interaction* (function 'gamm_one_par_one_repl' with 'interaction = TRUE')  
+* 10. Non-linear models with interaction - all stations      
+   
+**Saved results:**    
+* 5a "Data/121_result_list_notimpacted.rds"  
+* 5b "Data/121_result_list_lessimpacted.rds"  
+* 7a "Data/121_gamm_list0.rds"  
+* 7b "Data/121_gamm_list1.rds"  
+* 7c "Data/121_gamm_list2.rds"  
+* 10 "Data/121_gamm_list_notimpacted_int.rds"  
 
 
 ## 1. Libraries  
@@ -1073,8 +1096,8 @@ list(x1, x2) %>%
 
 ### Run for all parameters and replicates  
   
-#### Test    
-Two parameters only  
+#### Test 1      
+Two first parameters only    
 ```{r}
 
 if (FALSE){ 
@@ -1090,6 +1113,8 @@ if (FALSE){
     replicate = rep(1:nrep, nrow)
   )
   nrow(listno_replicate)  # 4
+  
+  series_param_tissue[1:nrow,]
   
   # GAM analyses  
   x <- 1:nrow(listno_replicate) %>%
@@ -1109,6 +1134,62 @@ if (FALSE){
 
 ```
 
+#### Test 2        
+Run for a specific parameter/tissue      
+```{r}
+
+if (FALSE){ 
+  
+  param <- "HG"
+  i <- with(series_param_tissue, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  series_param_tissue[i,]
+  i
+  
+  # 1:nrow(series_param_tissue) %>%
+  
+  # nrow <- 2  # number of parameters/tissues
+  nrep <- 3  # number of replicates
+  
+  # Data frame with two columns, col. 1 for parameter/tissue, col. 2 for replicate  
+  listno_replicate <- data.frame(
+    listno = rep(i, each = nrep),
+    replicate = rep(1:nrep, length(i))
+  )
+  nrow(listno_replicate)  # 4
+  listno_replicate
+
+  # GAM analyses, all stations  
+  x <- 1:nrow(listno_replicate) %>%
+    map(
+      ~gamm_one_par_one_repl(
+        series_param_tissue$PARAM[listno_replicate$listno[.]], 
+        series_param_tissue$TISSUE_NAME[listno_replicate$listno[.]],
+        repl = listno_replicate$listno[.],
+        data = dat2)
+    )
+  
+  str(x, 1)            # list of 3 lists
+  str(x[[1]], 1)       # list of 2, ttable and plotvalues
+  x %>% map_dfr(~.$ttable)
+  
+  # GAM analyses, non-impacted stations  
+  x <- 1:nrow(listno_replicate) %>%
+    map(
+      ~gamm_one_par_one_repl(
+        series_param_tissue$PARAM[listno_replicate$listno[.]], 
+        series_param_tissue$TISSUE_NAME[listno_replicate$listno[.]],
+        repl = listno_replicate$listno[.],
+        data = dat2_notimpacted)       # this is the only change  
+    )
+  
+  str(x, 1)            # list of 3 lists
+  str(x[[1]], 1)       # list of 2, ttable and plotvalues
+  x %>% map_dfr(~.$ttable)
+
+  }
+
+
+```
 
 ### a. All stations - All parameters/tissues  
 Is only run if 'run_analysis' = TRUE, otherwise we use saved data   
@@ -1162,17 +1243,10 @@ if (run_analysis) {
   
 }
   
-cat("\n gamm_list0: \n")
-str(gamm_list0, 1)              # list of 2 lists, "result" and "error"
-
-cat("\n gamm_list0$result: \n")
-length(gamm_list0$result)       # list of 555
-str(gamm_list0$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
-
 ```
 
 ### Save  
-REMEMBER to comment out 'run_analysis <- TRUE' in the previous c
+REMEMBER to comment out 'run_analysis <- TRUE' in the previous chunk after saving  
 Only done once, when we have run the entire analysis  
 ```{r}
 
@@ -1181,6 +1255,20 @@ if (run_analysis) {
 } else {
   gamm_list0 <- readRDS("Data/121_gamm_list0.rds")
 }
+
+cat("\n gamm_list0: \n")
+str(gamm_list0, 1)              # list of 2 lists, "result" and "error"
+
+cat("\n gamm_list0$result: \n")
+length(gamm_list0$result)       # list of 555
+
+cat("\n gamm_list0$result number 1: \n")
+str(gamm_list0$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
+
+cat("\n gamm_list0$result number 1's t-table: \n")
+str(gamm_list0$result[[1]]$ttable)  
+
+
 
 ```
 
@@ -1212,7 +1300,7 @@ nrow(listno_replicate)  # 1014
 #o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
 
 run_analysis <- FALSE  
-run_analysis <- TRUE
+# run_analysis <- TRUE
 
 if (run_analysis) {
   
@@ -1237,12 +1325,6 @@ if (run_analysis) {
   
 } 
 
-cat("\n gamm_list1: \n")
-str(gamm_list1, 1)              # list of 2 lists, "result" and "error"
-
-cat("\n gamm_list1$result: \n")
-length(gamm_list1$result)       # list of 555
-str(gamm_list1$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
 
 ```
 
@@ -1256,7 +1338,53 @@ if (run_analysis){
 } else {
   gamm_list1 <- readRDS("Data/121_gamm_list1.rds")
 }
+
+cat("\n gamm_list0: \n")
+str(gamm_list0, 1)              # list of 2 lists, "result" and "error"
+
+cat("\n gamm_list0$result: \n")
+length(gamm_list0$result)       # list of 543
+
+cat("\n gamm_list0$result number 1: \n")
+str(gamm_list0$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
+
+cat("\n gamm_list0$result number 1's t-table: \n")
+str(gamm_list0$result[[1]]$ttable)  
+
+if (FALSE){
   
+  # Check a specific parameter/tissue
+  param <- "HG"
+  i <- with(series_param_tissue, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  cat("i =", i, "\n")
+  # series_param_tissue[i,]
+  j <- with(listno_replicate, which(listno == i))
+  cat("j =", j, "\n")
+  # series_param_tissue[i,]
+  gamm_list1$error[j]  
+  # A term has fewer unique covariate combinations than specified maximum degrees of freedom  
+  
+  # GAM analyses, non-impacted stations  
+  # GAM analyses  
+  gamm_list1_EXTRA <- j %>%
+    map(
+      ~gamm_one_par_one_repl_s(
+        series_param_tissue$PARAM[listno_replicate$listno[.]], 
+        series_param_tissue$TISSUE_NAME[listno_replicate$listno[.]],
+        repl = listno_replicate$replicate[.],
+        data = dat2_notimpacted)
+    ) %>%
+    purrr::transpose()
+  
+  str(x, 1)            # list of 3 lists
+  str(x[[1]], 1)       # list of 2, ttable and plotvalues
+  x %>% map_dfr(~.$ttable)
+
+    
+  
+  
+}
+
 ```
 
 
@@ -1289,7 +1417,7 @@ nrow(listno_replicate)  # 1014
 #o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
 
 run_analysis <- FALSE  
-run_analysis <- TRUE
+# run_analysis <- TRUE
 
 if (run_analysis) {
   
@@ -1314,12 +1442,6 @@ if (run_analysis) {
   
 } 
 
-cat("\n gamm_list2: \n")
-str(gamm_list2, 1)              # list of 2 lists, "result" and "error"
-
-cat("\n gamm_list2$result: \n")
-length(gamm_list2$result)       # list of 555
-str(gamm_list2$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
 
 ```
 
@@ -1333,7 +1455,30 @@ if (run_analysis){
 } else {
   gamm_list2 <- readRDS("Data/121_gamm_list2.rds")
 }
+
+cat("\n gamm_list2: \n")
+str(gamm_list2, 1)              # list of 2 lists, "result" and "error"
+
+cat("\n gamm_list2$result: \n")
+length(gamm_list2$result)       # list of 555
+str(gamm_list2$result[[1]], 1)  # list of 2 data frames, ttable (1 row) and plotvalues (101 rows)
+
+if (FALSE){
+  # Check one particular parameter/tissue
+  # First, combine all the one-line t-tables   
+  df <- gamm_list0$result %>% map_dfr(~.$ttable)
+  # Get the index we want
+  i <- with(df, which(PARAM == "HG" & TISSUE_NAME == "Muskel"))
+  i
+  df[i,]
+  # Check if its OK
+  # All 
+  result_ok <- gamm_list0[["error"]] %>% map_lgl(is.null)
+  result_ok[i]
   
+}
+
+
 ```
 
 
