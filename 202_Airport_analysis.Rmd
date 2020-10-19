@@ -22,6 +22,8 @@ library(leaflet)
 
 library(knitr)    # for function kable()
 
+library(mapdata)
+
 source("202_Airport_analysis_functions.R")
 
 options(width = 110) # 100 character with for tables etc.
@@ -161,13 +163,16 @@ dat %>%
 ```
 
 
-### b. Map data
+### b1. Map data
 ```{r 2b}
 
 # MAp data (Norway w/o Svalbard + Jan Mayen)
-test <- maps::map("world", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
-sel <- grepl("Svalbard", test$names) | test$names == "Norway:Jan Mayen"  # select Svalbard + Jan Mayen
-map <- maps::map("world", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
+test <- maps::map("worldHires", "Norway", plot = FALSE)   # map data for Norway - this is just to get region names
+
+sel <- grepl("Svalbard", test$names) | 
+  test$names == "Norway:Jan Mayen" |
+  test$names == "Norway:Bouvet Island"                   # select Svalbard + Jan Mayen
+map <- maps::map("worldHires", test$names[!sel], exact = TRUE, plot = FALSE)  # Norway w/o Svalbard + Jan Mayen
 map_df <- data.frame(Longitude = map$x, Latitude = map$y)
 
 #
@@ -186,7 +191,39 @@ map_df$y[coordinate_exists] <- SP.UTM@coords[,2]
 
 cat("'map_df' created")
 
+if (FALSE){
+  maps::map("worldHires", test$names[!sel],
+          xlim = c(8,12), ylim = c(58,60),
+          col = "gray", fill = TRUE)
+
+}
 ```
+
+### b2. Yet another background map  
+```{r}
+# Background map ----
+library(sf)
+nc_norway <- st_read("K:/Kart/N1000/norge2.shp")
+st_crs(nc_norway) <- "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs"  # set coordinate system
+
+data_norway <- nc_norway %>%
+  st_coordinates() %>%                                  # get coordinates only
+  as.data.frame()
+
+
+if (FALSE){
+
+  # plot UTM
+  ggplot() +
+    geom_polygon(data = data_norway, aes(X, Y, group = interaction(L1, L2)), fill = "grey30") +
+    coord_fixed(xlim = c(2, 3)*1E5,  ylim = c(65, 66.8)*1E5)
+  
+}
+
+
+```
+
+
 
 ### c. Distance to airport        
 **Distance1** = closest airport  
@@ -212,10 +249,14 @@ df_distance %>%
 ```{r, fig.width=8, fig.height=6}
 
 plots <- purrr::map(1:6, ~plot_closest(., dat_stations, dat_airports))
-cowplot::plot_grid(plotlist = plots, nrow = 2)
+gg <- cowplot::plot_grid(plotlist = plots, nrow = 2)
+ggsave("Figures/202_codstations_airports_01.png", gg, dpi = 500, width = 8, height = 6)
+gg
 
 plots <- purrr::map(7:11, ~plot_closest(., dat_stations, dat_airports))
-cowplot::plot_grid(plotlist = plots, nrow = 2)
+gg <- cowplot::plot_grid(plotlist = plots, nrow = 2)
+ggsave("Figures/202_codstations_airports_02.png", gg, dpi = 500, width = 8, height = 6)
+gg
 
 ```
 
@@ -556,28 +597,44 @@ gg3 + scale_y_log10()
 ```{r, fig.width=6, fig.height=7}
 
 for (param in c("PFOS", "PFOSA", "PFUdA")){
-  
+   # param <- "PFOS"  
+
   df <- dat %>%
-    filter(PARAM %in% param & TISSUE_NAME %in% "Lever" & MYEAR == 2019 & !is.na(VALUE_WW)) %>%
-    group_by(STATION_CODE, Lon, Lat) %>%
-    summarise(`Concentration 2019` = median(VALUE_WW), .groups = "drop") %>%
-    mutate(textside = case_when(
-      STATION_CODE %in% c("30B", "36B", "13B", "53B") ~ "right",
-      TRUE ~ "left"
-    ))
+    filter(PARAM %in% param & TISSUE_NAME %in% "Lever" & MYEAR >= 2011 & !is.na(VALUE_WW)) %>% #View()
+    group_by(STATION_CODE, Lon, Lat) %>% #View()
+    mutate(Last_year = max(MYEAR)) %>% #View()
+    filter(MYEAR == Last_year) %>% #View()
+    summarise(
+      `Concentration last year` = median(VALUE_WW),
+      Last_year = first(Last_year),
+      .groups = "drop") %>% # View()
+    mutate(
+      textside = case_when(
+        STATION_CODE %in% c("30B", "36B", "13B", "53B") ~ "right",
+        TRUE ~ "left"),
+      # For adding the "(2011)" under 15B label
+      last_year_comment = case_when(
+        Last_year < 2019 ~ paste0("(", Last_year, ")"),
+        TRUE ~ "")
+    ) # %>%  View()
   gg <- ggplot(df) +
     annotation_map(map_norway_h, aes(long, lat), fill = terrain.colors(10)[7]) +
-    geom_point(aes(Lon, Lat, fill = `Concentration 2019`), pch = 21, size = rel(3)) +
+    geom_point(aes(Lon, Lat, fill = `Concentration last year`), pch = 21, size = rel(3)) +
     geom_text(data = subset(df, textside == "right"),
               aes(Lon, Lat, label = STATION_CODE), hjust = -0.4, size = rel(3)) +
     geom_text(data = subset(df, textside == "left"),
               aes(Lon, Lat, label = STATION_CODE), hjust = 1.4, size = rel(3)) +
+    # Add "(2011)" under 15B label:
+    geom_text(data = subset(df, textside == "left"),
+              aes(Lon, Lat - 0.35, label = last_year_comment), hjust = 1.2, size = rel(3)) +
     scale_fill_distiller(palette = "PRGn") +
     annotate("text", x = -8, y = 71.5, label = param, hjust = 0, size = rel(5)) +
     coord_map("lambert", parameters = c(64, 12), xlim = c(-1,30), ylim = c(57, 72)) +
     theme_bw() +
     theme(axis.title = element_blank(),
         legend.position = c(.68, .15))
+  
+    ggsave(paste0("Figures/202_Map_", param, ".png"), gg, width=6, height=7, dpi = 500)
     
     print(gg)
 

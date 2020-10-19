@@ -87,22 +87,25 @@ plot_closest <- function(..., range = 200, print_plot = FALSE){
   
   
   df <- get_closest(...) %>%
-    mutate(Label = paste(i, "-", Airport))
+    mutate(Label = paste(i, "-", stringr::str_extract(Airport, "([^[[:blank:]]]+)")))
   
   ran <- range*1000
   
-  gg <- ggplot(df, aes(Airport_x, Airport_y)) +
-    geom_point() +
-    geom_text(aes(x = Airport_x + 5000, label = Label), hjust = 0) +
-    geom_point(data = df[1,], aes(x=x, y=y), color = "red2") +
-    geom_path(data = map_df, aes(x=x, y=y)) +
+  # plot UTM
+  gg <- ggplot() +
+    geom_polygon(data = data_norway, aes(X, Y, group = interaction(L1, L2)), fill = "grey70") +
+    geom_point(data = df, aes(x = Airport_x, y = Airport_y)) +
+    geom_text(data = df, aes(x = Airport_x + 5000, y = Airport_y, label = Label), hjust = 0) +
+    geom_point(data = df[1,], aes(x=x, y=y), color = "red2", size = rel(3)) +
     coord_fixed(
-      xlim = df[1,]$x + c(-ran/2, ran/2), 
+      xlim = df[1,]$x + c(-ran/2, ran/2),
       ylim = df[1,]$y + c(-ran/2, ran/2)
     ) +
+    theme_bw() +
     theme(
       axis.title = element_blank(),
-      axis.text = element_blank()
+      axis.text = element_blank(),
+      panel.grid = element_blank()
     ) +
     labs(title = df[1,]$STATION_CODE)
   
