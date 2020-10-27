@@ -760,7 +760,7 @@ plot_observations("Dieldrin",  tissue = "Lever")
 
 ## 6. Linear results   
 Different from the non-linear (GAMM) statistics by  
-* Assumin a linear effect of distance along coast  
+* Assuming a linear effect of distance along coast  
 * Analysing length-adjusted concentrations (instead of raw wet-weight concentrations)   
 * Picking either 
 
@@ -794,11 +794,15 @@ linear_results <- result_list[[1]][ok] %>%
   left_join(df_parameter_groups[c("Parameter.Code", "Substance.Group")],
             by = c("PARAM" = "Parameter.Code"),
             na_matches = "never") %>%
+  filter(PARAM != "Sum PCB 7") %>%               # (1) 
   select(Substance.Group, everything()) %>%
   arrange(Substance.Group)
 
-```
+# (1) This is an incomplete duplicate of CB_S7, based on data from 2015 and 2016 only
+#     See scr. 121, "checking" in part 2 (after dat2 has been created)
 
+```
+### Add rates of change  
 ```{r}
 
 
@@ -953,7 +957,7 @@ pars_other <- par_all[!(sel1 | sel2 | sel3 | sel4)] %>% unique()
 par_levels <- c(pars_pcb, pars_bde, pars_hbcd, pars_pfas, pars_other)
 ```
 
-Order variables  
+Order parameters (i.e. order rows)    
 ```{r, results='hide'}
 # Check if some parameters occur more than once (they shouldn't!):
 check <- table(par_levels)
@@ -965,10 +969,37 @@ tab_comb <- tab_comb %>%
   mutate(PARAM = factor(PARAM, levels = par_levels))
 
 ```
-Output  
+
+Add sample and proref statistics  
+```{r}
+
+# This contains PROREF (called Q95 in this table)
+dat_medians <- readRDS(
+  "../Milkys2_pc/Files_from_Jupyterhub_2019/Raw_data/110_mediandata_updated_2020-08-05.rds")
+
+dat_proref <- dat_medians %>%
+  filter(Basis == "WW" & !is.na(Q95)) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise(Proref = first(Q95), .groups = "drop")
+
+tab_stats <- dat2_notimpacted %>% # nrow()
+  left_join(dat_proref, by = c("PARAM", "TISSUE_NAME")) %>%
+  group_by(PARAM, TISSUE_NAME) %>%
+  summarise(
+    `Number of samples` = n(),
+    `Percent below Proref` = round(100*mean(VALUE_WW <= Proref)),
+    `Percent below 2xProref` = round(100*mean(VALUE_WW <= (2*Proref))),
+    .groups = "drop"
+  )
+  
+
+```
+
+### Final table   
 ```{r}
 cs_dt <- tab_comb %>%
-  select(-Linear_effect)
+  left_join(tab_stats, by = c("PARAM", "TISSUE_NAME")) %>%
+  select(-Linear_effect) 
 
 cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
                            color = ifelse(cs_dt$Linear_p < 0.05, "red", "black"))
@@ -1092,9 +1123,12 @@ tab_comb <- tab_comb %>%
 
 ```
 
+
+
 Output
 ```{r}
 cs_dt <- tab_comb %>% 
+  left_join(tab_stats, by = c("PARAM", "TISSUE_NAME")) %>%
   select(-Linear_effect)
 
 cs_dt$Linear_p = cell_spec(cs_dt$Linear_p, 
@@ -1113,6 +1147,65 @@ kbl(cs_dt, escape = F) %>%
 
 # For later use:
 tab_comb_Year <- tab_comb
+
+```
+
+## 9. Combined table for geo + year effect  
+```{r}
+
+tab_comb_1 <- tab_comb_Distance %>% select(-Linear_effect)
+tab_comb_2 <- tab_comb_Year %>% select(-Linear_effect)
+
+names(tab_comb_1)[5:7] <- paste("Dist", names(tab_comb_Distance)[6:8]) 
+names(tab_comb_2)[5:7] <- paste("Year", names(tab_comb_Year)[6:8])
+
+tab_comb_DistYear <- full_join(
+  tab_comb_1, 
+  tab_comb_2,
+  by = c("Substance.Group", "PARAM", "TISSUE_NAME")
+)
+
+#
+# Save as excel
+writexl::write_xlsx(tab_comb_DistYear, "Data/tab_comb_DistYear (script 122).xlsx")
+
+```
+
+### Table output  
+```{r}
+#
+# Write to table
+#
+cs_dt <- tab_comb_DistYear
+
+cs_dt$`Dist Linear_p` = cell_spec(
+  cs_dt$`Dist Linear_p`, 
+  color = ifelse(cs_dt$`Dist Linear_p` < 0.05, "red", "black"))
+
+cs_dt$`Dist Non_linear_p` = cell_spec(
+  cs_dt$`Dist Non_linear_p`, 
+  color = case_when(
+    is.na(cs_dt$`Dist Non_linear_p`) ~ "black",
+    cs_dt$`Dist Non_linear_p` <= 0.05 ~ "red",
+    cs_dt$`Dist Non_linear_p` > 0.05 ~ "black")
+)
+
+cs_dt$`Year Linear_p` = cell_spec(
+  cs_dt$`Year Linear_p`, 
+  color = ifelse(cs_dt$`Year Linear_p` < 0.05, "red", "black"))
+
+cs_dt$`Year Non_linear_p` = cell_spec(
+  cs_dt$`Year Non_linear_p`, 
+  color = case_when(
+    is.na(cs_dt$`Year Non_linear_p`) ~ "black",
+    cs_dt$`Year Non_linear_p` <= 0.05 ~ "red",
+    cs_dt$`Year Non_linear_p` > 0.05 ~ "black")
+)
+
+
+
+kbl(cs_dt, escape = F) %>%
+  kable_paper("striped", full_width = F)
 
 ```
 
