@@ -216,7 +216,7 @@ dat2 <- dat %>%
   group_by(STATION_CODE) %>%
   mutate(TL_mean = mean(TL, na.rm = TRUE)) %>%
   ungroup() %>%
-  filter(!is.na(Dist_along_coast))
+  filter(!is.na(Dist_along_coast) & PARAM != "Sum PCB 7")
 
 # dat2 <- dat
 
@@ -241,7 +241,25 @@ if (FALSE){
     filter(grepl("QCB", PARAM)) %>%
     xtabs(~PARAM + MYEAR, .)
 
-    }
+  # 'Sum PCB 7' and CB_S7
+  # CB_S7 is duplicated as 'Sum PCB 7' in two years 2015 and 2016, so it can be ignored
+  dat2 %>%
+    filter(PARAM %in% c("Sum PCB 7", "CB_S7")) %>%
+    xtabs(~PARAM + MYEAR, .)
+
+  dat2 %>%
+    filter(PARAM %in% c("Sum PCB 7", "CB_S7") & MYEAR == 2015) %>%
+    xtabs(~PARAM + STATION_CODE, .)
+  
+  dat2 %>%
+    filter(PARAM %in% c("Sum PCB 7", "CB_S7") & MYEAR == 2015) %>%
+    arrange(MYEAR, STATION_CODE, TISSUE_NAME, SAMPLE_NO2) %>%
+    View()
+
+
+}
+
+
 ```
 
 ### Test add_random_data() function  
